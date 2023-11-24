@@ -82,6 +82,6 @@ export default class LineWithCommentRemover {
       oldLines.splice(markerIndex, 1); // Delete blank line after
     }
 
-    return oldLines.join("\n") + "\n";
+    return oldLines.join("\n");
   }
 }
