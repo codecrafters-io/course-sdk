@@ -11,8 +11,12 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^11.1.0",
+    "@types/diff": "^5.0.8",
+    "@types/glob": "^8.1.0",
     "@types/js-yaml": "^4.0.9",
     "commander": "^11.1.0",
+    "diff": "^5.1.0",
+    "glob": "^10.3.10",
     "js-yaml": "^4.1.0",
     "mustache": "^4.2.0",
     "p-map": "^6.0.0"

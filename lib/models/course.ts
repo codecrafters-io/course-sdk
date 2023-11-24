@@ -66,9 +66,9 @@ export default class Course {
       definitionYaml["stages"].map(
         (stageYaml, stageIndex) =>
           new CourseStage(
-            stageYaml["slug"] as string,
+            stageYaml["name"] as string,
             stageIndex + 1,
-            stageYaml["name"] as string
+            stageYaml["slug"] as string
           )
       ),
       directory

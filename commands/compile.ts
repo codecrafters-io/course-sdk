@@ -1,3 +1,4 @@
+import FirstStageSolutionsCompiler from "../lib/compilers/first-stage-solutions-compiler";
 import StarterTemplateCompiler from "../lib/compilers/starter-template-compiler";
 import Course from "../lib/models/course";
 import BaseCommand from "./base";
@@ -10,12 +11,12 @@ export default class CompileCommand extends BaseCommand {
     this.languageFilter = languageFilter;
   }
 
-  doRun() {
+  async doRun() {
     const course = Course.loadFromDirectory(process.cwd());
 
     const compilers = [
       new StarterTemplateCompiler(course),
-      // new FirstStageSolutionsCompiler(course),
+      new FirstStageSolutionsCompiler(course),
       // new FirstStageExplanationsCompiler(course),
       // new SolutionDiffsCompiler(course),
     ];
@@ -24,7 +25,8 @@ export default class CompileCommand extends BaseCommand {
       console.log("Compiling all languages...");
 
       for (const compiler of compilers) {
-        compiler.compileAll();
+        console.log(`Compiling ${compiler.constructor.name}...`);
+        await compiler.compileAll();
       }
     } else {
       if (this.#languageSlugsToFilter.length === 1) {

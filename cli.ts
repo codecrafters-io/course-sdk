@@ -17,8 +17,8 @@ program
       "language to compile for. Example: 'go'"
     ).default("", "All languages")
   )
-  .action((languageFilter) => {
-    new CompileCommand(languageFilter).run();
+  .action(async (languageFilter) => {
+    await new CompileCommand(languageFilter).run();
   });
 
 program.parse();

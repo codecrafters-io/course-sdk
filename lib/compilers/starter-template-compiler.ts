@@ -16,8 +16,9 @@ export default class StarterTemplateCompiler {
   async compileAll(): Promise<void> {
     await pMap(this.definitions, async (definition) => {
       console.log(
-        `compiling starter repositories for ${definition.course.slug}-${definition.language.slug}`
+        `- compiling starter repositories for ${definition.course.slug}-${definition.language.slug}`
       );
+
       await this.compileDefinition(definition);
     });
   }

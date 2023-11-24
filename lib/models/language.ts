@@ -34,7 +34,7 @@ export default class Language {
     const language = this.all().find((language) => language.slug === slug);
 
     if (!language) {
-      throw new Error(`Language with slug ${slug} not found`);
+      throw `Language with slug ${slug} not found`;
     }
 
     return language;
@@ -47,7 +47,7 @@ export default class Language {
     return this.findBySlug(language_pack.split("-")[0]);
   }
 
-  codeFileExtension(): string {
+  get codeFileExtension(): string {
     const extensions: { [key: string]: string } = {
       c: "c",
       clojure: "clj",
@@ -72,13 +72,13 @@ export default class Language {
     return extensions[this.slug];
   }
 
-  languagePack() {
+  get languagePack() {
     if (this.slug === "javascript") return "nodejs";
     if (this.slug === "csharp") return "dotnet";
     return this.slug;
   }
 
-  syntaxHighlightingIdentifier() {
+  get syntaxHighlightingIdentifier() {
     return this.slug;
   }
 }

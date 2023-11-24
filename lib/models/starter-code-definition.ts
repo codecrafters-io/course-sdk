@@ -55,8 +55,6 @@ export default class StarterRepoDefinition {
       fs.readFileSync(course.starterRepositoryDefinitionsFilePath, "utf8")
     ) as StarterDefinitionYAML[];
 
-    console.log(starterDefinitionsYaml);
-
     return starterDefinitionsYaml.map((starterDefinitionYaml) => {
       return new StarterRepoDefinition(
         course,

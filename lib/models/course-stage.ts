@@ -8,4 +8,16 @@ export default class CourseStage {
     this.number = number;
     this.slug = slug;
   }
+
+  get solutionDir(): string {
+    return `${this.number.toString().padStart(2, "0")}-${this.slug}`;
+  }
+
+  get testerTestCaseJson(): string {
+    return JSON.stringify({
+      slug: this.slug,
+      tester_log_prefix: `stage-${this.number}`,
+      title: `Stage ${this.number}: ${this.name}`,
+    });
+  }
 }
