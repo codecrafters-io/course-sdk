@@ -30,7 +30,7 @@ class ChangedFile {
     try {
       const { execSync } = require("child_process");
       try {
-        diffOutput = execSync(`diff -u ${oldFileName} ${newFileName}`, {
+        diffOutput = execSync(`diff -d -U 25 ${oldFileName} ${newFileName}`, {
           encoding: "utf8",
         });
       } catch (error) {
@@ -55,8 +55,12 @@ class ChangedFile {
     fs.unlinkSync(oldFileName);
     fs.unlinkSync(newFileName);
 
-    const diffOutputLines = diffOutput.split('\n');
-    return diffOutputLines.slice(2).join('\n'); // Remove the first two lines of the diff output
+    const diffOutputLines = diffOutput.split("\n");
+
+    return diffOutputLines
+      .slice(2)
+      .map((line) => (line == " " ? "" : line)) // Diff can output a space for unchanged lines
+      .join("\n"); // Remove the first two lines of the diff output
   }
 }
 

@@ -96,12 +96,19 @@ Are you sure there's a contiguous block of comments after the 'Uncomment this' m
     fs.writeFileSync(
       explanationFilePath,
 
-      Mustache.render(EXPLANATION_TEMPLATE, {
-        course_short_name: this.course.shortName,
-        uncommented_code_blocks: processedBlocks,
-        entry_point_file: processedBlocks[0].filePath,
-        language_syntax_highlighting_identifier: language.slug,
-      })
+      Mustache.render(
+        // TODO: Remove this, backward compat for older Ruby course-sdk template
+        EXPLANATION_TEMPLATE.replace(
+          "Study and uncomment the relevant code:",
+          "Study and uncomment the relevant code: "
+        ),
+        {
+          course_short_name: this.course.shortName,
+          uncommented_code_blocks: processedBlocks,
+          entry_point_file: processedBlocks[0].filePath,
+          language_syntax_highlighting_identifier: language.slug,
+        }
+      )
     );
   }
 
