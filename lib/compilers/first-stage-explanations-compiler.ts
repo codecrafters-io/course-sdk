@@ -17,7 +17,6 @@ Study and uncomment the relevant code:
 \`\`\`
 
 {{/uncommented_code_blocks}}
-
 Push your changes to pass the first stage:
 
 \`\`\`
