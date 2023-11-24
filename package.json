@@ -7,5 +7,8 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "yargs": "^17.7.2"
   }
 }
