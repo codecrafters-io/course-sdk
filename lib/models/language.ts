@@ -1,0 +1,84 @@
+export default class Language {
+  slug: string;
+  name: string;
+
+  constructor(slug: string, name: string) {
+    this.slug = slug;
+    this.name = name;
+  }
+
+  static all() {
+    return [
+      new Language("c", "C"),
+      new Language("cpp", "C++"),
+      new Language("clojure", "Clojure"),
+      new Language("crystal", "Crystal"),
+      new Language("csharp", "C#"),
+      new Language("elixir", "Elixir"),
+      new Language("go", "Go"),
+      new Language("haskell", "Haskell"),
+      new Language("java", "Java"),
+      new Language("javascript", "JavaScript"),
+      new Language("kotlin", "Kotlin"),
+      new Language("nim", "Nim"),
+      new Language("php", "PHP"),
+      new Language("python", "Python"),
+      new Language("ruby", "Ruby"),
+      new Language("rust", "Rust"),
+      new Language("swift", "Swift"),
+      new Language("zig", "Zig"),
+    ];
+  }
+
+  static findBySlug(slug: string): Language {
+    const language = this.all().find((language) => language.slug === slug);
+
+    if (!language) {
+      throw new Error(`Language with slug ${slug} not found`);
+    }
+
+    return language;
+  }
+
+  static findByLanguagePack(language_pack: string) {
+    if (language_pack.startsWith("nodejs"))
+      return this.findBySlug("javascript");
+    if (language_pack.startsWith("dotnet")) return this.findBySlug("csharp");
+    return this.findBySlug(language_pack.split("-")[0]);
+  }
+
+  codeFileExtension(): string {
+    const extensions: { [key: string]: string } = {
+      c: "c",
+      clojure: "clj",
+      cpp: "cpp",
+      crystal: "cr",
+      csharp: "cs",
+      elixir: "ex",
+      go: "go",
+      haskell: "hs",
+      java: "java",
+      javascript: "js",
+      kotlin: "kt",
+      nim: "nim",
+      php: "php",
+      python: "py",
+      ruby: "rb",
+      rust: "rs",
+      swift: "swift",
+      zig: "zig",
+    };
+
+    return extensions[this.slug];
+  }
+
+  languagePack() {
+    if (this.slug === "javascript") return "nodejs";
+    if (this.slug === "csharp") return "dotnet";
+    return this.slug;
+  }
+
+  syntaxHighlightingIdentifier() {
+    return this.slug;
+  }
+}

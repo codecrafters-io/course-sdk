@@ -3,12 +3,17 @@
   "module": "cli.ts",
   "type": "module",
   "devDependencies": {
+    "@types/mustache": "^4.2.5",
     "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "yargs": "^17.7.2"
+    "@commander-js/extra-typings": "^11.1.0",
+    "@types/js-yaml": "^4.0.9",
+    "commander": "^11.1.0",
+    "js-yaml": "^4.1.0",
+    "mustache": "^4.2.0"
   }
 }
