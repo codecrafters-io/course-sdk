@@ -1,4 +1,5 @@
 import Mustache from "mustache";
+import fs from "fs";
 import YAML from "js-yaml";
 import Course from "./course";
 import Language from "./language";
@@ -51,8 +52,10 @@ export default class StarterRepoDefinition {
     };
 
     const starterDefinitionsYaml = YAML.load(
-      course.starterRepositoryDefinitionsFilePath
-    ) as unknown as StarterDefinitionYAML[];
+      fs.readFileSync(course.starterRepositoryDefinitionsFilePath, "utf8")
+    ) as StarterDefinitionYAML[];
+
+    console.log(starterDefinitionsYaml);
 
     return starterDefinitionsYaml.map((starterDefinitionYaml) => {
       return new StarterRepoDefinition(
@@ -79,9 +82,11 @@ export default class StarterRepoDefinition {
       const fpath = `${templateDir}/${mapping.templatePath}`;
       const templateContents = fs.readFileSync(fpath, "utf8");
 
+      Mustache.escape = (text) => text;
+
       return {
         path: mapping.destinationPath,
-        contents: mapping.shouldSkipTemplateInterpolation()
+        contents: mapping.shouldSkipTemplateInterpolation
           ? templateContents
           : Mustache.render(templateContents, this.templateContext()),
         mode: fs.statSync(fpath).mode,
@@ -91,11 +96,11 @@ export default class StarterRepoDefinition {
 
   private templateContext(): any {
     return {
-      languageName: this.language.name,
-      languageSlug: this.language.slug,
-      [`languageIs${this.language.slug}`]: true,
-      courseName: this.course.name,
-      courseSlug: this.course.name,
+      language_name: this.language.name,
+      language_slug: this.language.slug,
+      [`language_is_${this.language.slug}`]: true,
+      course_name: this.course.name,
+      course_slug: this.course.slug,
       ...this.templateAttrs,
     };
   }
