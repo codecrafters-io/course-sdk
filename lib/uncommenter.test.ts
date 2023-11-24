@@ -368,14 +368,18 @@ test("uncommentedBlocksWithMarker", () => {
   const actual = new Uncommenter(
     "python",
     `
+    a = b
+
     # Uncomment this to pass the first stage
     # a = b
+
+    c = d
     `,
     UNCOMMENT_PATTERN
   ).uncommentedBlocksWithMarker;
 
-  const expected = `# Uncomment this to pass the first stage
-a = b`;
+  const expected = `    # Uncomment this to pass the first stage
+    a = b`;
 
   expect(actual[0]).toBe(expected);
 });
