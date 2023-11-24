@@ -1,0 +1,11 @@
+{
+  "name": "course-sdk",
+  "module": "cli.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
