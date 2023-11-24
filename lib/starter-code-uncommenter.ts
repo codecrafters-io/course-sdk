@@ -34,6 +34,7 @@ export default class StarterCodeUncommenter {
     const diffs = codeFiles
       .map((filePath) => {
         const oldContents = fs.readFileSync(filePath, "utf8");
+
         const newContents = new Uncommenter(
           this.language.slug,
           oldContents,

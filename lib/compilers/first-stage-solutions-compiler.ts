@@ -14,7 +14,7 @@ export default class FirstStageSolutionsCompiler {
     this.course = course;
   }
 
-  compileAll(): void {
+  async compileAll() {
     this.starterRepositoryDirectories().forEach(
       (starterRepositoryDirectory) => {
         this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
@@ -51,16 +51,22 @@ export default class FirstStageSolutionsCompiler {
       rmdirSync(codeDirectory, { recursive: true });
     }
 
-    mkdirSync(codeDirectory, { recursive: true });
-
     // TODO: Bun's copyFileSync doesn't support recursive copying?
     execSync(`cp -R ${starterRepositoryDirectory} ${codeDirectory}`);
 
-    let diffs = new LineWithCommentRemover(codeDirectory, language).process();
-    this.ensureDiffsExist(diffs);
+    const uncommentMarkerDiffs = new LineWithCommentRemover(
+      codeDirectory,
+      language
+    ).process();
 
-    diffs = new StarterCodeUncommenter(codeDirectory, language).uncomment();
-    this.ensureDiffsExist(diffs);
+    this.ensureDiffsExist(uncommentMarkerDiffs);
+
+    const passStageDiffs = new StarterCodeUncommenter(
+      codeDirectory,
+      language
+    ).uncomment();
+
+    this.ensureDiffsExist(passStageDiffs);
   }
 
   protected ensureDiffsExist(diffs: any[]): void {
