@@ -39,23 +39,25 @@ export default class Uncommenter {
   }
 
   get uncommented(): string {
-    return (
-      this.code
-        .split("\n")
-        .map((line, index) => {
-          console.log(line, index, this.withinUncommentBounds(index));
-          return this.withinUncommentBounds(index)
-            ? this.uncommentLine(line)
-            : line;
-        })
-        .filter(
-          (line, index) =>
-            !this.uncommentLineIndices().includes(index) ||
-            (this.uncommentLineIndices().includes(index - 1) &&
-              !/^\s*$/.test(line))
-        )
-        .join("\n") + "\n"
-    );
+    const uncommentedLines = this.code.split("\n").map((line, index) => {
+      return this.withinUncommentBounds(index)
+        ? this.uncommentLine(line)
+        : line;
+    });
+
+    const filteredLines = uncommentedLines.filter((line, index) => {
+      const isUncommentMarker = this.uncommentLineIndices().includes(index);
+      const previousLineIsUncommentMarker =
+        this.uncommentLineIndices().includes(index - 1);
+      const isLineEmpty = /^\s*$/.test(line);
+
+      return !(
+        isUncommentMarker ||
+        (previousLineIsUncommentMarker && isLineEmpty)
+      );
+    });
+
+    return filteredLines.join("\n");
   }
 
   get uncommentedBlocksWithMarker(): string[] {
