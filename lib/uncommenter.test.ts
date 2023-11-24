@@ -6,29 +6,7 @@ test("", () => {
 
 import Uncommenter from "./uncommenter";
 
-const SAMPLE_TWO_MARKERS_COMMENTED = `
-a = b
-
-# Uncomment this to pass the first stage
-#
-# # First uncommented block
-# b = c
-
-# Uncomment this to pass the first stage
-#
-# # Second uncommented block
-# c = d
-`;
-
-const SAMPLE_TWO_MARKERS_UNCOMMENTED = `
-a = b
-
-# First uncommented block
-b = c
-
-# Second uncommented block
-c = d
-`;
+const UNCOMMENT_PATTERN = /Uncomment this/;
 
 const SAMPLE_PY_COMMENTED = `
 abcd = true
@@ -194,7 +172,29 @@ var b = 2;
 Console.WriteLine(a + b);
 `;
 
-const UNCOMMENT_PATTERN = /Uncomment this/;
+const SAMPLE_TWO_MARKERS_COMMENTED = `
+a = b
+
+# Uncomment this to pass the first stage
+#
+# # First uncommented block
+# b = c
+
+# Uncomment this to pass the first stage
+#
+# # Second uncommented block
+# c = d
+`;
+
+const SAMPLE_TWO_MARKERS_UNCOMMENTED = `
+a = b
+
+# First uncommented block
+b = c
+
+# Second uncommented block
+c = d
+`;
 
 test("python", () => {
   const actual = new Uncommenter("python", SAMPLE_PY_COMMENTED, UNCOMMENT_PATTERN).uncommented;
