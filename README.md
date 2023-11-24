@@ -17,16 +17,20 @@ git clone https://github.com/codecrafters-io/build-your-own-git.git
 cd build-your-own-git
 ```
 
+### Running tests
+
 Run this command to compile and test Go solutions:
 
 ```sh
-course-sdk test go
+course-sdk test go # test all stages for Go
+course-sdk test go stage_slug_1,stage_slug_2 # test only specific stages
 ```
 
-If you only want to test solutions for specific stage(s):
+### Compiling starter code & solutions
 
 ```sh
-course-sdk test go stage_slug_1,stage_slug_2
+course-sdk compile # compiles all languages
+course-sdk compile go # compiles only Go
 ```
 
 To add support for a new language (TODO, not working yet):
