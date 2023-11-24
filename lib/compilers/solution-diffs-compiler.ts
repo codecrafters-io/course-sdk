@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as diff from "diff";
+import tmp from "tmp";
 import Course from "../models/course";
 import Language from "../models/language";
 import { glob } from "glob";
@@ -21,14 +21,28 @@ class ChangedFile {
   }
 
   diff(): string {
-    return diff.createPatch(
-      this.path,
-      this.oldContents || "",
-      this.newContents || "",
-      "",
-      "",
-      { context: 25 }
-    );
+    const oldFileName = tmp.fileSync().name;
+    const newFileName = tmp.fileSync().name;
+    fs.writeFileSync(oldFileName, this.oldContents || "");
+    fs.writeFileSync(newFileName, this.newContents || "");
+
+    let diffOutput = "";
+    try {
+      diffOutput = require("child_process").execSync(
+        `diff -u ${oldFileName} ${newFileName}`
+      );
+    } catch (error) {
+      if ((error as { status: number }).status !== 1) {
+        throw error;
+      }
+    }
+
+    fs.unlinkSync(oldFileName);
+    fs.unlinkSync(newFileName);
+
+    console.log(diffOutput);
+
+    return diffOutput;
   }
 }
 
@@ -91,14 +105,10 @@ class SolutionDiffsCompiler {
 
       fs.mkdirSync(nextStageDiffDirectory, { recursive: true });
 
-      console.log(nextStageCodeDirectory, previousStageCodeDirectory);
-
       const changedFiles = this.computeChangedFiles(
         previousStageCodeDirectory,
         nextStageCodeDirectory
       );
-
-      console.log(changedFiles);
 
       for (const changedFile of changedFiles) {
         const diffFilePath = `${path.join(

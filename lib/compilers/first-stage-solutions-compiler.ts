@@ -81,10 +81,6 @@ export default class FirstStageSolutionsCompiler {
 
         process.exit(1);
       }
-
-      // console.log("");
-      // console.log(diff.toString({ color: true }));
-      // console.log("");
     });
   }
 
