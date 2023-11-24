@@ -1,3 +1,4 @@
+import { FirstStageExplanationsCompiler } from "../lib/compilers/first-stage-explanations-compiler";
 import FirstStageSolutionsCompiler from "../lib/compilers/first-stage-solutions-compiler";
 import StarterTemplateCompiler from "../lib/compilers/starter-template-compiler";
 import Course from "../lib/models/course";
@@ -17,7 +18,7 @@ export default class CompileCommand extends BaseCommand {
     const compilers = [
       new StarterTemplateCompiler(course),
       new FirstStageSolutionsCompiler(course),
-      // new FirstStageExplanationsCompiler(course),
+      new FirstStageExplanationsCompiler(course),
       // new SolutionDiffsCompiler(course),
     ];
 

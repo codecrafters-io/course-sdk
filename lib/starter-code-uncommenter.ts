@@ -24,7 +24,7 @@ export default class StarterCodeUncommenter {
     this.language = language;
   }
 
-  uncomment(): diff.ParsedDiff[] {
+  uncomment(): string[] {
     const codeFiles = this.codeFiles();
 
     if (codeFiles.length === 0) {

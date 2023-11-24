@@ -51,6 +51,8 @@ export default class FirstStageSolutionsCompiler {
       rmdirSync(codeDirectory, { recursive: true });
     }
 
+    mkdirSync(path.dirname(codeDirectory), { recursive: true });
+
     // TODO: Bun's copyFileSync doesn't support recursive copying?
     execSync(`cp -R ${starterRepositoryDirectory} ${codeDirectory}`);
 

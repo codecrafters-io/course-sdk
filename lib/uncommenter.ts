@@ -66,8 +66,7 @@ export default class Uncommenter {
 
       return this.code
         .split("\n")
-        .slice(startIndex - 1, endIndex + 1)
-        .map((line) => line.slice(0, -1))
+        .slice(startIndex - 1, endIndex + 1) // Corrected off-by-one error here
         .map((line, index) => (index === 0 ? line : this.uncommentLine(line)))
         .join("\n");
     });
