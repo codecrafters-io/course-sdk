@@ -28,21 +28,35 @@ class ChangedFile {
 
     let diffOutput = "";
     try {
-      diffOutput = require("child_process").execSync(
-        `diff -u ${oldFileName} ${newFileName}`
-      );
+      const { execSync } = require("child_process");
+      try {
+        diffOutput = execSync(`diff -u ${oldFileName} ${newFileName}`, {
+          encoding: "utf8",
+        });
+      } catch (error) {
+        // @ts-ignore
+        if (error.status === 1) {
+          // @ts-ignore
+          diffOutput = error.stdout;
+        } else {
+          throw error;
+        }
+      }
     } catch (error) {
       if ((error as { status: number }).status !== 1) {
         throw error;
       }
     }
 
+    if (diffOutput.trim() === "") {
+      throw new Error("No diff output");
+    }
+
     fs.unlinkSync(oldFileName);
     fs.unlinkSync(newFileName);
 
-    console.log(diffOutput);
-
-    return diffOutput;
+    const diffOutputLines = diffOutput.split('\n');
+    return diffOutputLines.slice(2).join('\n'); // Remove the first two lines of the diff output
   }
 }
 
