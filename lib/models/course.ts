@@ -1,7 +1,9 @@
 import CourseStage from "./course-stage";
-import fs from "fs";
-import path from "path";
+import Dockerfile from "./dockerfile";
 import YAML from "js-yaml";
+import fs from "fs";
+import { glob } from "glob";
+import path from "path";
 import { CourseDefinitionFileNotFoundError, InvalidCourseDefinitionFileError } from "../errors";
 
 export default class Course {
@@ -63,6 +65,10 @@ export default class Course {
     return path.join(this.directory, "compiled_starters");
   }
 
+  get dockerfilesDir(): string {
+    return path.join(this.directory, "dockerfiles");
+  }
+
   get firstStage(): CourseStage {
     return this.stages[0];
   }
@@ -83,5 +89,33 @@ export default class Course {
     const index = this.stages.findIndex((stage) => stage.slug === courseStage.slug);
 
     return this.stages.slice(index + 1);
+  }
+
+  get dockerfiles() {
+    return glob.sync(path.join(this.dockerfilesDir, "*.Dockerfile")).map((dockerfilePath) => new Dockerfile(dockerfilePath));
+  }
+
+  get latestDockerfiles() {
+    const dockerfilesGroupedByLanguageSlug: { [key: string]: Dockerfile[] } = {};
+
+    for (const dockerfile of this.dockerfiles) {
+      const languageSlug = dockerfile.language.slug;
+
+      if (!dockerfilesGroupedByLanguageSlug[languageSlug]) {
+        dockerfilesGroupedByLanguageSlug[languageSlug] = [];
+      }
+
+      dockerfilesGroupedByLanguageSlug[languageSlug].push(dockerfile);
+    }
+
+    const latestDockerfiles = [];
+
+    for (const languageSlug in dockerfilesGroupedByLanguageSlug) {
+      const dockerfiles = dockerfilesGroupedByLanguageSlug[languageSlug];
+      const latestDockerfile = dockerfiles.sort((a, b) => b.semver().compare(a.semver()))[0];
+      latestDockerfiles.push(latestDockerfile);
+    }
+
+    return latestDockerfiles;
   }
 }
