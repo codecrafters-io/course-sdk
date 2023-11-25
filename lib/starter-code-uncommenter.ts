@@ -7,9 +7,7 @@ import { glob } from "glob";
 
 class UncommentMarkerNotFound extends Error {
   constructor(markerPattern: string, files: string[]) {
-    super(
-      `Didn't find a line that matches ${markerPattern} in any of these files: ${files}`
-    );
+    super(`Didn't find a line that matches ${markerPattern} in any of these files: ${files}`);
   }
 }
 
@@ -35,11 +33,7 @@ export default class StarterCodeUncommenter {
       .map((filePath) => {
         const oldContents = fs.readFileSync(filePath, "utf8");
 
-        const newContents = new Uncommenter(
-          this.language.slug,
-          oldContents,
-          StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN
-        ).uncommented;
+        const newContents = new Uncommenter(this.language.slug, oldContents, StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN).uncommented;
 
         if (oldContents === newContents) {
           return null;
@@ -49,20 +43,12 @@ export default class StarterCodeUncommenter {
         // TODO: Implement postProcessors
 
         const newContentsAgain = fs.readFileSync(filePath, "utf8");
-        return diff.createTwoFilesPatch(
-          filePath,
-          filePath,
-          oldContents,
-          newContentsAgain
-        );
+        return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
       })
       .filter(Boolean);
 
     if (diffs.length === 0) {
-      throw new UncommentMarkerNotFound(
-        StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN.source,
-        codeFiles
-      );
+      throw new UncommentMarkerNotFound(StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN.source, codeFiles);
     }
 
     return diffs;

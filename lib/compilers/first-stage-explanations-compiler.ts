@@ -35,38 +35,21 @@ export class FirstStageExplanationsCompiler {
 
   async compileAll() {
     for (const dir of this.#starterRepositoryDirectories()) {
-      console.log(
-        `- compiling first stage explanations for ${path.basename(dir)}`
-      );
+      console.log(`- compiling first stage explanations for ${path.basename(dir)}`);
       await this.compileForStarterRepositoryDirectory(dir);
     }
   }
 
   compileForLanguage(language: Language): void {
     this.#starterRepositoryDirectories()
-      .filter(
-        (starterRepositoryDirectory) =>
-          path.basename(starterRepositoryDirectory).split("-").pop() ===
-          language.slug
-      )
-      .forEach((starterRepositoryDirectory) =>
-        this.compileForStarterRepositoryDirectory(starterRepositoryDirectory)
-      );
+      .filter((starterRepositoryDirectory) => path.basename(starterRepositoryDirectory).split("-").pop() === language.slug)
+      .forEach((starterRepositoryDirectory) => this.compileForStarterRepositoryDirectory(starterRepositoryDirectory));
   }
 
-  async compileForStarterRepositoryDirectory(
-    starterRepositoryDirectory: string
-  ) {
-    const language = Language.findBySlug(
-      path.basename(starterRepositoryDirectory).split("-").pop() as string
-    );
+  async compileForStarterRepositoryDirectory(starterRepositoryDirectory: string) {
+    const language = Language.findBySlug(path.basename(starterRepositoryDirectory).split("-").pop() as string);
 
-    const explanationFilePath = path.join(
-      this.course.solutionsDir,
-      language.slug,
-      this.course.firstStage.solutionDir,
-      "explanation.md"
-    );
+    const explanationFilePath = path.join(this.course.solutionsDir, language.slug, this.course.firstStage.solutionDir, "explanation.md");
 
     if (fs.existsSync(explanationFilePath)) {
       fs.unlinkSync(explanationFilePath);
@@ -74,10 +57,7 @@ export class FirstStageExplanationsCompiler {
 
     fs.mkdirSync(path.dirname(explanationFilePath), { recursive: true });
 
-    const blocks = new StarterCodeUncommenter(
-      starterRepositoryDirectory,
-      language
-    ).uncommentedBlocksWithMarkers();
+    const blocks = new StarterCodeUncommenter(starterRepositoryDirectory, language).uncommentedBlocksWithMarkers();
 
     if (blocks.length === 0) {
       console.error(`
@@ -98,10 +78,7 @@ Are you sure there's a contiguous block of comments after the 'Uncomment this' m
 
       Mustache.render(
         // TODO: Remove this, backward compat for older Ruby course-sdk template
-        EXPLANATION_TEMPLATE.replace(
-          "Study and uncomment the relevant code:",
-          "Study and uncomment the relevant code: "
-        ),
+        EXPLANATION_TEMPLATE.replace("Study and uncomment the relevant code:", "Study and uncomment the relevant code: "),
         {
           course_short_name: this.course.shortName,
           uncommented_code_blocks: processedBlocks,

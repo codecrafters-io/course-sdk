@@ -13,8 +13,6 @@ Are you sure you're in a CodeCrafters course directory?
 
 export class InvalidCourseDefinitionFileError extends CodeCraftersError {
   constructor(originalError: Error) {
-    super(
-      `The 'course-definition.yml' file is invalid. Error: ${originalError.message}`
-    );
+    super(`The 'course-definition.yml' file is invalid. Error: ${originalError.message}`);
   }
 }

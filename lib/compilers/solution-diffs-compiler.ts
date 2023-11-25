@@ -10,11 +10,7 @@ class ChangedFile {
   oldContents: string | null;
   newContents: string | null;
 
-  constructor(
-    path: string,
-    oldContents: string | null,
-    newContents: string | null
-  ) {
+  constructor(path: string, oldContents: string | null, newContents: string | null) {
     this.path = path;
     this.oldContents = oldContents;
     this.newContents = newContents;
@@ -80,9 +76,7 @@ class SolutionDiffsCompiler {
   }
 
   async compileForLanguage(language: Language) {
-    console.log(
-      `compiling solution diffs for ${this.course.slug}-${language.slug}`
-    );
+    console.log(`compiling solution diffs for ${this.course.slug}-${language.slug}`);
 
     const stages = this.course.stages;
 
@@ -91,31 +85,16 @@ class SolutionDiffsCompiler {
       const nextStage = stages[i];
 
       const previousStageCodeDirectory = previousStage
-        ? path.join(
-            this.course.solutionsDir,
-            language.slug,
-            previousStage.solutionDir,
-            "code"
-          )
+        ? path.join(this.course.solutionsDir, language.slug, previousStage.solutionDir, "code")
         : this.starterDirectoryFor(language);
 
-      const nextStageCodeDirectory = path.join(
-        this.course.solutionsDir,
-        language.slug,
-        nextStage.solutionDir,
-        "code"
-      );
+      const nextStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, nextStage.solutionDir, "code");
 
       if (!fs.existsSync(nextStageCodeDirectory)) {
         continue;
       }
 
-      const nextStageDiffDirectory = path.join(
-        this.course.solutionsDir,
-        language.slug,
-        nextStage.solutionDir,
-        "diff"
-      );
+      const nextStageDiffDirectory = path.join(this.course.solutionsDir, language.slug, nextStage.solutionDir, "diff");
 
       if (fs.existsSync(nextStageDiffDirectory)) {
         fs.rmdirSync(nextStageDiffDirectory, { recursive: true });
@@ -123,26 +102,17 @@ class SolutionDiffsCompiler {
 
       fs.mkdirSync(nextStageDiffDirectory, { recursive: true });
 
-      const changedFiles = this.computeChangedFiles(
-        previousStageCodeDirectory,
-        nextStageCodeDirectory
-      );
+      const changedFiles = this.computeChangedFiles(previousStageCodeDirectory, nextStageCodeDirectory);
 
       for (const changedFile of changedFiles) {
-        const diffFilePath = `${path.join(
-          nextStageDiffDirectory,
-          changedFile.path
-        )}.diff`;
+        const diffFilePath = `${path.join(nextStageDiffDirectory, changedFile.path)}.diff`;
         fs.mkdirSync(path.dirname(diffFilePath), { recursive: true });
         fs.writeFileSync(diffFilePath, changedFile.diff());
       }
     }
   }
 
-  protected computeChangedFiles(
-    sourceDirectory: string,
-    targetDirectory: string
-  ): ChangedFile[] {
+  protected computeChangedFiles(sourceDirectory: string, targetDirectory: string): ChangedFile[] {
     const sourceDirectoryPaths = glob.sync(`${sourceDirectory}/**/*`);
     const sourceDirectoryFiles = sourceDirectoryPaths.filter((filePath) => {
       return fs.lstatSync(filePath).isFile();
@@ -159,19 +129,14 @@ class SolutionDiffsCompiler {
       const relativePath = path.relative(targetDirectory, targetDirectoryFile);
 
       const sourceDirectoryFile = sourceDirectoryFiles.find(
-        (sourceDirectoryFile) =>
-          path.relative(sourceDirectory, sourceDirectoryFile) === relativePath
+        (sourceDirectoryFile) => path.relative(sourceDirectory, sourceDirectoryFile) === relativePath
       );
 
-      const oldContents = sourceDirectoryFile
-        ? fs.readFileSync(sourceDirectoryFile, "utf8")
-        : null;
+      const oldContents = sourceDirectoryFile ? fs.readFileSync(sourceDirectoryFile, "utf8") : null;
       const newContents = fs.readFileSync(targetDirectoryFile, "utf8");
 
       if (oldContents !== newContents) {
-        changedFiles.push(
-          new ChangedFile(relativePath, oldContents, newContents)
-        );
+        changedFiles.push(new ChangedFile(relativePath, oldContents, newContents));
       }
     }
 
@@ -179,18 +144,11 @@ class SolutionDiffsCompiler {
       const relativePath = path.relative(sourceDirectory, sourceDirectoryFile);
 
       const targetDirectoryFile = targetDirectoryFiles.find(
-        (targetDirectoryFile) =>
-          path.relative(targetDirectory, targetDirectoryFile) === relativePath
+        (targetDirectoryFile) => path.relative(targetDirectory, targetDirectoryFile) === relativePath
       );
 
       if (!targetDirectoryFile) {
-        changedFiles.push(
-          new ChangedFile(
-            relativePath,
-            fs.readFileSync(sourceDirectoryFile, "utf8"),
-            null
-          )
-        );
+        changedFiles.push(new ChangedFile(relativePath, fs.readFileSync(sourceDirectoryFile, "utf8"), null));
       }
     }
 
@@ -203,9 +161,7 @@ class SolutionDiffsCompiler {
       .filter((dirent) => dirent.isDirectory())
       .map((dirent) => dirent.name);
 
-    return languageDirectories.map((languageDirectory) =>
-      Language.findBySlug(languageDirectory)
-    );
+    return languageDirectories.map((languageDirectory) => Language.findBySlug(languageDirectory));
   }
 
   protected starterDirectoryFor(language: Language): string {

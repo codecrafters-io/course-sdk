@@ -9,11 +9,7 @@ export class FileMapping {
   templatePath: string;
   shouldSkipTemplateInterpolation: boolean;
 
-  constructor(
-    destinationPath: string,
-    templatePath: string,
-    shouldSkipTemplateInterpolation: boolean
-  ) {
+  constructor(destinationPath: string, templatePath: string, shouldSkipTemplateInterpolation: boolean) {
     this.destinationPath = destinationPath;
     this.templatePath = templatePath;
     this.shouldSkipTemplateInterpolation = shouldSkipTemplateInterpolation;
@@ -26,12 +22,7 @@ export default class StarterRepoDefinition {
   fileMappings: FileMapping[];
   templateAttrs: any;
 
-  constructor(
-    course: Course,
-    language: Language,
-    fileMappings: FileMapping[],
-    templateAttrs: any
-  ) {
+  constructor(course: Course, language: Language, fileMappings: FileMapping[], templateAttrs: any) {
     this.course = course;
     this.language = language;
     this.fileMappings = fileMappings;
@@ -60,11 +51,7 @@ export default class StarterRepoDefinition {
         course,
         Language.findBySlug(starterDefinitionYaml.language),
         starterDefinitionYaml.file_mappings.map((fm: any) => {
-          return new FileMapping(
-            fm.target,
-            fm.source,
-            fm.shouldSkipTemplateEvaluation || false
-          );
+          return new FileMapping(fm.target, fm.source, fm.shouldSkipTemplateEvaluation || false);
         }),
         starterDefinitionYaml.template_attributes
       );
@@ -84,9 +71,7 @@ export default class StarterRepoDefinition {
 
       return {
         path: mapping.destinationPath,
-        contents: mapping.shouldSkipTemplateInterpolation
-          ? templateContents
-          : Mustache.render(templateContents, this.templateContext()),
+        contents: mapping.shouldSkipTemplateInterpolation ? templateContents : Mustache.render(templateContents, this.templateContext()),
         mode: fs.statSync(fpath).mode,
       };
     });

@@ -197,169 +197,109 @@ c = d
 `;
 
 test("python", () => {
-  const actual = new Uncommenter(
-    "python",
-    SAMPLE_PY_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("python", SAMPLE_PY_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_PY_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("noop if no uncomment marker", () => {
-  const actual = new Uncommenter("python", SAMPLE_PY_COMMENTED, /not found/)
-    .uncommented;
+  const actual = new Uncommenter("python", SAMPLE_PY_COMMENTED, /not found/).uncommented;
   const expected = SAMPLE_PY_COMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice python", () => {
-  const actual = new Uncommenter(
-    "python",
-    SAMPLE_PY_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("python", SAMPLE_PY_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_PY_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("go", () => {
-  const actual = new Uncommenter("go", SAMPLE_GO_COMMENTED, UNCOMMENT_PATTERN)
-    .uncommented;
+  const actual = new Uncommenter("go", SAMPLE_GO_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_GO_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice go", () => {
-  const actual = new Uncommenter("go", SAMPLE_GO_UNCOMMENTED, UNCOMMENT_PATTERN)
-    .uncommented;
+  const actual = new Uncommenter("go", SAMPLE_GO_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_GO_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("haskell", () => {
-  const actual = new Uncommenter(
-    "haskell",
-    SAMPLE_HASKELL_COMMENTD,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("haskell", SAMPLE_HASKELL_COMMENTD, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_HASKELL_UNCOMMENTD;
   expect(actual).toBe(expected);
 });
 
 test("twice haskell", () => {
-  const actual = new Uncommenter(
-    "haskell",
-    SAMPLE_HASKELL_UNCOMMENTD,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("haskell", SAMPLE_HASKELL_UNCOMMENTD, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_HASKELL_UNCOMMENTD;
   expect(actual).toBe(expected);
 });
 
 test("java", () => {
-  const actual = new Uncommenter(
-    "java",
-    SAMPLE_JAVA_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("java", SAMPLE_JAVA_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_JAVA_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice java", () => {
-  const actual = new Uncommenter(
-    "java",
-    SAMPLE_JAVA_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("java", SAMPLE_JAVA_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_JAVA_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("kotlin", () => {
-  const actual = new Uncommenter(
-    "kotlin",
-    SAMPLE_KOTLIN_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("kotlin", SAMPLE_KOTLIN_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_KOTLIN_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice kotlin", () => {
-  const actual = new Uncommenter(
-    "kotlin",
-    SAMPLE_KOTLIN_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("kotlin", SAMPLE_KOTLIN_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_KOTLIN_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("php", () => {
-  const actual = new Uncommenter("php", SAMPLE_PHP_COMMENTED, UNCOMMENT_PATTERN)
-    .uncommented;
+  const actual = new Uncommenter("php", SAMPLE_PHP_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_PHP_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice php", () => {
-  const actual = new Uncommenter(
-    "php",
-    SAMPLE_PHP_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("php", SAMPLE_PHP_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_PHP_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("javascript", () => {
-  const actual = new Uncommenter(
-    "javascript",
-    SAMPLE_JAVASCRIPT_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("javascript", SAMPLE_JAVASCRIPT_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_JAVASCRIPT_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice javascript", () => {
-  const actual = new Uncommenter(
-    "javascript",
-    SAMPLE_JAVASCRIPT_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("javascript", SAMPLE_JAVASCRIPT_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_JAVASCRIPT_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("csharp", () => {
-  const actual = new Uncommenter(
-    "csharp",
-    SAMPLE_CSHARP_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("csharp", SAMPLE_CSHARP_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_CSHARP_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("twice csharp", () => {
-  const actual = new Uncommenter(
-    "csharp",
-    SAMPLE_CSHARP_UNCOMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("csharp", SAMPLE_CSHARP_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_CSHARP_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
 
 test("two markers", () => {
-  const actual = new Uncommenter(
-    "python",
-    SAMPLE_TWO_MARKERS_COMMENTED,
-    UNCOMMENT_PATTERN
-  ).uncommented;
+  const actual = new Uncommenter("python", SAMPLE_TWO_MARKERS_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_TWO_MARKERS_UNCOMMENTED;
   expect(actual).toBe(expected);
 });

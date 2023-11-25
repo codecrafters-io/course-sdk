@@ -5,9 +5,7 @@ import { glob } from "glob";
 
 class LineMarkerNotFound extends Error {
   constructor(markerPattern: RegExp, files: string[]) {
-    super(
-      `Didn't find a line that matches ${markerPattern} in any of these files: ${files}`
-    );
+    super(`Didn't find a line that matches ${markerPattern} in any of these files: ${files}`);
   }
 }
 
@@ -41,20 +39,12 @@ export default class LineWithCommentRemover {
         fs.writeFileSync(filePath, newContents);
 
         const newContentsAgain = fs.readFileSync(filePath, "utf8");
-        return diff.createTwoFilesPatch(
-          filePath,
-          filePath,
-          oldContents,
-          newContentsAgain
-        );
+        return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
       })
       .filter(Boolean);
 
     if (diffs.length === 0) {
-      throw new LineMarkerNotFound(
-        LineWithCommentRemover.LINE_MARKER_PATTERN,
-        codeFiles
-      );
+      throw new LineMarkerNotFound(LineWithCommentRemover.LINE_MARKER_PATTERN, codeFiles);
     }
 
     return diffs;
@@ -67,9 +57,7 @@ export default class LineWithCommentRemover {
   private processFileContents(oldContents: string) {
     const oldLines = oldContents.split("\n");
 
-    let markerIndex = oldLines.findIndex((line) =>
-      LineWithCommentRemover.LINE_MARKER_PATTERN.test(line)
-    );
+    let markerIndex = oldLines.findIndex((line) => LineWithCommentRemover.LINE_MARKER_PATTERN.test(line));
 
     if (markerIndex === -1) {
       return oldContents;

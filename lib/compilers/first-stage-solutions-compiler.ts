@@ -15,37 +15,23 @@ export default class FirstStageSolutionsCompiler {
   }
 
   async compileAll() {
-    this.starterRepositoryDirectories().forEach(
-      (starterRepositoryDirectory) => {
-        this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
-      }
-    );
+    this.starterRepositoryDirectories().forEach((starterRepositoryDirectory) => {
+      this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
+    });
   }
 
   compileForLanguage(language: string): void {
     this.starterRepositoryDirectories()
-      .filter(
-        (starterRepositoryDirectory) =>
-          starterRepositoryDirectory.split("-").pop() === language
-      )
+      .filter((starterRepositoryDirectory) => starterRepositoryDirectory.split("-").pop() === language)
       .forEach((starterRepositoryDirectory) => {
         this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
       });
   }
 
-  compileForStarterRepositoryDirectory(
-    starterRepositoryDirectory: string
-  ): void {
-    const language = Language.findBySlug(
-      path.basename(starterRepositoryDirectory)
-    );
+  compileForStarterRepositoryDirectory(starterRepositoryDirectory: string): void {
+    const language = Language.findBySlug(path.basename(starterRepositoryDirectory));
 
-    const codeDirectory = path.join(
-      this.course.solutionsDir,
-      language.slug,
-      this.course.firstStage.solutionDir,
-      "code"
-    );
+    const codeDirectory = path.join(this.course.solutionsDir, language.slug, this.course.firstStage.solutionDir, "code");
 
     if (existsSync(codeDirectory)) {
       rmdirSync(codeDirectory, { recursive: true });
@@ -56,17 +42,11 @@ export default class FirstStageSolutionsCompiler {
     // TODO: Bun's copyFileSync doesn't support recursive copying?
     execSync(`cp -R ${starterRepositoryDirectory} ${codeDirectory}`);
 
-    const uncommentMarkerDiffs = new LineWithCommentRemover(
-      codeDirectory,
-      language
-    ).process();
+    const uncommentMarkerDiffs = new LineWithCommentRemover(codeDirectory, language).process();
 
     this.ensureDiffsExist(uncommentMarkerDiffs);
 
-    const passStageDiffs = new StarterCodeUncommenter(
-      codeDirectory,
-      language
-    ).uncomment();
+    const passStageDiffs = new StarterCodeUncommenter(codeDirectory, language).uncomment();
 
     this.ensureDiffsExist(passStageDiffs);
   }
@@ -75,9 +55,7 @@ export default class FirstStageSolutionsCompiler {
     diffs.forEach((diff) => {
       if (diff.toString() === "") {
         console.error("Expected uncommenting code to return a diff");
-        console.error(
-          "Are you sure there's a contiguous block of comments after the 'Uncomment this' marker?"
-        );
+        console.error("Are you sure there's a contiguous block of comments after the 'Uncomment this' marker?");
 
         process.exit(1);
       }

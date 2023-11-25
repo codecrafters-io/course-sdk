@@ -28,11 +28,7 @@ export default class Uncommenter {
   private code: string;
   private uncomment_marker_pattern: RegExp;
 
-  constructor(
-    language_slug: string,
-    code: string,
-    uncomment_marker_pattern: RegExp
-  ) {
+  constructor(language_slug: string, code: string, uncomment_marker_pattern: RegExp) {
     this.language_slug = language_slug;
     this.code = code;
     this.uncomment_marker_pattern = uncomment_marker_pattern;
@@ -40,21 +36,15 @@ export default class Uncommenter {
 
   get uncommented(): string {
     const uncommentedLines = this.code.split("\n").map((line, index) => {
-      return this.withinUncommentBounds(index)
-        ? this.uncommentLine(line)
-        : line;
+      return this.withinUncommentBounds(index) ? this.uncommentLine(line) : line;
     });
 
     const filteredLines = uncommentedLines.filter((line, index) => {
       const isUncommentMarker = this.uncommentLineIndices().includes(index);
-      const previousLineIsUncommentMarker =
-        this.uncommentLineIndices().includes(index - 1);
+      const previousLineIsUncommentMarker = this.uncommentLineIndices().includes(index - 1);
       const isLineEmpty = /^\s*$/.test(line);
 
-      return !(
-        isUncommentMarker ||
-        (previousLineIsUncommentMarker && isLineEmpty)
-      );
+      return !(isUncommentMarker || (previousLineIsUncommentMarker && isLineEmpty));
     });
 
     return filteredLines.join("\n");
@@ -89,11 +79,7 @@ export default class Uncommenter {
       let startIndex = uncommentLineIndex + 1;
       let endIndex = startIndex;
 
-      for (
-        let index = startIndex;
-        index < this.code.split("\n").length;
-        index++
-      ) {
+      for (let index = startIndex; index < this.code.split("\n").length; index++) {
         const line = this.code.split("\n")[index];
 
         if (!this.#lineRegex.test(line)) {
@@ -110,11 +96,7 @@ export default class Uncommenter {
   private uncommentLineIndices(): number[] {
     return this.code
       .split("\n")
-      .map((line, index) =>
-        this.#lineRegex.test(line) && this.uncomment_marker_pattern.test(line)
-          ? index
-          : -1
-      )
+      .map((line, index) => (this.#lineRegex.test(line) && this.uncomment_marker_pattern.test(line) ? index : -1))
       .filter((index) => index !== -1);
   }
 

@@ -2,10 +2,7 @@ import CourseStage from "./course-stage";
 import fs from "fs";
 import path from "path";
 import YAML from "js-yaml";
-import {
-  CourseDefinitionFileNotFoundError,
-  InvalidCourseDefinitionFileError,
-} from "../errors";
+import { CourseDefinitionFileNotFoundError, InvalidCourseDefinitionFileError } from "../errors";
 
 export default class Course {
   slug: string;
@@ -14,13 +11,7 @@ export default class Course {
   stages: CourseStage[];
   directory: string;
 
-  constructor(
-    slug: string,
-    name: string,
-    shortName: string,
-    stages: CourseStage[],
-    directory: string
-  ) {
+  constructor(slug: string, name: string, shortName: string, stages: CourseStage[], directory: string) {
     this.slug = slug;
     this.name = name;
     this.shortName = shortName;
@@ -50,9 +41,7 @@ export default class Course {
     let definitionYaml: DefinitionYaml;
 
     try {
-      definitionYaml = YAML.load(
-        definitionYamlRaw
-      ) as unknown as DefinitionYaml;
+      definitionYaml = YAML.load(definitionYamlRaw) as unknown as DefinitionYaml;
     } catch (e) {
       throw new InvalidCourseDefinitionFileError(e as Error);
     }
@@ -64,12 +53,7 @@ export default class Course {
       definitionYaml["name"] as string,
       definitionYaml["short_name"] as string,
       definitionYaml["stages"].map(
-        (stageYaml, stageIndex) =>
-          new CourseStage(
-            stageYaml["name"] as string,
-            stageIndex + 1,
-            stageYaml["slug"] as string
-          )
+        (stageYaml, stageIndex) => new CourseStage(stageYaml["name"] as string, stageIndex + 1, stageYaml["slug"] as string)
       ),
       directory
     );
@@ -96,9 +80,7 @@ export default class Course {
   }
 
   stagesAfter(courseStage: CourseStage): CourseStage[] {
-    const index = this.stages.findIndex(
-      (stage) => stage.slug === courseStage.slug
-    );
+    const index = this.stages.findIndex((stage) => stage.slug === courseStage.slug);
 
     return this.stages.slice(index + 1);
   }

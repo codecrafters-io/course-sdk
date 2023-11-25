@@ -22,5 +22,8 @@
     "mustache": "^4.2.0",
     "p-map": "^6.0.0",
     "tmp": "^0.2.1"
+  },
+  "prettier": {
+    "printWidth": 140
   }
 }
