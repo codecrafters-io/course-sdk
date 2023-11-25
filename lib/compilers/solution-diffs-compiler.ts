@@ -76,7 +76,7 @@ class SolutionDiffsCompiler {
   }
 
   async compileForLanguage(language: Language) {
-    console.log(`compiling solution diffs for ${this.course.slug}-${language.slug}`);
+    console.log(`- compiling solution diffs for ${this.course.slug}-${language.slug}`);
 
     const stages = this.course.stages;
 

@@ -15,9 +15,7 @@ export default class FirstStageSolutionsCompiler {
   }
 
   async compileAll() {
-    this.starterRepositoryDirectories().forEach((starterRepositoryDirectory) => {
-      this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
-    });
+    await Promise.all(this.starterRepositoryDirectories().map((dir) => this.compileForStarterRepositoryDirectory(dir)));
   }
 
   compileForLanguage(language: string): void {
@@ -28,9 +26,10 @@ export default class FirstStageSolutionsCompiler {
       });
   }
 
-  compileForStarterRepositoryDirectory(starterRepositoryDirectory: string): void {
-    const language = Language.findBySlug(path.basename(starterRepositoryDirectory));
+  async compileForStarterRepositoryDirectory(starterRepositoryDirectory: string): Promise<void> {
+    console.log(`- compiling solutions for ${path.basename(starterRepositoryDirectory)}`);
 
+    const language = Language.findBySlug(path.basename(starterRepositoryDirectory));
     const codeDirectory = path.join(this.course.solutionsDir, language.slug, this.course.firstStage.solutionDir, "code");
 
     if (existsSync(codeDirectory)) {
@@ -43,11 +42,9 @@ export default class FirstStageSolutionsCompiler {
     execSync(`cp -R ${starterRepositoryDirectory} ${codeDirectory}`);
 
     const uncommentMarkerDiffs = new LineWithCommentRemover(codeDirectory, language).process();
-
     this.ensureDiffsExist(uncommentMarkerDiffs);
 
     const passStageDiffs = new StarterCodeUncommenter(codeDirectory, language).uncomment();
-
     this.ensureDiffsExist(passStageDiffs);
   }
 

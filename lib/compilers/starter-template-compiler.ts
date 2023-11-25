@@ -17,8 +17,6 @@ export default class StarterTemplateCompiler {
 
   async compileAll(): Promise<void> {
     await pMap(this.definitions, async (definition) => {
-      console.log(`- compiling starter repositories for ${definition.course.slug}-${definition.language.slug}`);
-
       await this.compileDefinition(definition);
     });
   }
@@ -33,6 +31,7 @@ export default class StarterTemplateCompiler {
   }
 
   private async compileDefinition(definition: StarterRepoDefinition): Promise<void> {
+    console.log(`- compiling starter template for ${definition.course.slug}-${definition.language.slug}`);
     const directory = definition.compiledStarterDirectory();
 
     if (existsSync(directory)) {
@@ -77,9 +76,11 @@ export default class StarterTemplateCompiler {
     const relativePath = dockerShellCommandExecutor.containerPath(filepath);
 
     if (filepath.endsWith(".md")) {
-      dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore ${relativePath}`);
+      console.log(`  - postprocessing ${relativePath}`);
+      await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore ${relativePath}`);
     } else if (filepath.endsWith(".js")) {
-      dockerShellCommandExecutor.exec(
+      console.log(`  - postprocessing ${relativePath}`);
+      await dockerShellCommandExecutor.exec(
         `prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check ${relativePath}`
       );
     }
