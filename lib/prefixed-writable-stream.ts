@@ -19,7 +19,7 @@ export default class PrefixedWritableStream extends Writable {
       if (index === lines.length - 1 && line !== "") {
         if (this.lastChar === "\n") {
           this.target.write(this.prefix);
-          this.target.write(this.prefix + line);
+          this.target.write(line);
         }
 
         this.lastChar = line[line.length - 1];

@@ -35,13 +35,13 @@ export default class DockerfileTester extends BaseTester {
     Logger.logInfo(`Building ${this.dockerfile.languagePack} image without cache`);
     const timeTaken = await this.assertTimeUnder(400, this.buildImage.bind(this));
 
-    // Logger.logInfo(`Took ${timeTaken} secs`);
-    // Logger.logInfo("");
+    Logger.logInfo(`Took ${timeTaken} secs`);
+    Logger.logInfo("");
 
-    // Logger.logInfo(`Building ${this.languagePack} image with cache`);
-    // const timeTakenWithCache = this.assertTimeUnder(5, this.buildImage);
+    Logger.logInfo(`Building ${this.dockerfile.languagePack} image with cache`);
+    const timeTakenWithCache = await this.assertTimeUnder(5, this.buildImage.bind(this));
 
-    // Logger.logSuccess(`Took ${timeTakenWithCache} secs`);
+    Logger.logSuccess(`Took ${timeTakenWithCache} secs`);
   }
 
   async buildImage() {

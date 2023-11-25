@@ -13,19 +13,21 @@ export default class TestCommand extends BaseCommand {
   async doRun() {
     const course = Course.loadFromDirectory(process.cwd());
 
-    const testers = [...this.dockerfileTestersForCourse(course)];
+    let testers = [...this.dockerfileTestersForCourse(course)];
 
     // TODO: Implement filtering
     if (this.#languageSlugsToFilter.length !== 0) {
-      console.warn("Filtering not supported yet");
-      process.exit(1);
+      testers = testers.filter((tester) => this.#languageSlugsToFilter.includes(tester.language.slug));
+      console.log("Testing languages:", this.#languageSlugsToFilter.join(", "));
+    } else {
+      console.log("Testing all languages...");
     }
-
-    console.log("Testing all languages...");
 
     for (const tester of testers) {
       if (!(await tester.test())) {
-        console.error(`Test failed: ${tester.constructor.name}`);
+        console.error("");
+        console.error(`${tester.constructor.name} failed. Check the logs above for more details.`);
+        console.error("");
         process.exit(1);
       }
     }
