@@ -32,8 +32,8 @@ export default class DockerfileTester extends BaseTester {
 
     Logger.logHeader(`Testing Dockerfile: ${this.slug}`);
 
-    // Logger.logInfo(`Building ${this.languagePack} image without cache`);
-    // const timeTaken = this.assertTimeUnder(400, this.buildImage);
+    Logger.logInfo(`Building ${this.dockerfile.languagePack} image without cache`);
+    const timeTaken = await this.assertTimeUnder(400, this.buildImage.bind(this));
 
     // Logger.logInfo(`Took ${timeTaken} secs`);
     // Logger.logInfo("");
@@ -44,10 +44,10 @@ export default class DockerfileTester extends BaseTester {
     // Logger.logSuccess(`Took ${timeTakenWithCache} secs`);
   }
 
-  buildImage() {
+  async buildImage() {
     const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
     const expectedOutput = `naming to docker.io/library/${this.slug}`;
-    this.assertStderrContains(command, expectedOutput);
+    await this.assertStderrContains(command, expectedOutput);
   }
 
   get slug() {

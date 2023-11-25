@@ -1,6 +1,9 @@
-import childProcess from "child_process";
+import child_process from "child_process";
 import util from "util";
 import { createWriteStream, WriteStream } from "fs";
+import Logger from "../logger";
+import MemoryWritableStream from "../memory-writable-stream";
+import PrefixedWritableStream from "../prefixed-writable-stream";
 
 class TestFailedError extends Error {
   constructor() {
@@ -8,49 +11,49 @@ class TestFailedError extends Error {
   }
 }
 
-class MultiWriter {
-  targets: WriteStream[];
+// class MultiWriter {
+//   targets: WriteStream[];
 
-  constructor(...targets: WriteStream[]) {
-    this.targets = targets;
-  }
+//   constructor(...targets: WriteStream[]) {
+//     this.targets = targets;
+//   }
 
-  write(...args: any[]): void {
-    this.targets.map((t) => t.write(...args));
-  }
+//   write(...args: any[]): void {
+//     this.targets.map((t) => t.write(...args));
+//   }
 
-  close(): void {
-    this.targets.forEach((t) => t.close());
-  }
-}
+//   close(): void {
+//     this.targets.forEach((t) => t.close());
+//   }
+// }
 
-class PrefixedLineWriter {
-  prefix: string;
-  target: WriteStream;
-  lastChar: string;
+// class PrefixedLineWriter {
+//   prefix: string;
+//   target: WriteStream;
+//   lastChar: string;
 
-  constructor(prefix: string, target: WriteStream) {
-    this.prefix = prefix;
-    this.target = target;
-    this.lastChar = "\n";
-  }
+//   constructor(prefix: string, target: WriteStream) {
+//     this.prefix = prefix;
+//     this.target = target;
+//     this.lastChar = "\n";
+//   }
 
-  write(msg: string): number {
-    let bytesWritten = 0;
-    [...msg].forEach((char) => {
-      if (this.lastChar === "\n") {
-        this.target.write(this.prefix);
-      }
-      bytesWritten += this.target.write(char);
-      this.lastChar = char;
-    });
-    return bytesWritten;
-  }
+//   write(msg: string): number {
+//     let bytesWritten = 0;
+//     [...msg].forEach((char) => {
+//       if (this.lastChar === "\n") {
+//         this.target.write(this.prefix);
+//       }
+//       bytesWritten += this.target.write(char);
+//       this.lastChar = char;
+//     });
+//     return bytesWritten;
+//   }
 
-  close(): void {
-    // No-op
-  }
-}
+//   close(): void {
+//     // No-op
+//   }
+// }
 
 export default class BaseTester {
   // Returns true if the test passed, false if it failed
@@ -72,25 +75,32 @@ export default class BaseTester {
   }
 
   async assertStderrContains(command: string, expectedStderr: string, expectedExitCode = 0): Promise<void> {
-    childProcess.execSync;
-    const { stdout, stderr, exitCode } = await exec(command);
-
     console.log("");
 
-    const stdoutStream = new Buffer("");
-    const stderrStream = createWriteStream("stderr.txt");
-    stdoutStream.write(stdout);
-    stderrStream.write(stderr);
+    const childProcess = child_process.spawn(command, [], { shell: true });
+    const stdoutCaptured = new MemoryWritableStream();
+    const stderrCaptured = new MemoryWritableStream();
 
-    if (exitCode !== expectedExitCode) {
-      this.logError(`Process exited with code ${exitCode} (expected: ${expectedExitCode})`);
-      throw new TestFailedError();
-    }
+    childProcess.stderr.pipe(stderrCaptured);
+    childProcess.stdout.pipe(stdoutCaptured);
 
-    if (!stderr.includes(expectedStderr)) {
-      this.logError(`Expected '${expectedStderr}' to be present.`);
-      throw new TestFailedError();
-    }
+    childProcess.stderr.pipe(new PrefixedWritableStream("     ", process.stderr));
+    childProcess.stdout.pipe(new PrefixedWritableStream("     ", process.stdout));
+
+    return new Promise((resolve, reject) => {
+      childProcess.on("close", (exitCode) => {
+        console.log("");
+        if (exitCode !== expectedExitCode) {
+          Logger.logError(`Process exited with code ${exitCode} (expected: ${expectedExitCode})`);
+          reject(new TestFailedError());
+        } else if (!stderrCaptured.getBuffer().toString().includes(expectedStderr)) {
+          Logger.logError(`Expected '${expectedStderr}' to be present.`);
+          reject(new TestFailedError());
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   async assertStdoutContains(command: string, expectedStdout: string, expectedExitCode = 0): Promise<void> {
@@ -125,14 +135,14 @@ export default class BaseTester {
     }
   }
 
-  async assertTimeUnder(thresholdSeconds: number): Promise<number> {
+  async assertTimeUnder(thresholdSeconds: number, fn: () => unknown): Promise<number> {
     const before = Date.now();
-    await this.doTest();
+    await fn();
     const after = Date.now();
     const timeTaken = Math.round((after - before) / 1000);
 
     if (timeTaken > thresholdSeconds) {
-      this.logError(`Measured time (${timeTaken}s) was above ${thresholdSeconds} seconds`);
+      Logger.logError(`Measured time (${timeTaken}s) was above ${thresholdSeconds} seconds`);
       throw new TestFailedError();
     }
 
