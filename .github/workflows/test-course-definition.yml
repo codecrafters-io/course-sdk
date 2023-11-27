@@ -38,6 +38,8 @@ jobs:
       #     load: true
       #     tags: tester:depot
 
+      - run: bun install
+
       - run: bun run ../../cli.ts compile
         working-directory: courses/${{github.event.repository.name}}
 
