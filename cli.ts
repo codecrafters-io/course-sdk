@@ -1,6 +1,7 @@
 import { Command, Argument } from "@commander-js/extra-typings";
 import CompileCommand from "./commands/compile";
 import TestCommand from "./commands/test";
+import { Option } from "commander";
 
 const program = new Command();
 
@@ -18,7 +19,15 @@ program
   .command("test")
   .description("Test starter code & solutions")
   .addArgument(new Argument("[language]", "language to test for. Example: 'go'").default("", "All languages"))
-  .action(async (languageFilter) => {
+  .option("--no-compile", "Disable compiling starter code & solutions before testing")
+  .action(async (languageFilter, options) => {
+    if (options.compile) {
+      console.log("Compiling... (use --no-compile to skip)");
+      await new CompileCommand(languageFilter).run();
+    } else {
+      console.log("Skipping compilation");
+    }
+
     await new TestCommand(languageFilter).run();
   });
 
