@@ -48,15 +48,13 @@ export default class TestCommand extends BaseCommand {
 
   async starterCodeTestersForCourse(course: Course): Promise<StarterCodeTester[]> {
     const starterCodeDefinitions = StarterCodeDefinition.loadForCourse(course);
+    const testerDownloader = new TesterDownloader(course, "/tmp/testers");
+
+    await testerDownloader.downloadIfNeeded();
 
     return Promise.all(
       starterCodeDefinitions.map(
-        async (starterCodeDefinition) =>
-          new StarterCodeTester(
-            course,
-            await new TesterDownloader(course, "/tmp/testers").downloadIfNeeded(),
-            starterCodeDefinition.language
-          )
+        async (starterCodeDefinition) => new StarterCodeTester(course, testerDownloader.testerDir, starterCodeDefinition.language)
       )
     );
   }
