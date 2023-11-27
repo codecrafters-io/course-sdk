@@ -11,6 +11,7 @@ import YAML from "js-yaml";
 import StarterCodeUncommenter from "../starter-code-uncommenter";
 import LineWithCommentRemover from "../line-with-comment-remover";
 import testScriptFile from "../scripts/test.sh";
+import ShellCommandExecutor from "../shell-command-executor";
 
 const writeFile = util.promisify(fs.writeFile);
 
@@ -35,6 +36,9 @@ export default class StarterCodeTester extends BaseTester {
     this.copiedStarterDir = tmp.dirSync().name;
     await exec(`rm -rf ${this.copiedStarterDir}`);
     await exec(`cp -r ${this.starterDir} ${this.copiedStarterDir}`);
+    await exec(`git -C ${this.copiedStarterDir} init`);
+    await exec(`git -C ${this.copiedStarterDir} add .`);
+    await exec(`git -C ${this.copiedStarterDir} commit -m "Initial commit"`);
 
     Logger.logHeader(`Testing starter: ${this.course.slug}-${this.language.slug}`);
 
@@ -61,26 +65,23 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
-    // Not sure if this is required
-    // const ensureSafeDirectoryCommand = "git config --global --add safe.directory /course-sdk/" + this.course.dir;
-    // await exec(ensureSafeDirectoryCommand);
+    await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
 
-    const diff = await exec(`git -C ${this.starterDir} diff --exit-code`);
+    const diff = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} diff --exit-code`, { expectedExitCodes: [0, 1] });
 
-    if (diff.stdout.trim() === "") {
+    if (diff.exitCode === 0) {
       Logger.logSuccess("No uncommitted changes to compiled templates found.");
     } else {
-      Logger.logInfo(`There are uncommitted changes to compiled templates in ${this.starterDir}:`);
+      Logger.logInfo(`There are uncommitted changes to compiled templates in ${this.copiedStarterDir}:`);
       Logger.logInfo(diff.stdout);
-      Logger.logError("Please commit these changes and try again.");
+      Logger.logError("Either commit these changes or add the files to .gitignore and try again.");
 
       throw new Error("TestFailedError");
     }
 
     Logger.logInfo("Checking if there are no untracked changes to compiled templates");
 
-    const listUntrackedFilesCommand = "git -C " + this.starterDir + " ls-files --others --exclude-standard";
-    const untrackedFiles = await exec(listUntrackedFilesCommand);
+    const untrackedFiles = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} ls-files --others --exclude-standard`);
 
     if (untrackedFiles.stdout.trim() === "") {
       Logger.logSuccess("No untracked changes to compiled templates found.");

@@ -3,9 +3,12 @@ import MemoryWritableStream from "./memory-writable-stream";
 import PrefixedWritableStream from "./prefixed-writable-stream";
 
 export default class ShellCommandExecutor {
-  static execute(command: string, options: { expectedExitCode?: boolean; prefix?: string } = {}) {
+  static execute(
+    command: string,
+    options: { expectedExitCodes?: number[]; prefix?: string } = {}
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const prefix = options.prefix || "";
-    const expectedExitCode = options.expectedExitCode || 0;
+    const expectedExitCodes = options.expectedExitCodes || [0];
 
     const childProcess = child_process.spawn(command, [], { shell: true });
     const stdoutCaptured = new MemoryWritableStream();
@@ -19,11 +22,11 @@ export default class ShellCommandExecutor {
 
     return new Promise((resolve, reject) => {
       childProcess.on("close", (exitCode) => {
-        if (exitCode !== expectedExitCode) {
+        if (!expectedExitCodes.includes(exitCode!)) {
           console.log("");
-          console.log(`Process exited with code ${exitCode} (expected: ${expectedExitCode})`);
+          console.log(`Process exited with code ${exitCode} (expected: ${expectedExitCodes.join(",")})`);
           console.log("");
-          reject(new Error(`Process exited with code ${exitCode} (expected: ${expectedExitCode})`));
+          reject(new Error(`Process exited with code ${exitCode} (expected: ${expectedExitCodes.join(",")})`));
         } else {
           resolve({
             stdout: stdoutCaptured.getBuffer().toString(),
