@@ -13,35 +13,37 @@ export default class LineWithCommentRemover {
   private dir: string;
   private language: Language;
 
-  private static LINE_MARKER_PATTERN = /You can use print/;
+  static LINE_MARKER_PATTERN = /You can use print/;
 
   constructor(dir: string, language: Language) {
     this.dir = dir;
     this.language = language;
   }
 
-  process() {
+  async process(): Promise<string[]> {
     const codeFiles = this.codeFiles();
 
     if (codeFiles.length === 0) {
       throw new Error("No code files found");
     }
 
-    const diffs = codeFiles
-      .map((filePath) => {
-        const oldContents = fs.readFileSync(filePath, "utf8");
-        const newContents = this.processFileContents(oldContents);
+    const diffs = (await Promise.all(
+      codeFiles
+        .map(async (filePath) => {
+          const oldContents = await fs.promises.readFile(filePath, "utf8");
+          const newContents = this.processFileContents(oldContents);
 
-        if (oldContents === newContents) {
-          return null;
-        }
+          if (oldContents === newContents) {
+            return null;
+          }
 
-        fs.writeFileSync(filePath, newContents);
+          fs.writeFileSync(filePath, newContents);
 
-        const newContentsAgain = fs.readFileSync(filePath, "utf8");
-        return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
-      })
-      .filter(Boolean);
+          const newContentsAgain = fs.readFileSync(filePath, "utf8");
+          return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
+        })
+        .filter(Boolean)
+    )) as string[];
 
     if (diffs.length === 0) {
       throw new LineMarkerNotFound(LineWithCommentRemover.LINE_MARKER_PATTERN, codeFiles);
@@ -50,7 +52,7 @@ export default class LineWithCommentRemover {
     return diffs;
   }
 
-  private codeFiles() {
+  codeFiles() {
     return glob.sync(`${this.dir}/**/*.${this.language.codeFileExtension}`);
   }
 

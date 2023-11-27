@@ -1,63 +1,13 @@
 import child_process from "child_process";
-import { createWriteStream, WriteStream } from "fs";
-import util from "util";
 import Logger from "../logger";
 import MemoryWritableStream from "../memory-writable-stream";
 import PrefixedWritableStream from "../prefixed-writable-stream";
-import childProcess from "child_process";
-
-const exec = util.promisify(childProcess.exec);
 
 class TestFailedError extends Error {
   constructor() {
     super("Test failed");
   }
 }
-
-// class MultiWriter {
-//   targets: WriteStream[];
-
-//   constructor(...targets: WriteStream[]) {
-//     this.targets = targets;
-//   }
-
-//   write(...args: any[]): void {
-//     this.targets.map((t) => t.write(...args));
-//   }
-
-//   close(): void {
-//     this.targets.forEach((t) => t.close());
-//   }
-// }
-
-// class PrefixedLineWriter {
-//   prefix: string;
-//   target: WriteStream;
-//   lastChar: string;
-
-//   constructor(prefix: string, target: WriteStream) {
-//     this.prefix = prefix;
-//     this.target = target;
-//     this.lastChar = "\n";
-//   }
-
-//   write(msg: string): number {
-//     let bytesWritten = 0;
-//     [...msg].forEach((char) => {
-//       if (this.lastChar === "\n") {
-//         this.target.write(this.prefix);
-//       }
-//       bytesWritten += this.target.write(char);
-//       this.lastChar = char;
-//     });
-//     return bytesWritten;
-//   }
-
-//   close(): void {
-//     // No-op
-//   }
-// }
-
 export default class BaseTester {
   // Returns true if the test passed, false if it failed
   async test(): Promise<boolean> {
@@ -107,33 +57,37 @@ export default class BaseTester {
   }
 
   async assertStdoutContains(command: string, expectedStdout: string, expectedExitCode = 0): Promise<void> {
-    const { stdout, stderr, code } = await exec(command);
-
     console.log("");
 
-    const stdoutStream = createWriteStream("stdout.txt");
-    const stderrStream = createWriteStream("stderr.txt");
-    stdoutStream.write(stdout);
-    stderrStream.write(stderr);
+    const childProcess = child_process.spawn(command, [], { shell: true });
+    const stdoutCaptured = new MemoryWritableStream();
+    const stderrCaptured = new MemoryWritableStream();
 
-    if (code !== expectedExitCode) {
-      this.logError(`Process exited with code ${code} (expected: ${expectedExitCode})`);
-      throw new TestFailedError();
-    }
+    childProcess.stderr.pipe(stderrCaptured);
+    childProcess.stdout.pipe(stdoutCaptured);
 
-    if (!stdout.includes(expectedStdout)) {
-      this.logError(`Expected '${expectedStdout}' to be present.`);
-      throw new TestFailedError();
-    }
-  }
+    childProcess.stderr.pipe(new PrefixedWritableStream("     ", process.stderr));
+    childProcess.stdout.pipe(new PrefixedWritableStream("     ", process.stdout));
 
-  setupIoRelay(source: WriteStream, prefixedDestination: WriteStream, otherDestination: WriteStream): void {
-    source.pipe(new MultiWriter(new PrefixedLineWriter("     ", prefixedDestination), otherDestination));
+    return new Promise((resolve, reject) => {
+      childProcess.on("close", (exitCode) => {
+        console.log("");
+        if (exitCode !== expectedExitCode) {
+          Logger.logError(`Process exited with code ${exitCode} (expected: ${expectedExitCode})`);
+          reject(new TestFailedError());
+        } else if (!stdoutCaptured.getBuffer().toString().includes(expectedStdout)) {
+          Logger.logError(`Expected '${expectedStdout}' to be present.`);
+          reject(new TestFailedError());
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   assert(condition: boolean, message: string): void {
     if (!condition) {
-      this.logError(message);
+      Logger.logError(message);
       throw new TestFailedError();
     }
   }

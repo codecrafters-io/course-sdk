@@ -107,8 +107,8 @@ export default class StarterCodeTester extends BaseTester {
       console.log("");
     }
 
-    const diffs2 = await new LineWithCommentRemover(this.copiedStarterDir, this.language).process();
-    for (const diff of diffs2) {
+    const commentRemovalDiffs = await new LineWithCommentRemover(this.copiedStarterDir, this.language).process();
+    for (const diff of commentRemovalDiffs) {
       if (diff.toString() === "") {
         Logger.logError("Expected removing logger line to return a diff");
         Logger.logError(
