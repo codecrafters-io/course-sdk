@@ -1,0 +1,241 @@
+name: Test Course Definition
+
+on:
+  workflow_call:
+    inputs:
+      sdkRef:
+        required: false
+        type: string
+        default: main
+
+jobs:
+  verify_templates_compiled:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: oven-sh/setup-bun@v1
+
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      # - uses: depot/setup-action@v1
+      # - uses: depot/build-push-action@v1
+      #   with:
+      #     project: tsp80qbtxw
+      #     context: .
+      #     load: true
+      #     tags: tester:depot
+
+      - run: bun run ../../cli.ts compile
+        working-directory: courses/${{github.event.repository.name}}
+
+      - name: "Ensure no uncommitted changes to compiled templates"
+        run: git diff --exit-code
+        working-directory: courses/${{github.event.repository.name}}
+
+      - name: "Print untracked files"
+        run: git ls-files compiled_starters/ --exclude-standard --others
+        working-directory: courses/${{github.event.repository.name}}
+
+      - name: "Ensure untracked files are empty (check previous step for list of files)"
+        run: test -z "$(git ls-files compiled_starters/ --exclude-standard --others)"
+        working-directory: courses/${{github.event.repository.name}}
+
+  markdown_lint:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      # - uses: depot/setup-action@v1
+      # - uses: depot/build-push-action@v1
+      #   with:
+      #     project: tsp80qbtxw
+      #     context: .
+      #     load: true
+      #     tags: tester:depot
+
+      - run: docker build -t js-tools -f dockerfiles/js-tools.Dockerfile .
+      - run: docker run js-tools markdownlint courses/${{github.event.repository.name}}/compiled_starters
+
+  go_lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: test -z $(gofmt -l courses/${{github.event.repository.name}}) || (gofmt -l courses/${{github.event.repository.name}} && exit 1)
+
+  js_lint:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      # - uses: depot/setup-action@v1
+      # - uses: depot/build-push-action@v1
+      #   with:
+      #     project: tsp80qbtxw
+      #     context: .
+      #     load: true
+      #     tags: tester:depot
+
+      - run: docker build -t js-tools -f dockerfiles/js-tools.Dockerfile .
+      - run: docker run js-tools prettier --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check courses/${{github.event.repository.name}}/**/*.js
+
+  rust_lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: find courses/${{github.event.repository.name}} -name '*.rs' | xargs rustfmt --edition "2021" --check
+
+  identify_language_slugs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      language_slugs: ${{ steps.generate-language-slugs.outputs.language_slugs }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate Language Slugs
+        id: generate-language-slugs
+        run: |-
+          LANGUAGE_SLUGS=$(ls solutions | jq -Rnc '[inputs]')
+          echo ::set-output name=language_slugs::${LANGUAGE_SLUGS}
+
+  test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    timeout-minutes: 20
+
+    needs:
+      - identify_language_slugs
+
+    strategy:
+      matrix:
+        language: ${{ fromJSON(needs.identify_language_slugs.outputs.language_slugs) }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: "echo ::remove-matcher owner=go::" # Messes with our output
+
+      # - uses: depot/setup-action@v1
+      # - uses: depot/build-push-action@v1
+      #   with:
+      #     project: tsp80qbtxw
+      #     context: .
+      #     load: true
+      #     tags: tester:depot
+
+      - run: bun run ../../cli.ts test ${{matrix.language}}
+        working-directory: courses/${{github.event.repository.name}}
+
+  validate-schemas:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      # - uses: depot/setup-action@v1
+      # - uses: depot/build-push-action@v1
+      #   with:
+      #     project: tsp80qbtxw
+      #     context: .
+      #     load: true
+      #     tags: tester:depot
+
+      - run: docker run js-tools ajv validate --spec draft2020 -s schemas/course-definition.json -d courses/${{github.event.repository.name}}/course-definition.yml
+
+  validate-stages-naming:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk-v2"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: scripts/validate_stages_naming.sh "courses/${{github.event.repository.name}}"

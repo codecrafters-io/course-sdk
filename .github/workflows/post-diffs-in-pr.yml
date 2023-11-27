@@ -1,0 +1,35 @@
+name: Post diffs
+
+on:
+  workflow_call:
+    inputs:
+      sdkRef:
+        required: false
+        type: string
+        default: main
+
+jobs:
+  post-diffs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: 'codecrafters-io/course-sdk'
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{ github.event.repository.name }}
+          fetch-depth: 100
+
+      # - run: ./scripts/post_diffs_in_pr.sh
+      #   env:
+      #     GITHUB_TOKEN: '${{ github.token }}'
+      #     GITHUB_EVENT_NUMBER: ${{ github.event.number }}
+      #     GITHUB_BASE_REF_SHA: ${{ github.event.pull_request.base.sha }}
+      #     GITHUB_REF_SHA: ${{ github.event.pull_request.head.sha }}
+      #     REPO_PATH: courses/${{ github.event.repository.name }}
+      #     SDK_REF: ${{ inputs.sdkRef }}
+
+
