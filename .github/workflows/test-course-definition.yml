@@ -82,7 +82,7 @@ jobs:
       #     load: true
       #     tags: tester:depot
 
-      - run: docker build -t js-tools -f dockerfiles/js-tools.Dockerfile .
+      - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
       - run: docker-compose run js-tools markdownlint courses/${{github.event.repository.name}}/compiled_starters
 
   go_lint:
@@ -123,7 +123,7 @@ jobs:
       #     load: true
       #     tags: tester:depot
 
-      - run: docker build -t js-tools -f dockerfiles/js-tools.Dockerfile .
+      - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
       - run: docker-compose run js-tools prettier --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check courses/${{github.event.repository.name}}/**/*.js
 
   rust_lint:
