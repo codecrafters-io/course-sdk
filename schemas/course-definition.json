@@ -1,60 +1,158 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://codecrafters.io/course-definition.schema.json",
-  "title": "CodeCrafters Course Definition",
-  "description": "Schema for a CodeCrafters course definition",
+  "$schema": "http://json-schema.org/draft-06/schema#",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "slug": {
       "type": "string",
-      "description": "Slug of the course"
+      "minLength": 1,
+      "description": "A unique URL-friendly identifier for your course. Example: `redis`."
     },
     "name": {
       "type": "string",
-      "description": "Name of the course"
+      "minLength": 1,
+      "description": "The name of your course. Example: `Build your own Redis`."
     },
     "short_name": {
       "type": "string",
-      "description": "Short name of the course"
+      "minLength": 1,
+      "description": "A short name for your course. Example: `Redis`."
     },
     "release_status": {
       "type": "string",
-      "description": "Release status of the course",
-      "enum": [
-        "alpha",
-        "beta",
-        "live"
-      ]
+      "minLength": 1,
+      "description": "The release status of your course. Accepted values: `alpha`, `beta`, `live`."
     },
     "description_md": {
       "type": "string",
-      "description": "Description of the course in Markdown"
+      "minLength": 1,
+      "description": "A markdown description for your course. 25-50 words."
     },
     "short_description_md": {
       "type": "string",
-      "description": "Short description of the course in Markdown"
+      "minLength": 1,
+      "description": "A short description of your course, < 15 words."
     },
     "completion_percentage": {
-      "type": "number",
-      "description": "Completion percentage of the course"
+      "type": "integer",
+      "not": { "type": "null" },
+      "description": "The percentage of users who complete this course. Set to 5% if we don't have data yet."
     },
-    "early_access_languages": {
+    "languages": {
       "type": "array",
-      "description": "Early access languages of the course",
       "items": {
-          "type": "string"
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Slug for the language. Example: `python`. Full list of languages available [here](https://backend.codecrafters.io/api/v1/languages)."
+          }
+        },
+        "required": ["slug"]
       }
     },
-    "supported_languages": {
-      "type": "array",
-      "description": "Supported languages of the course",
-      "items": {
-        "type": "string"
-      }
+    "marketing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "difficulty": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The difficulty of the course. Accepted values: `easy`, `medium`, `hard`."
+        },
+        "sample_extension_idea_title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A title for the sample extension idea. Example: `Geospatial Queries`"
+        },
+        "sample_extension_idea_description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A description for the sample extension idea. Example: `A Redis server that can respond to geospatial queries`"
+        },
+        "testimonials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "author_name": { "type": "string", "minLength": 1 },
+              "author_description": { "type": "string", "minLength": 1 },
+              "author_avatar": { "type": "string", "minLength": 1 },
+              "link": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 }
+            },
+            "required": [
+              "author_name",
+              "author_description",
+              "author_avatar",
+              "link",
+              "text"
+            ]
+          }
+        }
+      },
+      "required": ["difficulty", "testimonials"]
     },
-    "starter_repos": {
-      "type": "object"
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A unique identifier for this stage. Your tester will reference this value. Example: `init`"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The name of this stage. Example: `Respond to PING`"
+          },
+          "description_md": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A markdown description for this stage, rendered in the 'Your Task' card."
+          },
+          "difficulty": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A difficulty rating for this stage, from the perspective of a proficient programmer.\n\n- `very_easy`: <5m\n- `easy`: 5-10m \n- `medium`: 30m-1h\n- `hard`: >1h"
+          },
+          "marketing_md": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A short markdown description of this stage, used in the course overview page."
+          },
+          "tester_source_code_url": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Link to the source code for the test cases of this stage. Optional."
+          }
+        },
+        "required": [
+          "description_md",
+          "difficulty",
+          "marketing_md",
+          "name",
+          "slug"
+        ]
+      }
     }
   },
-  "required": ["slug", "name", "short_name", "release_status"]
+  "required": [
+    "slug",
+    "name",
+    "short_name",
+    "release_status",
+    "description_md",
+    "short_description_md",
+    "completion_percentage",
+    "languages",
+    "marketing",
+    "stages"
+  ]
 }
