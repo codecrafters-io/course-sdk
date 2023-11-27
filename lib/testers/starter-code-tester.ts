@@ -153,8 +153,7 @@ export default class StarterCodeTester extends BaseTester {
 
   async assertScriptOutput(expectedOutput: string, expectedExitCode = 0) {
     // TODO: Using tmp.fileSync() here causes "Text file busy" errors on GitHub runners
-    const randomNum = Math.floor(Math.random() * 10000);
-    const testScriptPath = `/tmp/script_${randomNum}`;
+    const testScriptPath = tmp.tmpNameSync();
 
     await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
     await exec(`chmod +x ${testScriptPath}`);
