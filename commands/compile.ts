@@ -4,6 +4,7 @@ import SolutionDiffsCompiler from "../lib/compilers/solution-diffs-compiler";
 import StarterTemplateCompiler from "../lib/compilers/starter-template-compiler";
 import DockerShellCommandExecutor from "../lib/docker-shell-command-executor";
 import Course from "../lib/models/course";
+import Language from "../lib/models/language";
 import BaseCommand from "./base";
 
 export default class CompileCommand extends BaseCommand {
@@ -45,9 +46,12 @@ export default class CompileCommand extends BaseCommand {
         console.log(`Compiling languages: ${this.#languageSlugsToFilter.join(", ")}...`);
       }
 
-      console.error("Filtering is not supported yet!");
-      // const language = Language.find_by_slug!(language_filter)
-      // compilers.each { |compiler| compiler.compile_for_language(language) }
+      for (const compiler of compilers) {
+        for (const languageSlug of this.#languageSlugsToFilter) {
+          const language = Language.findBySlug(languageSlug);
+          await compiler.compileForLanguage(language);
+        }
+      }
     }
   }
 

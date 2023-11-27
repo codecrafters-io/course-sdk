@@ -5,6 +5,7 @@ import pMap from "p-map";
 import Course from "../models/course";
 import StarterCodeDefinition from "../models/starter-code-definition";
 import DockerShellCommandExecutor from "../docker-shell-command-executor";
+import Language from "../models/language";
 
 export default class StarterTemplateCompiler {
   private course: Course;
@@ -20,9 +21,9 @@ export default class StarterTemplateCompiler {
     });
   }
 
-  async compileForLanguage(language: string): Promise<void> {
+  async compileForLanguage(language: Language): Promise<void> {
     for (const definition of this.definitions) {
-      if (definition.language.slug === language) {
+      if (definition.language.slug === language.slug) {
         console.log(`compiling ${definition.course.slug}-${definition.language.slug}`);
         await this.compileDefinition(definition);
       }

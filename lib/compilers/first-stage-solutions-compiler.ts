@@ -18,9 +18,9 @@ export default class FirstStageSolutionsCompiler {
     await Promise.all(this.starterRepositoryDirectories().map((dir) => this.compileForStarterRepositoryDirectory(dir)));
   }
 
-  compileForLanguage(language: string): void {
+  compileForLanguage(language: Language): void {
     this.starterRepositoryDirectories()
-      .filter((starterRepositoryDirectory) => starterRepositoryDirectory.split("-").pop() === language)
+      .filter((starterRepositoryDirectory) => starterRepositoryDirectory.split("-").pop() === language.slug)
       .forEach((starterRepositoryDirectory) => {
         this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
       });

@@ -18,9 +18,13 @@ program
 program
   .command("test")
   .description("Test starter code & solutions")
-  .addArgument(new Argument("[language]", "language to test for. Example: 'go'").default("", "All languages"))
+  .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
   .option("--no-compile", "Disable compiling starter code & solutions before testing")
   .action(async (languageFilter, options) => {
+    if (languageFilter === "all") {
+      languageFilter = "";
+    }
+
     if (options.compile) {
       console.log("Compiling... (use --no-compile to skip)");
       await new CompileCommand(languageFilter).run();
