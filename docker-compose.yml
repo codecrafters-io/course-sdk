@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  js-tools:
+    image: js-tools:depot
+    build:
+      context: .
+      dockerfile: lib/dockerfiles/js-tools.Dockerfile
+    volumes:
+      - .:/course-sdk
