@@ -153,9 +153,26 @@ export default class StarterCodeTester extends BaseTester {
 
   async assertScriptOutput(expectedOutput: string, expectedExitCode = 0) {
     const testScriptPath = tmp.fileSync().name;
+
+    console.log("------ BEFORE WRITING SCRIPT -----------");
+
+    console.log("lsof output:");
+    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
+    console.log("lsof -c sh output:");
+    console.log(child_process.execSync(`lsof -c sh`).toString());
+
+    console.log("------ WRITING SCRIPT -----------");
+
     await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
+
+    console.log("------ AFTER WRITING SCRIPT -----------");
+
+    console.log("lsof output:");
+    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
+    console.log("lsof -c sh output:");
+    console.log(child_process.execSync(`lsof -c sh`).toString());
 
     // Debugging "Text file busy" error
     // Print the path of the test script
@@ -168,7 +185,7 @@ export default class StarterCodeTester extends BaseTester {
     console.log("lsof -c sh output:");
     console.log(child_process.execSync(`lsof -c sh`).toString());
     console.log("lsof -c bun output:");
-    console.log(child_process.execSync(`lsof -c bun`).toString());
+    console.log(child_process.execSync(`lsof -c course-sdk`).toString());
     // Wait for a while to ensure the file system has time to release any locks on the file
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
