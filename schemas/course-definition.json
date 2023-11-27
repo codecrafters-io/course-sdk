@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codecrafters.io/course-definition.schema.json",
+  "title": "CodeCrafters Course Definition",
+  "description": "Schema for a CodeCrafters course definition",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Slug of the course"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the course"
+    },
+    "short_name": {
+      "type": "string",
+      "description": "Short name of the course"
+    },
+    "release_status": {
+      "type": "string",
+      "description": "Release status of the course",
+      "enum": [
+        "alpha",
+        "beta",
+        "live"
+      ]
+    },
+    "description_md": {
+      "type": "string",
+      "description": "Description of the course in Markdown"
+    },
+    "short_description_md": {
+      "type": "string",
+      "description": "Short description of the course in Markdown"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "description": "Completion percentage of the course"
+    },
+    "early_access_languages": {
+      "type": "array",
+      "description": "Early access languages of the course",
+      "items": {
+          "type": "string"
+      }
+    },
+    "supported_languages": {
+      "type": "array",
+      "description": "Supported languages of the course",
+      "items": {
+        "type": "string"
+      }
+    },
+    "starter_repos": {
+      "type": "object"
+    }
+  },
+  "required": ["slug", "name", "short_name", "release_status"]
+}
