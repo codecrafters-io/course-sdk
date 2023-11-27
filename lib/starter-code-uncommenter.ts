@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import Language from "./models/language";
 import { glob } from "glob";
+import DiffBuilder from "./diff-builder";
 
 class UncommentMarkerNotFound extends Error {
   constructor(markerPattern: string, files: string[]) {
@@ -22,30 +23,32 @@ export default class StarterCodeUncommenter {
     this.language = language;
   }
 
-  uncomment(): string[] {
+  async uncomment(): Promise<string[]> {
     const codeFiles = this.codeFiles();
 
     if (codeFiles.length === 0) {
       throw new Error("No code files found");
     }
 
-    const diffs = codeFiles
-      .map((filePath) => {
-        const oldContents = fs.readFileSync(filePath, "utf8");
+    const diffs = (
+      await Promise.all(
+        codeFiles.map(async (filePath) => {
+          const oldContents = await fs.promises.readFile(filePath, "utf8");
 
-        const newContents = new Uncommenter(this.language.slug, oldContents, StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN).uncommented;
+          const newContents = new Uncommenter(this.language.slug, oldContents, StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN).uncommented;
 
-        if (oldContents === newContents) {
-          return null;
-        }
+          if (oldContents === newContents) {
+            return null;
+          }
 
-        fs.writeFileSync(filePath, newContents);
-        // TODO: Implement postProcessors
+          fs.writeFileSync(filePath, newContents);
+          // TODO: Implement postProcessors
 
-        const newContentsAgain = fs.readFileSync(filePath, "utf8");
-        return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
-      })
-      .filter(Boolean);
+          const newContentsAgain = fs.readFileSync(filePath, "utf8");
+          return DiffBuilder.buildDiff(oldContents, newContentsAgain);
+        })
+      )
+    ).filter((diff) => diff !== null) as string[];
 
     if (diffs.length === 0) {
       throw new UncommentMarkerNotFound(StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN.source, codeFiles);

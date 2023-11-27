@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as diff from "diff";
 import Language from "./models/language";
 import { glob } from "glob";
+import DiffBuilder from "./diff-builder";
 
 class LineMarkerNotFound extends Error {
   constructor(markerPattern: RegExp, files: string[]) {
@@ -27,9 +28,9 @@ export default class LineWithCommentRemover {
       throw new Error("No code files found");
     }
 
-    const diffs = (await Promise.all(
-      codeFiles
-        .map(async (filePath) => {
+    const diffs = (
+      await Promise.all(
+        codeFiles.map(async (filePath) => {
           const oldContents = await fs.promises.readFile(filePath, "utf8");
           const newContents = this.processFileContents(oldContents);
 
@@ -40,10 +41,10 @@ export default class LineWithCommentRemover {
           fs.writeFileSync(filePath, newContents);
 
           const newContentsAgain = fs.readFileSync(filePath, "utf8");
-          return diff.createTwoFilesPatch(filePath, filePath, oldContents, newContentsAgain);
+          return DiffBuilder.buildDiff(oldContents, newContentsAgain);
         })
-        .filter(Boolean)
-    )) as string[];
+      )
+    ).filter((diff) => diff !== null) as string[];
 
     if (diffs.length === 0) {
       throw new LineMarkerNotFound(LineWithCommentRemover.LINE_MARKER_PATTERN, codeFiles);

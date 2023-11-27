@@ -4,6 +4,7 @@ import tmp from "tmp";
 import Course from "../models/course";
 import Language from "../models/language";
 import { glob } from "glob";
+import DiffBuilder from "../diff-builder";
 
 class ChangedFile {
   path: string;
@@ -17,46 +18,7 @@ class ChangedFile {
   }
 
   diff(): string {
-    const oldFileName = tmp.fileSync().name;
-    const newFileName = tmp.fileSync().name;
-    fs.writeFileSync(oldFileName, this.oldContents || "");
-    fs.writeFileSync(newFileName, this.newContents || "");
-
-    let diffOutput = "";
-    try {
-      const { execSync } = require("child_process");
-      try {
-        diffOutput = execSync(`diff -d -U 25 ${oldFileName} ${newFileName}`, {
-          encoding: "utf8",
-        });
-      } catch (error) {
-        // @ts-ignore
-        if (error.status === 1) {
-          // @ts-ignore
-          diffOutput = error.stdout;
-        } else {
-          throw error;
-        }
-      }
-    } catch (error) {
-      if ((error as { status: number }).status !== 1) {
-        throw error;
-      }
-    }
-
-    if (diffOutput.trim() === "") {
-      throw new Error("No diff output");
-    }
-
-    fs.unlinkSync(oldFileName);
-    fs.unlinkSync(newFileName);
-
-    const diffOutputLines = diffOutput.split("\n");
-
-    return diffOutputLines
-      .slice(2)
-      .map((line) => (line == " " ? "" : line)) // Diff can output a space for unchanged lines
-      .join("\n"); // Remove the first two lines of the diff output
+    return DiffBuilder.buildDiff(this.oldContents || "", this.newContents || "");
   }
 }
 
