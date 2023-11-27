@@ -7,4 +7,4 @@ services:
       context: .
       dockerfile: lib/dockerfiles/js-tools.Dockerfile
     volumes:
-      - .:/course-sdk
+      - .:/workdir
