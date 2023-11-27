@@ -163,7 +163,8 @@ export default class StarterCodeTester extends BaseTester {
     // Print the contents of the test script
     console.log(`Test script contents: ${fs.readFileSync(testScriptPath).toString()}`);
     // Use lsof command to check if any other process is locking the file
-    console.log(`lsof output: ${child_process.execSync(`lsof ${testScriptPath}`).toString()}`);
+    console.log("lsof output:");
+    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
     // Wait for a while to ensure the file system has time to release any locks on the file
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
