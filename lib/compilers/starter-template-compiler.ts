@@ -3,13 +3,13 @@ import { existsSync, mkdirSync, writeFileSync, chmodSync } from "fs";
 import { join, dirname } from "path";
 import pMap from "p-map";
 import Course from "../models/course";
-import StarterRepoDefinition from "../models/starter-code-definition";
+import StarterCodeDefinition from "../models/starter-code-definition";
 import DockerShellCommandExecutor from "../docker-shell-command-executor";
 
 export default class StarterTemplateCompiler {
   private course: Course;
   private _dockerShellCommandExecutor: DockerShellCommandExecutor | undefined;
-  private _definitionsCache: StarterRepoDefinition[] | undefined;
+  private _definitionsCache: StarterCodeDefinition[] | undefined;
 
   constructor(course: Course) {
     this.course = course;
@@ -30,7 +30,7 @@ export default class StarterTemplateCompiler {
     }
   }
 
-  private async compileDefinition(definition: StarterRepoDefinition): Promise<void> {
+  private async compileDefinition(definition: StarterCodeDefinition): Promise<void> {
     console.log(`- compiling starter template for ${definition.course.slug}-${definition.language.slug}`);
     const directory = definition.compiledStarterDirectory();
 
@@ -63,9 +63,9 @@ export default class StarterTemplateCompiler {
     return this._dockerShellCommandExecutor;
   }
 
-  private get definitions(): StarterRepoDefinition[] {
+  private get definitions(): StarterCodeDefinition[] {
     if (!this._definitionsCache) {
-      this._definitionsCache = StarterRepoDefinition.loadForCourse(this.course);
+      this._definitionsCache = StarterCodeDefinition.loadForCourse(this.course);
     }
 
     return this._definitionsCache;

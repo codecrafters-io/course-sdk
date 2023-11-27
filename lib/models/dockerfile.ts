@@ -13,22 +13,24 @@ export default class Dockerfile {
     return path.basename(this.path);
   }
 
-  get languagePack() {
+  get languagePackWithVersion() {
     return this.filename.replace(/\.Dockerfile$/, "");
   }
 
-  get language() {
-    const slug = this.filename.split("-")[0];
+  get languagePack() {
+    return this.languagePackWithVersion.split("-")[0];
+  }
 
-    if (slug === null) {
+  get language() {
+    if (this.languagePack === null) {
       throw new Error(`Dockerfile path ${this.path} does not match expected format`);
     }
 
-    return Language.findByLanguagePack(slug);
+    return Language.findByLanguagePack(this.languagePack);
   }
 
   semver(): semver.SemVer {
-    const versionString = this.languagePack.replace(`${this.language.slug}-`, "");
+    const versionString = this.languagePackWithVersion.replace(`${this.language.slug}-`, "");
 
     if (semver.coerce(versionString) === null) {
       throw new Error(`Dockerfile path ${this.path} does not match expected format`);

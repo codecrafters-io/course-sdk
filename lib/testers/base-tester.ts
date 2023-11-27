@@ -1,9 +1,12 @@
 import child_process from "child_process";
-import util from "util";
 import { createWriteStream, WriteStream } from "fs";
+import util from "util";
 import Logger from "../logger";
 import MemoryWritableStream from "../memory-writable-stream";
 import PrefixedWritableStream from "../prefixed-writable-stream";
+import childProcess from "child_process";
+
+const exec = util.promisify(childProcess.exec);
 
 class TestFailedError extends Error {
   constructor() {

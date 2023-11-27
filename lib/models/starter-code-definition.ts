@@ -16,7 +16,7 @@ export class FileMapping {
   }
 }
 
-export default class StarterRepoDefinition {
+export default class StarterCodeDefinition {
   course: Course;
   language: Language;
   fileMappings: FileMapping[];
@@ -29,7 +29,7 @@ export default class StarterRepoDefinition {
     this.templateAttrs = templateAttrs;
   }
 
-  static loadForCourse(course: Course): StarterRepoDefinition[] {
+  static loadForCourse(course: Course): StarterCodeDefinition[] {
     type StarterDefinitionYAML = {
       language: string;
       file_mappings: {
@@ -47,7 +47,7 @@ export default class StarterRepoDefinition {
     ) as StarterDefinitionYAML[];
 
     return starterDefinitionsYaml.map((starterDefinitionYaml) => {
-      return new StarterRepoDefinition(
+      return new StarterCodeDefinition(
         course,
         Language.findBySlug(starterDefinitionYaml.language),
         starterDefinitionYaml.file_mappings.map((fm: any) => {

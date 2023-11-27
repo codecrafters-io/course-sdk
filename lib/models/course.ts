@@ -5,6 +5,7 @@ import fs from "fs";
 import { glob } from "glob";
 import path from "path";
 import { CourseDefinitionFileNotFoundError, InvalidCourseDefinitionFileError } from "../errors";
+import Language from "./language";
 
 export default class Course {
   slug: string;
@@ -59,6 +60,10 @@ export default class Course {
       ),
       directory
     );
+  }
+
+  compiledStarterRepositoryDirForLanguage(language: Language): string {
+    return path.join(this.compiledStarterRepositoriesDir, language.slug);
   }
 
   get compiledStarterRepositoriesDir(): string {

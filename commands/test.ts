@@ -1,6 +1,9 @@
 import Course from "../lib/models/course";
 import BaseCommand from "./base";
 import DockerfileTester from "../lib/testers/dockerfile-tester";
+import StarterCodeDefinition from "../lib/models/starter-code-definition";
+import StarterCodeTester from "../lib/testers/starter-code-tester";
+import TesterDownloader from "../lib/tester-downloader";
 
 export default class TestCommand extends BaseCommand {
   languageFilter: string; // Can be empty string
@@ -13,9 +16,8 @@ export default class TestCommand extends BaseCommand {
   async doRun() {
     const course = Course.loadFromDirectory(process.cwd());
 
-    let testers = [...this.dockerfileTestersForCourse(course)];
+    let testers = [...this.dockerfileTestersForCourse(course), ...(await this.starterCodeTestersForCourse(course))];
 
-    // TODO: Implement filtering
     if (this.#languageSlugsToFilter.length !== 0) {
       testers = testers.filter((tester) => this.#languageSlugsToFilter.includes(tester.language.slug));
       console.log("Testing languages:", this.#languageSlugsToFilter.join(", "));
@@ -42,5 +44,20 @@ export default class TestCommand extends BaseCommand {
 
   dockerfileTestersForCourse(course: Course): DockerfileTester[] {
     return course.latestDockerfiles.map((dockerfile) => new DockerfileTester(course, dockerfile));
+  }
+
+  async starterCodeTestersForCourse(course: Course): Promise<StarterCodeTester[]> {
+    const starterCodeDefinitions = StarterCodeDefinition.loadForCourse(course);
+
+    return Promise.all(
+      starterCodeDefinitions.map(
+        async (starterCodeDefinition) =>
+          new StarterCodeTester(
+            course,
+            await new TesterDownloader(course, "/tmp/testers").downloadIfNeeded(),
+            starterCodeDefinition.language
+          )
+      )
+    );
   }
 }
