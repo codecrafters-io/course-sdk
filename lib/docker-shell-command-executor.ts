@@ -4,6 +4,8 @@ import fs from "fs";
 import tmp from "tmp";
 import util from "util";
 import path from "path";
+import ShellCommandExecutor from "./shell-command-executor";
+import ansiColors from "ansi-colors";
 
 const exec = util.promisify(child_process.exec);
 const writeFile = util.promisify(fs.writeFile);
@@ -22,7 +24,9 @@ export default class DockerShellCommandExecutor {
   static async buildImage(dockerfileType: DockerfileType) {
     const dockerfilePath = tmp.fileSync().name;
     await writeFile(dockerfilePath, this.dockerfileContents(dockerfileType));
-    await exec(`docker build -t course-sdk-${dockerfileType} -f ${dockerfilePath} .`);
+    await ShellCommandExecutor.execute(`docker build -t course-sdk-${dockerfileType} -f ${dockerfilePath} .`, {
+      prefix: ansiColors.yellow("[docker-build] "),
+    });
   }
 
   async exec(command: string) {

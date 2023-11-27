@@ -18,8 +18,11 @@ export default class CompileCommand extends BaseCommand {
     const course = Course.loadFromDirectory(process.cwd());
 
     console.log("Building js-tools Docker image...");
+    console.log("");
     await DockerShellCommandExecutor.buildImage("js-tools");
+    console.log("");
     console.log("js-tools Docker image built.");
+    console.log("");
 
     const compilers = [
       new StarterTemplateCompiler(course),
