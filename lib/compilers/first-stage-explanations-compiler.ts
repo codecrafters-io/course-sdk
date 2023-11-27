@@ -40,10 +40,12 @@ export class FirstStageExplanationsCompiler {
     }
   }
 
-  compileForLanguage(language: Language): void {
-    this.#starterRepositoryDirectories()
-      .filter((starterRepositoryDirectory) => path.basename(starterRepositoryDirectory).split("-").pop() === language.slug)
-      .forEach((starterRepositoryDirectory) => this.compileForStarterRepositoryDirectory(starterRepositoryDirectory));
+  async compileForLanguage(language: Language): Promise<void> {
+    await Promise.all(
+      this.#starterRepositoryDirectories()
+        .filter((starterRepositoryDirectory) => path.basename(starterRepositoryDirectory) === language.slug)
+        .map((starterRepositoryDirectory) => this.compileForStarterRepositoryDirectory(starterRepositoryDirectory))
+    );
   }
 
   async compileForStarterRepositoryDirectory(starterRepositoryDirectory: string) {

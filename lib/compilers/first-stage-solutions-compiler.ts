@@ -18,12 +18,12 @@ export default class FirstStageSolutionsCompiler {
     await Promise.all(this.starterRepositoryDirectories().map((dir) => this.compileForStarterRepositoryDirectory(dir)));
   }
 
-  compileForLanguage(language: Language): void {
-    this.starterRepositoryDirectories()
-      .filter((starterRepositoryDirectory) => starterRepositoryDirectory.split("-").pop() === language.slug)
-      .forEach((starterRepositoryDirectory) => {
-        this.compileForStarterRepositoryDirectory(starterRepositoryDirectory);
-      });
+  async compileForLanguage(language: Language): Promise<void> {
+    await Promise.all(
+      this.starterRepositoryDirectories()
+        .filter((starterRepositoryDirectory) => path.basename(starterRepositoryDirectory) === language.slug)
+        .map((starterRepositoryDirectory) => this.compileForStarterRepositoryDirectory(starterRepositoryDirectory))
+    );
   }
 
   async compileForStarterRepositoryDirectory(starterRepositoryDirectory: string): Promise<void> {
