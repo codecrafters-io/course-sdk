@@ -8,7 +8,6 @@ import DockerShellCommandExecutor from "../docker-shell-command-executor";
 
 export default class StarterTemplateCompiler {
   private course: Course;
-  private _dockerShellCommandExecutor: DockerShellCommandExecutor | undefined;
   private _definitionsCache: StarterCodeDefinition[] | undefined;
 
   constructor(course: Course) {
@@ -54,13 +53,7 @@ export default class StarterTemplateCompiler {
   }
 
   private async dockerShellCommandExecutor(): Promise<DockerShellCommandExecutor> {
-    if (!this._dockerShellCommandExecutor) {
-      this._dockerShellCommandExecutor = new DockerShellCommandExecutor(this.course.directory, "js-tools");
-
-      await this._dockerShellCommandExecutor.buildImage();
-    }
-
-    return this._dockerShellCommandExecutor;
+    return new DockerShellCommandExecutor(this.course.directory, "js-tools");
   }
 
   private get definitions(): StarterCodeDefinition[] {

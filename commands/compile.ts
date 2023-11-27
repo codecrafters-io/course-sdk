@@ -2,6 +2,7 @@ import { FirstStageExplanationsCompiler } from "../lib/compilers/first-stage-exp
 import FirstStageSolutionsCompiler from "../lib/compilers/first-stage-solutions-compiler";
 import SolutionDiffsCompiler from "../lib/compilers/solution-diffs-compiler";
 import StarterTemplateCompiler from "../lib/compilers/starter-template-compiler";
+import DockerShellCommandExecutor from "../lib/docker-shell-command-executor";
 import Course from "../lib/models/course";
 import BaseCommand from "./base";
 
@@ -15,6 +16,10 @@ export default class CompileCommand extends BaseCommand {
 
   async doRun() {
     const course = Course.loadFromDirectory(process.cwd());
+
+    console.log("Building js-tools Docker image...");
+    await DockerShellCommandExecutor.buildImage("js-tools");
+    console.log("js-tools Docker image built.");
 
     const compilers = [
       new StarterTemplateCompiler(course),
@@ -34,9 +39,7 @@ export default class CompileCommand extends BaseCommand {
       if (this.#languageSlugsToFilter.length === 1) {
         console.log(`Compiling language: ${this.#languageSlugsToFilter[0]}...`);
       } else {
-        console.log(
-          `Compiling languages: ${this.#languageSlugsToFilter.join(", ")}...`
-        );
+        console.log(`Compiling languages: ${this.#languageSlugsToFilter.join(", ")}...`);
       }
 
       console.error("Filtering is not supported yet!");

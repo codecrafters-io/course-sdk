@@ -19,10 +19,10 @@ export default class DockerShellCommandExecutor {
     this.dockerfileType = dockerfileType;
   }
 
-  async buildImage() {
+  static async buildImage(dockerfileType: DockerfileType) {
     const dockerfilePath = tmp.fileSync().name;
-    await writeFile(dockerfilePath, this.dockerfileContents(this.dockerfileType));
-    await exec(`docker build -t course-sdk-${this.dockerfileType} -f ${dockerfilePath} .`);
+    await writeFile(dockerfilePath, this.dockerfileContents(dockerfileType));
+    await exec(`docker build -t course-sdk-${dockerfileType} -f ${dockerfilePath} .`);
   }
 
   async exec(command: string) {
@@ -34,7 +34,7 @@ export default class DockerShellCommandExecutor {
     return path.relative(this.workingDirectory, filePath);
   }
 
-  dockerfileContents(dockerfileType: DockerfileType): string {
+  static dockerfileContents(dockerfileType: DockerfileType): string {
     return {
       "js-tools": fs.readFileSync(jsToolsDockerfile).toString(),
     }[dockerfileType];
