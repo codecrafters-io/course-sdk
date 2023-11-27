@@ -84,7 +84,7 @@ jobs:
       #     tags: tester:depot
 
       - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
-      - run: docker-compose run js-tools --disable MD041 markdownlint courses/${{github.event.repository.name}}/compiled_starters
+      - run: docker-compose run js-tools markdownlint --disable MD041 courses/${{github.event.repository.name}}/compiled_starters
 
   go_lint:
     runs-on: ubuntu-latest
