@@ -155,6 +155,7 @@ export default class StarterCodeTester extends BaseTester {
     const testScriptPath = tmp.fileSync().name;
     await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
     await exec(`chmod +x ${testScriptPath}`);
+    await exec(`sync`); // Avoid "Text file busy" errors
 
     const command = [
       "docker run",
