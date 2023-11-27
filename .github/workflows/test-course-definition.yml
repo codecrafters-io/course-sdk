@@ -39,8 +39,9 @@ jobs:
       #     tags: tester:depot
 
       - run: bun install
+      - run: make install
 
-      - run: bun run ../../cli.ts compile
+      - run: course-sdk compile
         working-directory: courses/${{github.event.repository.name}}
 
       - name: "Ensure no uncommitted changes to compiled templates"
@@ -175,10 +176,15 @@ jobs:
         language: ${{ fromJSON(needs.identify_language_slugs.outputs.language_slugs) }}
 
     steps:
+      - uses: oven-sh/setup-bun@v1
+
       - uses: actions/checkout@v3
         with:
           repository: "codecrafters-io/course-sdk-v2"
           ref: ${{inputs.sdkRef}}
+
+      - run: bun install
+      - run: make install
 
       - uses: actions/checkout@v3
         with:
@@ -194,7 +200,7 @@ jobs:
       #     load: true
       #     tags: tester:depot
 
-      - run: bun run ../../cli.ts test ${{matrix.language}}
+      - run: course-sdk test ${{matrix.language}}
         working-directory: courses/${{github.event.repository.name}}
 
   validate-schemas:
