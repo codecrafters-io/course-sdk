@@ -156,40 +156,9 @@ export default class StarterCodeTester extends BaseTester {
     const randomNum = Math.floor(Math.random() * 10000);
     const testScriptPath = `/tmp/script_${randomNum}`;
 
-    console.log("------ BEFORE WRITING SCRIPT -----------");
-
-    console.log("lsof output:");
-    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
-    console.log("lsof -c sh output:");
-    console.log(child_process.execSync(`lsof -c sh`).toString());
-
-    console.log("------ WRITING SCRIPT -----------");
-
     await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
-
-    console.log("------ AFTER WRITING SCRIPT -----------");
-
-    console.log("lsof output:");
-    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
-    console.log("lsof -c sh output:");
-    console.log(child_process.execSync(`lsof -c sh`).toString());
-
-    // Debugging "Text file busy" error
-    // Print the path of the test script
-    console.log(`Test script path: ${testScriptPath}`);
-    // Print the contents of the test script
-    console.log(`Test script contents: ${fs.readFileSync(testScriptPath).toString()}`);
-    // Use lsof command to check if any other process is locking the file
-    console.log("lsof output:");
-    console.log(child_process.execSync(`lsof ${testScriptPath}`).toString());
-    console.log("lsof -c sh output:");
-    console.log(child_process.execSync(`lsof -c sh`).toString());
-    console.log("lsof -c bun output:");
-    console.log(child_process.execSync(`lsof -c course-sdk`).toString());
-    // Wait for a while to ensure the file system has time to release any locks on the file
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const command = [
       "docker run",
