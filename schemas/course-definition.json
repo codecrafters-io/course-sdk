@@ -84,13 +84,7 @@
               "link": { "type": "string", "minLength": 1 },
               "text": { "type": "string", "minLength": 1 }
             },
-            "required": [
-              "author_name",
-              "author_description",
-              "author_avatar",
-              "link",
-              "text"
-            ]
+            "required": ["author_name", "author_description", "author_avatar", "link", "text"]
           }
         }
       },
@@ -100,7 +94,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "slug": {
             "type": "string",
@@ -133,13 +127,7 @@
             "description": "Link to the source code for the test cases of this stage. Optional."
           }
         },
-        "required": [
-          "description_md",
-          "difficulty",
-          "marketing_md",
-          "name",
-          "slug"
-        ]
+        "required": ["description_md", "difficulty", "marketing_md", "name", "slug"]
       }
     }
   },
