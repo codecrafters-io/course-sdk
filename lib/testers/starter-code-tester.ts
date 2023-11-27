@@ -157,10 +157,15 @@ export default class StarterCodeTester extends BaseTester {
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
 
-    console.log("debug");
-    console.log(testScriptPath);
-    console.log(fs.readFileSync(testScriptPath).toString());
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Test
+    // Debugging "Text file busy" error
+    // Print the path of the test script
+    console.log(`Test script path: ${testScriptPath}`);
+    // Print the contents of the test script
+    console.log(`Test script contents: ${fs.readFileSync(testScriptPath).toString()}`);
+    // Use lsof command to check if any other process is locking the file
+    console.log(`lsof output: ${child_process.execSync(`lsof ${testScriptPath}`).toString()}`);
+    // Wait for a while to ensure the file system has time to release any locks on the file
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const command = [
       "docker run",
