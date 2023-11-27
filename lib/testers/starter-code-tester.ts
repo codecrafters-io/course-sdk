@@ -157,6 +157,8 @@ export default class StarterCodeTester extends BaseTester {
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
 
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Test
+
     const command = [
       "docker run",
       "--rm",
