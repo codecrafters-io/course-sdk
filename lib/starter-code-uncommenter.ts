@@ -1,10 +1,9 @@
 import Uncommenter from "./uncommenter";
-import * as diff from "diff";
 import * as fs from "fs";
 import * as path from "path";
 import Language from "./models/language";
 import { glob } from "glob";
-import DiffBuilder from "./diff-builder";
+import Diff from "./diff";
 
 class UncommentMarkerNotFound extends Error {
   constructor(markerPattern: string, files: string[]) {
@@ -23,7 +22,7 @@ export default class StarterCodeUncommenter {
     this.language = language;
   }
 
-  async uncomment(): Promise<string[]> {
+  async uncomment(): Promise<Diff[]> {
     const codeFiles = this.codeFiles();
 
     if (codeFiles.length === 0) {
@@ -45,10 +44,10 @@ export default class StarterCodeUncommenter {
           // TODO: Implement postProcessors
 
           const newContentsAgain = fs.readFileSync(filePath, "utf8");
-          return DiffBuilder.buildDiff(oldContents, newContentsAgain);
+          return Diff.fromContents(oldContents, newContentsAgain);
         })
       )
-    ).filter((diff) => diff !== null) as string[];
+    ).filter((diff) => diff !== null) as Diff[];
 
     if (diffs.length === 0) {
       throw new UncommentMarkerNotFound(StarterCodeUncommenter.UNCOMMENT_MARKER_PATTERN.source, codeFiles);

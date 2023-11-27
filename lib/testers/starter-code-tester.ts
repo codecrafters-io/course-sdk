@@ -103,7 +103,7 @@ export default class StarterCodeTester extends BaseTester {
       }
 
       console.log("");
-      console.log(diff.toString());
+      diff.printToConsole();
       console.log("");
     }
 

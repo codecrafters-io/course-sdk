@@ -1,8 +1,7 @@
 import * as fs from "fs";
-import * as diff from "diff";
 import Language from "./models/language";
 import { glob } from "glob";
-import DiffBuilder from "./diff-builder";
+import Diff from "./diff";
 
 class LineMarkerNotFound extends Error {
   constructor(markerPattern: RegExp, files: string[]) {
@@ -21,7 +20,7 @@ export default class LineWithCommentRemover {
     this.language = language;
   }
 
-  async process(): Promise<string[]> {
+  async process(): Promise<Diff[]> {
     const codeFiles = this.codeFiles();
 
     if (codeFiles.length === 0) {
@@ -41,10 +40,10 @@ export default class LineWithCommentRemover {
           fs.writeFileSync(filePath, newContents);
 
           const newContentsAgain = fs.readFileSync(filePath, "utf8");
-          return DiffBuilder.buildDiff(oldContents, newContentsAgain);
+          return Diff.fromContents(oldContents, newContentsAgain);
         })
       )
-    ).filter((diff) => diff !== null) as string[];
+    ).filter((diff) => diff !== null) as Diff[];
 
     if (diffs.length === 0) {
       throw new LineMarkerNotFound(LineWithCommentRemover.LINE_MARKER_PATTERN, codeFiles);
