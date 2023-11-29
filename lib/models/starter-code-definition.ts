@@ -71,8 +71,11 @@ export default class StarterCodeDefinition {
       Mustache.escape = (text) => text;
 
       return {
+        skippedTemplateInterpolation: mapping.shouldSkipTemplateInterpolation,
         path: mapping.destinationPath,
-        contents: mapping.shouldSkipTemplateInterpolation ? templateContents : Mustache.render(templateContents.toString("utf-8"), this.templateContext()),
+        contents: mapping.shouldSkipTemplateInterpolation
+          ? templateContents
+          : Mustache.render(templateContents.toString("utf-8"), this.templateContext()),
         mode: fs.statSync(fpath).mode,
       };
     });

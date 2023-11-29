@@ -39,6 +39,10 @@ export default class StarterTemplateCompiler {
     }
 
     for (const file of definition.files(this.course.directory)) {
+      if (file.skippedTemplateInterpolation) {
+        console.log(`  - ignoring template interpolation for ${file.path}`);
+      }
+
       const path = join(directory, file.path);
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, file.contents);
