@@ -66,13 +66,13 @@ export default class StarterCodeDefinition {
   files(templateDir: string): any[] {
     return this.fileMappings.map((mapping: FileMapping) => {
       const fpath = `${templateDir}/${mapping.templatePath}`;
-      const templateContents = fs.readFileSync(fpath, "utf8");
+      const templateContents = fs.readFileSync(fpath);
 
       Mustache.escape = (text) => text;
 
       return {
         path: mapping.destinationPath,
-        contents: mapping.shouldSkipTemplateInterpolation ? templateContents : Mustache.render(templateContents, this.templateContext()),
+        contents: mapping.shouldSkipTemplateInterpolation ? templateContents : Mustache.render(templateContents.toString("utf-8"), this.templateContext()),
         mode: fs.statSync(fpath).mode,
       };
     });
