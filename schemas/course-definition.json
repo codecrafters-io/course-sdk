@@ -48,6 +48,19 @@
             "type": "string",
             "minLength": 1,
             "description": "Slug for the language. Example: `python`. Full list of languages available [here](https://backend.codecrafters.io/api/v1/languages)."
+          },
+          "release_status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The release status of your course. Accepted values: `alpha`, `beta`, `live`."
+          },
+          "alpha_tester_usernames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The usernames of users who are alpha testing this language."
+            }
           }
         },
         "required": ["slug"]
