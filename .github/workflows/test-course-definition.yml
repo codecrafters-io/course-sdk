@@ -200,6 +200,9 @@ jobs:
       #     load: true
       #     tags: tester:depot
 
+      - run: git config --global user.email "hello@codecrafters.io"
+      - run: git config --global user.name "codecrafters-bot"
+
       - run: course-sdk test ${{matrix.language}}
         working-directory: courses/${{github.event.repository.name}}
 
