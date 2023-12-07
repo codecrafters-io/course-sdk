@@ -171,7 +171,7 @@ export default class StarterCodeTester extends BaseTester {
       `-e CODECRAFTERS_TEST_CASES_JSON='[${this.course.firstStage.testerTestCaseJson}]'`,
       `-e CODECRAFTERS_CURRENT_STAGE_SLUG=${this.course.firstStage.slug}`, // TODO: Remove this
       "-e TESTER_DIR=/tester",
-      "--user=#{`id -u`.strip}:#{`id -g`.strip}",
+      "--user $(id -u):$(id -g)",
       "-w /app",
       "--memory=2g",
       "--cpus=0.5",
