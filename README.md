@@ -3,7 +3,10 @@ This repository is used to develop & test CodeCrafters challenges.
 ## Installation
 
 - Make sure that you have [Docker](https://docs.docker.com/engine/install/) installed.
-- Download the latest release. (TODO: Add link)
+- For now, you'll need to compile the SDK from source using Bun.
+  - Make sure you have [Bun](https://bun.sh/docs/installation) installed.
+  - Clone this repository and run `make install`
+  - (In the future, we'll publish pre-compiled binaries for the SDK)
 - Test it with `course-sdk --version`.
 
 ## Developing Courses
@@ -27,6 +30,8 @@ course-sdk test go stage_slug_1,stage_slug_2 # test only specific stages
 ```
 
 ### Compiling starter code & solutions
+
+If you want to just compile the starter code & solutions, and not run tests:
 
 ```sh
 course-sdk compile # compiles all languages
