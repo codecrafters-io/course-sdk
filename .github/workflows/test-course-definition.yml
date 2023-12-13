@@ -125,7 +125,6 @@ jobs:
       #     tags: tester:depot
 
       - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
-      - run: shasum courses/${{github.event.repository.name}}/solutions/javascript/01-init/code/app/main.js
       - run: docker-compose run js-tools prettier --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check courses/${{github.event.repository.name}}/**/*.js
 
   rust_lint:
