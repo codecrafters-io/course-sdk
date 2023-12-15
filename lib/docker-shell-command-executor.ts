@@ -1,5 +1,6 @@
-import jsToolsDockerfile from "./dockerfiles/js-tools.dockerfile";
-import goToolsDockerfile from "./dockerfiles/go-tools.dockerfile";
+import goToolsDockerfile from "./dockerfiles/go-tools.Dockerfile";
+import jsToolsDockerfile from "./dockerfiles/js-tools.Dockerfile";
+import rustToolsDockerfile from "./dockerfiles/rust-tools.Dockerfile";
 import child_process from "child_process";
 import fs from "fs";
 import tmp from "tmp";
@@ -11,7 +12,7 @@ import ansiColors from "ansi-colors";
 const exec = util.promisify(child_process.exec);
 const writeFile = util.promisify(fs.writeFile);
 
-export type DockerfileType = "js-tools" | "go-tools";
+export type DockerfileType = "js-tools" | "go-tools" | "rust-tools";
 
 export default class DockerShellCommandExecutor {
   dockerfileType: DockerfileType;
@@ -43,6 +44,7 @@ export default class DockerShellCommandExecutor {
     return {
       "js-tools": fs.readFileSync(jsToolsDockerfile).toString(),
       "go-tools": fs.readFileSync(goToolsDockerfile).toString(),
+      "rust-tools": fs.readFileSync(rustToolsDockerfile).toString(),
     }[dockerfileType];
   }
 }
