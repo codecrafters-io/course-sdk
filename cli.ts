@@ -1,5 +1,6 @@
 import { Command, Argument } from "@commander-js/extra-typings";
 import CompileCommand from "./commands/compile";
+import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
 import { Option } from "commander";
 
