@@ -16,6 +16,13 @@ program
   });
 
 program
+  .command("lint")
+  .description("Lint starter code & solutions")
+  .action(async () => {
+    await new LintCommand().run();
+  });
+
+program
   .command("test")
   .description("Test starter code & solutions")
   .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
