@@ -6,6 +6,7 @@ import Course from "../models/course";
 import StarterCodeDefinition from "../models/starter-code-definition";
 import DockerShellCommandExecutor from "../docker-shell-command-executor";
 import Language from "../models/language";
+import type { DockerfileType } from "../docker-shell-command-executor";
 
 export default class StarterTemplateCompiler {
   private course: Course;
