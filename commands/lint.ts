@@ -1,6 +1,6 @@
 import BaseCommand from "./base";
 import DockerShellCommandExecutor from "../lib/docker-shell-command-executor";
-import type { DockerfileType } from "../docker-shell-command-executor";
+import type { DockerfileType } from "../lib/docker-shell-command-executor";
 
 export default class LintCommand extends BaseCommand {
   constructor() {
