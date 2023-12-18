@@ -63,12 +63,12 @@ export default class LintCommand extends BaseCommand {
 
   async lintJavaScriptFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
-    await dockerShellCommandExecutor.exec(`prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check ./`);
+    await dockerShellCommandExecutor.exec(`prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check "./**/*.js"`);
   }
 
   async lintMarkdownFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
-    await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern ./`);
+    await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern "./**/*.md"`);
   }
 
   async lintRustFiles() {
