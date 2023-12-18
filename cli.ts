@@ -1,5 +1,6 @@
 import { Command, Argument } from "@commander-js/extra-typings";
 import CompileCommand from "./commands/compile";
+import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
 import { Option } from "commander";
 
@@ -13,6 +14,13 @@ program
   .addArgument(new Argument("[language]", "language to compile for. Example: 'go'").default("", "All languages"))
   .action(async (languageFilter) => {
     await new CompileCommand(languageFilter).run();
+  });
+
+program
+  .command("lint")
+  .description("Lint starter code & solutions")
+  .action(async () => {
+    await new LintCommand().run();
   });
 
 program
