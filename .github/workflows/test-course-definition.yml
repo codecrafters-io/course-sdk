@@ -143,6 +143,17 @@ jobs:
 
       - run: find courses/${{github.event.repository.name}} -name '*.rs' | xargs rustfmt --edition "2021" --check
 
+  docker_lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+          ignore: DL3059
+
   identify_language_slugs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
