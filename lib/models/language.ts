@@ -26,6 +26,7 @@ export default class Language {
       new Language("ruby", "Ruby"),
       new Language("rust", "Rust"),
       new Language("swift", "Swift"),
+      new Language("typescript", "TypeScript"),
       new Language("zig", "Zig"),
     ];
   }
@@ -43,6 +44,7 @@ export default class Language {
   static findByLanguagePack(language_pack: string) {
     if (language_pack.startsWith("nodejs")) return this.findBySlug("javascript");
     if (language_pack.startsWith("dotnet")) return this.findBySlug("csharp");
+    if (language_pack.startsWith("deno")) return this.findBySlug("typescript");
     return this.findBySlug(language_pack.split("-")[0]);
   }
 
@@ -65,6 +67,7 @@ export default class Language {
       ruby: "rb",
       rust: "rs",
       swift: "swift",
+      typescript: "ts",
       zig: "zig",
     };
 
@@ -74,6 +77,7 @@ export default class Language {
   get languagePack() {
     if (this.slug === "javascript") return "nodejs";
     if (this.slug === "csharp") return "dotnet";
+    if (this.slug === "typescript") return "deno";
     return this.slug;
   }
 

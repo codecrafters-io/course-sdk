@@ -6,7 +6,7 @@ import { Option } from "commander";
 
 const program = new Command();
 
-program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.1.0");
+program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.1.1");
 
 program
   .command("compile")
