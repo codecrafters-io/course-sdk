@@ -14,7 +14,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     timeout-minutes: 5
 
@@ -61,7 +60,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     timeout-minutes: 5
 
@@ -102,7 +100,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     timeout-minutes: 5
 
@@ -179,7 +176,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     timeout-minutes: 20
 
@@ -226,7 +222,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     timeout-minutes: 5
 
