@@ -11,6 +11,7 @@ export default class Uncommenter {
     crystal: Uncommenter.POUND_SIGN,
     elixir: Uncommenter.POUND_SIGN,
     go: Uncommenter.DOUBLE_SLASHES,
+    gleam: Uncommenter.DOUBLE_SLASHES,
     haskell: Uncommenter.DOUBLE_HYPHENS,
     java: Uncommenter.DOUBLE_SLASHES,
     javascript: Uncommenter.DOUBLE_SLASHES,
