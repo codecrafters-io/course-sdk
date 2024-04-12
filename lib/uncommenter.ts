@@ -21,6 +21,7 @@ export default class Uncommenter {
     python: Uncommenter.POUND_SIGN,
     ruby: Uncommenter.POUND_SIGN,
     rust: Uncommenter.DOUBLE_SLASHES,
+    scala: Uncommenter.DOUBLE_SLASHES,
     swift: Uncommenter.DOUBLE_SLASHES,
     typescript: Uncommenter.DOUBLE_SLASHES,
     zig: Uncommenter.DOUBLE_SLASHES,
