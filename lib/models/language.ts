@@ -46,7 +46,7 @@ export default class Language {
   static findByLanguagePack(language_pack: string) {
     if (language_pack.startsWith("nodejs")) return this.findBySlug("javascript");
     if (language_pack.startsWith("dotnet")) return this.findBySlug("csharp");
-    if (language_pack.startsWith("deno")) return this.findBySlug("typescript");
+    if (language_pack.startsWith("bun")) return this.findBySlug("typescript");
     return this.findBySlug(language_pack.split("-")[0]);
   }
 
@@ -81,7 +81,7 @@ export default class Language {
   get languagePack() {
     if (this.slug === "javascript") return "nodejs";
     if (this.slug === "csharp") return "dotnet";
-    if (this.slug === "typescript") return "deno";
+    if (this.slug === "typescript") return "bun";
     return this.slug;
   }
 
