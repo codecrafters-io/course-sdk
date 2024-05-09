@@ -52,7 +52,12 @@ export default class StarterCodeDefinition {
         course,
         Language.findBySlug(starterDefinitionYaml.language),
         starterDefinitionYaml.file_mappings.map((fm) => {
-          return new FileMapping(fm.target, fm.source, fm.should_skip_template_evaluation || false);
+          fm.should_skip_template_evaluation = true;
+          let sourceFileExtension = fm.source.split('.').pop();
+          if (sourceFileExtension == "md" || sourceFileExtension == "yml" || sourceFileExtension=="yaml") {
+            fm.should_skip_template_evaluation = false;
+          }
+          return new FileMapping(fm.target, fm.source, fm.should_skip_template_evaluation);
         }),
         starterDefinitionYaml.template_attributes
       );
