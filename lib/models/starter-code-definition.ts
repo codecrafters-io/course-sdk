@@ -7,12 +7,10 @@ import Language from "./language";
 export class FileMapping {
   destinationPath: string;
   templatePath: string;
-  shouldSkipTemplateInterpolation: boolean;
 
-  constructor(destinationPath: string, templatePath: string, shouldSkipTemplateInterpolation: boolean) {
+  constructor(destinationPath: string, templatePath: string) {
     this.destinationPath = destinationPath;
     this.templatePath = templatePath;
-    this.shouldSkipTemplateInterpolation = shouldSkipTemplateInterpolation;
   }
 }
 
@@ -35,7 +33,6 @@ export default class StarterCodeDefinition {
       file_mappings: {
         source: string;
         target: string;
-        should_skip_template_evaluation?: boolean;
       }[];
       template_attributes: {
         required_executable: string;
@@ -52,12 +49,7 @@ export default class StarterCodeDefinition {
         course,
         Language.findBySlug(starterDefinitionYaml.language),
         starterDefinitionYaml.file_mappings.map((fm) => {
-          fm.should_skip_template_evaluation = true;
-          let sourceFileExtension = fm.source.split('.').pop();
-          if (sourceFileExtension == "md" || sourceFileExtension == "yml" || sourceFileExtension=="yaml") {
-            fm.should_skip_template_evaluation = false;
-          }
-          return new FileMapping(fm.target, fm.source, fm.should_skip_template_evaluation);
+          return new FileMapping(fm.target, fm.source);
         }),
         starterDefinitionYaml.template_attributes
       );
@@ -72,13 +64,15 @@ export default class StarterCodeDefinition {
     return this.fileMappings.map((mapping: FileMapping) => {
       const fpath = `${templateDir}/${mapping.templatePath}`;
       const templateContents = fs.readFileSync(fpath);
+      const templateFileExtension = mapping.templatePath.split('.').pop() as string;
+      const shouldSkipTemplateInterpolation = !["md", "yml", "yaml"].includes(templateFileExtension);
 
       Mustache.escape = (text) => text;
 
       return {
-        skippedTemplateInterpolation: mapping.shouldSkipTemplateInterpolation,
+        skippedTemplateInterpolation: shouldSkipTemplateInterpolation,
         path: mapping.destinationPath,
-        contents: mapping.shouldSkipTemplateInterpolation
+        contents: shouldSkipTemplateInterpolation
           ? templateContents
           : Mustache.render(templateContents.toString("utf-8"), this.templateContext()),
         mode: fs.statSync(fpath).mode,
