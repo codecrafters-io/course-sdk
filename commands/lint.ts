@@ -54,6 +54,15 @@ export default class LintCommand extends BaseCommand {
     await this.lintRustFiles();
     console.log("Linting of Rust files complete.");
     console.log("");
+
+    await this.buildToolsImage("docker-tools");
+
+    console.log("");
+    console.log("Linting Docker files...")
+    console.log("");
+    await this.lintDockerFiles();
+    console.log("Linting of Docker files complete.");
+    console.log("");
   }
 
   async lintGoFiles() {
@@ -73,7 +82,13 @@ export default class LintCommand extends BaseCommand {
 
   async lintRustFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("rust-tools");
-    await dockerShellCommandExecutor.exec(`find . -name '*.rs' | xargs rustfmt --edition "2021" --check`);
+    await dockerShellCommandExecutor.exec(`find . -name '*.rs' -exec rustfmt --edition "2021" --check -- {} +`);
+  }
+
+  async lintDockerFiles() {
+    const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
+    await dockerShellCommandExecutor.exec(`sed -i '/^COPY /s/--exclude=[^ ]*//g' dockerfiles/*.Dockerfile`);
+    await dockerShellCommandExecutor.exec(`find . -name '*.Dockerfile' -exec hadolint --ignore DL3059 -- {} +`);
   }
 }
 
