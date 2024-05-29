@@ -33,7 +33,10 @@ export default class DockerShellCommandExecutor {
   }
 
   async exec(command: string) {
-    await exec(`docker run --rm -v ${this.workingDirectory}:/workdir -w /workdir course-sdk-${this.dockerfileType} ${command}`);
+    let quotedCommand = command.replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/'/g, "\\'");
+    await ShellCommandExecutor.execute(`docker run --rm -v ${this.workingDirectory}:/workdir -w /workdir course-sdk-${this.dockerfileType} sh -c "${quotedCommand}"`);
   }
 
   // Returns the path to a file inside the container
