@@ -87,8 +87,8 @@ export default class LintCommand extends BaseCommand {
 
   async lintDockerFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
-    await dockerShellCommandExecutor.exec(`sed -i '/^COPY /s/--exclude=[^ ]*//g' dockerfiles/*.Dockerfile`);
-    await dockerShellCommandExecutor.exec(`find . -name '*.Dockerfile' -exec hadolint --ignore DL3059 -- {} +`);
+    await dockerShellCommandExecutor.exec(`sed -i "/^COPY /s/--exclude=[^ ]*//g" dockerfiles/*.Dockerfile`);
+    await dockerShellCommandExecutor.exec(`hadolint --ignore DL3059 dockerfiles/*.Dockerfile`);
   }
 }
 
