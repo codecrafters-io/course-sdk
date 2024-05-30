@@ -2,7 +2,6 @@ import goToolsDockerfile from "./dockerfiles/go-tools.Dockerfile";
 import jsToolsDockerfile from "./dockerfiles/js-tools.Dockerfile";
 import rustToolsDockerfile from "./dockerfiles/rust-tools.Dockerfile";
 import dockerToolsDockerfile from "./dockerfiles/docker-tools.Dockerfile";
-import child_process from "child_process";
 import fs from "fs";
 import tmp from "tmp";
 import util from "util";
@@ -10,7 +9,6 @@ import path from "path";
 import ShellCommandExecutor from "./shell-command-executor";
 import ansiColors from "ansi-colors";
 
-const exec = util.promisify(child_process.exec);
 const writeFile = util.promisify(fs.writeFile);
 
 export type DockerfileType = "js-tools" | "go-tools" | "rust-tools" | "docker-tools";
@@ -33,9 +31,7 @@ export default class DockerShellCommandExecutor {
   }
 
   async exec(command: string) {
-    let quotedCommand = command.replace(/\\/g, '\\\\')
-            .replace(/"/g, '\\"')
-            .replace(/'/g, "\\'");
+    let quotedCommand = command.replace(/"/g, '\\"')
     await ShellCommandExecutor.execute(`docker run --rm -v ${this.workingDirectory}:/workdir -w /workdir course-sdk-${this.dockerfileType} sh -c "${quotedCommand}"`);
   }
 
