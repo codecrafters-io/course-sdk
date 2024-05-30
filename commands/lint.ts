@@ -60,7 +60,14 @@ export default class LintCommand extends BaseCommand {
     console.log("");
     console.log("Linting Docker files...")
     console.log("");
-    await this.lintDockerFiles();
+    const tmpDirectory = "dockerfiles-tmp/";
+    try {
+      await this.lintDockerFiles(tmpDirectory);
+      await this.cleanupAfterLintDockerFiles(tmpDirectory);
+    } catch (error) {
+      await this.cleanupAfterLintDockerFiles(tmpDirectory);
+      throw error;
+    }
     console.log("Linting of Docker files complete.");
     console.log("");
   }
@@ -85,10 +92,16 @@ export default class LintCommand extends BaseCommand {
     await dockerShellCommandExecutor.exec(`find . -name '*.rs' -exec rustfmt --edition "2021" --check -- {} +`);
   }
 
-  async lintDockerFiles() {
+  async lintDockerFiles(tmpDirectory: string) {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
-    await dockerShellCommandExecutor.exec(`sed -i "/^COPY /s/--exclude=[^ ]*//g" dockerfiles/*.Dockerfile`);
-    await dockerShellCommandExecutor.exec(`hadolint --ignore DL3059 dockerfiles/*.Dockerfile`);
+    await dockerShellCommandExecutor.exec(`cp -r dockerfiles/ ${tmpDirectory}/`);
+    await dockerShellCommandExecutor.exec(`sed -i "/^COPY /s/--exclude=[^ ]*//g" ${tmpDirectory}/*.Dockerfile`);
+    await dockerShellCommandExecutor.exec(`hadolint --ignore DL3059 ${tmpDirectory}/*.Dockerfile`);
+  }
+  
+  async cleanupAfterLintDockerFiles(tmpDirectory: string) {
+    const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
+    await dockerShellCommandExecutor.exec(`rm -rf ${tmpDirectory}`);
   }
 }
 
