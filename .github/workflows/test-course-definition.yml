@@ -59,7 +59,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      # We need write permissions to delete the tmp dockerfiles directory 
+      contents: write
 
     timeout-minutes: 5
 
