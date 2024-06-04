@@ -1,6 +1,6 @@
-export class CodeCraftersError extends Error {}
+export class FriendlyError extends Error {}
 
-export class CourseDefinitionFileNotFoundError extends CodeCraftersError {
+export class CourseDefinitionFileNotFoundError extends FriendlyError {
   constructor(directory: string) {
     super(
       `
@@ -11,7 +11,7 @@ Are you sure you're in a CodeCrafters course directory?
   }
 }
 
-export class InvalidCourseDefinitionFileError extends CodeCraftersError {
+export class InvalidCourseDefinitionFileError extends FriendlyError {
   constructor(originalError: Error) {
     super(`The 'course-definition.yml' file is invalid. Error: ${originalError.message}`);
   }
