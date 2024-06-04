@@ -78,14 +78,9 @@ jobs:
       - run: bun install
       - run: make install
 
-      - run: ls -all
-
-      - run: ls -all
-        working-directory: courses/${{github.event.repository.name}}
-
-      - name: chown user
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+      # - name: chown user
+      #   run: |
+      #     sudo chown -R $USER:$USER $GITHUB_WORKSPACE
 
       - name: "Lint using course-sdk"
         run: course-sdk lint
