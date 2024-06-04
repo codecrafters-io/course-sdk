@@ -79,12 +79,21 @@ jobs:
       - run: make install
 
       - run: ls -all
+
+      - run: ls -all
         working-directory: courses/${{github.event.repository.name}}
 
       - run: cp -r dockerfiles/ d-tmp/
+        working-directory: courses/${{github.event.repository.name}}
+
       - run: ls -all dockerfiles/
+        working-directory: courses/${{github.event.repository.name}}
+
       - run: ls -all d-tmp/
+        working-directory: courses/${{github.event.repository.name}}
+
       - run: rm -rf d-tmp/
+        working-directory: courses/${{github.event.repository.name}}
 
       - name: "Lint using course-sdk"
         run: course-sdk lint
