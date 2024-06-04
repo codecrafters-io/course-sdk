@@ -105,6 +105,7 @@ export default class LintCommand extends BaseCommand {
   }
 
   async cleanupAfterLintDockerFiles(tmpDirectory: string) {
+    await ShellCommandExecutor.execute(`ls -all`);
     await ShellCommandExecutor.execute(`rm -rf ${tmpDirectory}`);
   }
 }
