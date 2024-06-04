@@ -95,6 +95,10 @@ jobs:
       - run: rm -rf d-tmp/
         working-directory: courses/${{github.event.repository.name}}
 
+      - name: chown user
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+
       - name: "Lint using course-sdk"
         run: course-sdk lint
         working-directory: courses/${{github.event.repository.name}}
