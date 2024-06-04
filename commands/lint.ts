@@ -88,7 +88,7 @@ export default class LintCommand extends BaseCommand {
 
   async lintDockerFilesHelper(tmpDirectory: string) {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
-    await dockerShellCommandExecutor.exec(`cp -r dockerfiles/ ${tmpDirectory}/`);
+    await ShellCommandExecutor.execute(`cp -r dockerfiles/ ${tmpDirectory}/`);
     await dockerShellCommandExecutor.exec(`sed -i "/^COPY /s/--exclude=[^ ]*//g" ${tmpDirectory}/*.Dockerfile`);
     await dockerShellCommandExecutor.exec(`hadolint --ignore DL3059 ${tmpDirectory}/*.Dockerfile`);
   }
