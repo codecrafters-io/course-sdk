@@ -95,9 +95,6 @@ jobs:
       - run: rm -rf d-tmp/
         working-directory: courses/${{github.event.repository.name}}
 
-      - run: mkdir -p dockerfiles-tmp/dockerfiles
-        working-directory: courses/${{github.event.repository.name}}
-
       - name: chown user
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
