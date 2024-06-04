@@ -59,8 +59,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      # We need write permissions to delete the tmp dockerfiles directory 
-      contents: write
+      contents: read
 
     timeout-minutes: 5
 
@@ -78,6 +77,14 @@ jobs:
 
       - run: bun install
       - run: make install
+
+      - run: ls -all
+        working-directory: courses/${{github.event.repository.name}}
+
+      - run: cp -r dockerfiles/ d-tmp/
+      - run: ls -all dockerfiles/
+      - run: ls -all d-tmp/
+      - run: rm -rf d-tmp/
 
       - name: "Lint using course-sdk"
         run: course-sdk lint
