@@ -10,7 +10,7 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Caches 
+# Caches
 
 .cache
 
@@ -179,3 +179,6 @@ dist
 
 # Local history for Visual Studio Code
 .history/
+
+# Build output
+*.out
