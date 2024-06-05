@@ -55,6 +55,33 @@ jobs:
         run: test -z "$(git ls-files compiled_starters/ --exclude-standard --others)"
         working-directory: courses/${{github.event.repository.name}}
 
+  lint:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: oven-sh/setup-bun@v1
+
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: bun install
+      - run: make install
+
+      - name: "Lint using course-sdk"
+        run: course-sdk lint
+        working-directory: courses/${{github.event.repository.name}}
+
   markdown_lint:
     runs-on: ubuntu-latest
 
