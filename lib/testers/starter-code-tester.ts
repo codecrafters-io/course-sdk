@@ -17,7 +17,6 @@ const writeFile = util.promisify(fs.writeFile);
 
 const exec = util.promisify(child_process.exec);
 const readFile = util.promisify(fs.readFile);
-const coursesWithoutPrintDebugging = ["shell"]
 
 export default class StarterCodeTester extends BaseTester {
   course: Course;
@@ -60,8 +59,8 @@ export default class StarterCodeTester extends BaseTester {
     Logger.logInfo("Executing starter repo script");
 
     // Precompilation can take a while on GitHub runners, so let's give this 60s
-    if (coursesWithoutPrintDebugging.includes(this.course.slug)) {
-      await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Test failed.", 1));
+    if (this.course.slug === "shell") {
+      await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Test failed", 1));
     } else {
       await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Logs from your program will appear here", 1));
     }
@@ -119,7 +118,7 @@ export default class StarterCodeTester extends BaseTester {
       console.log("");
     }
 
-    if (!coursesWithoutPrintDebugging.includes(this.course.slug)) {
+    if (!(this.course.slug === "shell")) {
       const commentRemovalDiffs = await new LineWithCommentRemover(this.copiedStarterDir, this.language).process();
       for (const diff of commentRemovalDiffs) {
         if (diff.toString() === "") {
