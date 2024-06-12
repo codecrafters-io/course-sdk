@@ -59,7 +59,11 @@ export default class StarterCodeTester extends BaseTester {
     Logger.logInfo("Executing starter repo script");
 
     // Precompilation can take a while on GitHub runners, so let's give this 60s
-    await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Logs from your program will appear here", 1));
+    if (this.course.slug === "shell") {
+      await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Test failed", 1));
+    } else {
+      await this.assertTimeUnder(60, this.assertScriptOutput.bind(this, "Logs from your program will appear here", 1));
+    }
 
     Logger.logSuccess("Script output verified");
 
@@ -114,17 +118,19 @@ export default class StarterCodeTester extends BaseTester {
       console.log("");
     }
 
-    const commentRemovalDiffs = await new LineWithCommentRemover(this.copiedStarterDir, this.language).process();
-    for (const diff of commentRemovalDiffs) {
-      if (diff.toString() === "") {
-        Logger.logError("Expected removing logger line to return a diff");
-        Logger.logError(
-          `Are you sure there's a line that matches ${LineWithCommentRemover.LINE_MARKER_PATTERN} in any of these files: ${
-            new LineWithCommentRemover(this.copiedStarterDir, this.language).codeFiles
-          }?`
-        );
+    if (!(this.course.slug === "shell")) {
+      const commentRemovalDiffs = await new LineWithCommentRemover(this.copiedStarterDir, this.language).process();
+      for (const diff of commentRemovalDiffs) {
+        if (diff.toString() === "") {
+          Logger.logError("Expected removing logger line to return a diff");
+          Logger.logError(
+            `Are you sure there's a line that matches ${LineWithCommentRemover.LINE_MARKER_PATTERN} in any of these files: ${
+              new LineWithCommentRemover(this.copiedStarterDir, this.language).codeFiles
+            }?`
+          );
 
-        return;
+          return;
+        }
       }
     }
 
