@@ -41,8 +41,10 @@ export default class FirstStageSolutionsCompiler {
     // TODO: Bun's copyFileSync doesn't support recursive copying?
     execSync(`cp -R ${starterRepositoryDirectory} ${codeDirectory}`);
 
-    const uncommentMarkerDiffs = await new LineWithCommentRemover(codeDirectory, language).process();
-    this.ensureDiffsExist(uncommentMarkerDiffs);
+    if (this.course.slug !== "shell") {
+      const uncommentMarkerDiffs = await new LineWithCommentRemover(codeDirectory, language).process();
+      this.ensureDiffsExist(uncommentMarkerDiffs);
+    }
 
     const passStageDiffs = await new StarterCodeUncommenter(codeDirectory, language).uncomment();
     this.ensureDiffsExist(passStageDiffs);

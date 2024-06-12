@@ -168,6 +168,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Bun build binaries
+*.bun-build
+
 # IntelliJ based IDEs
 .idea
 
