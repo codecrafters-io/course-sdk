@@ -9,6 +9,7 @@ export default class Uncommenter {
     cpp: Uncommenter.DOUBLE_SLASHES,
     csharp: Uncommenter.DOUBLE_SLASHES,
     crystal: Uncommenter.POUND_SIGN,
+    dart: Uncommenter.DOUBLE_SLASHES,
     elixir: Uncommenter.POUND_SIGN,
     gleam: Uncommenter.DOUBLE_SLASHES,
     go: Uncommenter.DOUBLE_SLASHES,
