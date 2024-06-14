@@ -38,7 +38,9 @@ export default class Language {
     const language = this.all().find((language) => language.slug === slug);
 
     if (!language) {
-      throw `Language with slug ${slug} not found`;
+      throw `Language with slug '${slug}' not found. Available slugs: ${this.all()
+        .map((l) => l.slug)
+        .join(", ")}`;
     }
 
     return language;

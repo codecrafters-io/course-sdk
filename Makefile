@@ -1,3 +1,3 @@
 install:
-	bun build ./cli.ts --compile --outfile ./compiled
-	sudo mv ./compiled /usr/local/bin/course-sdk
+	bun build ./cli.ts --compile --outfile=main.out
+	if [ ! -L /usr/local/bin/course-sdk ]; then sudo ln -sf $(shell pwd)/main.out /usr/local/bin/course-sdk; fi

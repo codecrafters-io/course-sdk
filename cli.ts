@@ -3,6 +3,7 @@ import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
 import { Option } from "commander";
+import AddLanguageCommand from "./commands/add-language";
 
 const program = new Command();
 
@@ -41,6 +42,14 @@ program
     }
 
     await new TestCommand(languageFilter).run();
+  });
+
+program
+  .command("add-language")
+  .description("Add a language to this course")
+  .addArgument(new Argument("[language]", "language to add. Example: 'go'").argRequired())
+  .action(async (languageSlug) => {
+    await new AddLanguageCommand(languageSlug).run();
   });
 
 program.parse();

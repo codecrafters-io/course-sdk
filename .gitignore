@@ -10,7 +10,7 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Caches 
+# Caches
 
 .cache
 
@@ -176,3 +176,7 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Build output
+*.out
+
