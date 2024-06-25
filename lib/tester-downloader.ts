@@ -35,8 +35,14 @@ export default class TesterDownloader {
       fileStream.on("error", reject);
     });
 
-    fs.mkdirSync(this.testerDir, { recursive: true });
-    child_process.execSync(`tar xf ${compressedFilePath} -C ${this.testerDir}`);
+    try {
+      const tempExtractDir = fs.mkdtempSync("/tmp/extract")
+      child_process.execSync(`tar xf ${compressedFilePath} -C ${tempExtractDir}`)
+      fs.renameSync(tempExtractDir, this.testerDir)
+    } catch (error) {
+      console.error("Error extracting tester", error)
+    }
+
     fs.unlinkSync(compressedFilePath);
 
     return this.testerDir;
