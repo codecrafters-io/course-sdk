@@ -2,7 +2,7 @@ import { Command, Argument } from "@commander-js/extra-typings";
 import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
-import { Option } from "commander";
+import ValidateCommand from "./commands/validate";
 
 const program = new Command();
 
@@ -41,6 +41,21 @@ program
     }
 
     await new TestCommand(languageFilter).run();
+  });
+
+program
+  .command("check-go")
+  .description("Check Go is present and configured correctly. This is required in the shell challenge, where we need go to build the custom executable.")
+  .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
+  .action(async (languageFilter) => {
+    if (languageFilter === "all") {
+      languageFilter = "";
+    }
+    
+    let commandToExecute = "go version"
+    let outputStreamType = "stdout"
+    let expectedOutput = "go version"
+    await new ValidateCommand(languageFilter, commandToExecute, outputStreamType, expectedOutput).run();
   });
 
 program.parse();
