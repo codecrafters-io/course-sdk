@@ -26,10 +26,6 @@ export default class RuntimeTester extends BaseTester {
     this.expectedOutput = expectedOutput;
   }
 
-  get language() {
-    return Language.findByLanguagePack(this.dockerfile.languagePackWithVersion);
-  }
-
   async doTest() {
     this.copiedStarterDir = tmp.dirSync().name;
     await exec(`rm -rf ${this.copiedStarterDir}`);
@@ -37,14 +33,14 @@ export default class RuntimeTester extends BaseTester {
 
     Logger.logHeader(`Testing Runtime for Dockerfile: ${this.slug}`);
 
-    this.buildImageAndRunInside(this.commandToExecute, this.outputStreamType, this.expectedOutput);
+    await this.buildImageAndExecuteCommand(this.commandToExecute, this.outputStreamType, this.expectedOutput);
 
     Logger.logInfo("");
   }
 
-  async buildImageAndRunInside(commandToExecute: string, outputStreamType: string, expectedOutput: string) {
+  async buildImageAndExecuteCommand(commandToExecute: string, outputStreamType: string, expectedOutput: string) {
     Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image`);
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;    
+    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
     await this.assertStdoutContains(command, "");
 
     Logger.logInfo(`Executing command: \`${commandToExecute}\` inside the container`)
@@ -60,6 +56,10 @@ export default class RuntimeTester extends BaseTester {
     }
 
     Logger.logSuccess(`Found Expected output: \`${expectedOutput}\``);
+  }
+
+  get language() {
+    return Language.findByLanguagePack(this.dockerfile.languagePackWithVersion);
   }
 
   get slug() {
