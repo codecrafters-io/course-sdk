@@ -20,7 +20,7 @@ export default class ValidateCommand extends BaseCommand {
   async doRun() {
     const course = Course.loadFromDirectory(process.cwd());
 
-    let testers = [...this.runtimeTestersForCourse(course, this.commandToExecute, this.outputStreamType, this.expectedOutput)];
+    let testers = [...(await this.runtimeTestersForCourse(course, this.commandToExecute, this.outputStreamType, this.expectedOutput))];
 
     if (this.#languageSlugsToFilter.length !== 0) {
       testers = testers.filter((tester) => this.#languageSlugsToFilter.includes(tester.language.slug));
@@ -46,7 +46,7 @@ export default class ValidateCommand extends BaseCommand {
       .filter((s) => s !== "");
   }
 
-  runtimeTestersForCourse(course: Course, commandToExecute: string, outputStreamType: string, expectedOutput: string): RuntimeTester[] {
-    return course.latestDockerfiles.map((dockerfile) => new RuntimeTester(course, dockerfile, commandToExecute, outputStreamType, expectedOutput));
+  runtimeTestersForCourse(course: Course, commandToExecute: string, outputStreamType: string, expectedOutput: string): Promise<RuntimeTester[]> {
+    return Promise.all(course.latestDockerfiles.map((dockerfile) => new RuntimeTester(course, dockerfile, commandToExecute, outputStreamType, expectedOutput)));
   }
 }
