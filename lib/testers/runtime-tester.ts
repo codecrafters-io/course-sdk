@@ -37,21 +37,24 @@ export default class RuntimeTester extends BaseTester {
 
     Logger.logHeader(`Testing Runtime for Dockerfile: ${this.slug}`);
 
-    Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image`);
     this.buildImageAndRunInside(this.commandToExecute, this.outputStreamType, this.expectedOutput);
 
     Logger.logInfo("");
   }
 
   async buildImageAndRunInside(commandToExecute: string, outputStreamType: string, expectedOutput: string) {
-    Logger.logInfo(`Executing command: ${commandToExecute}`)
-    const command = `docker run --rm $(docker build -q -f ${this.dockerfile.path} ${this.copiedStarterDir}) ${commandToExecute}`;
+    Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image`);
+    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;    
+    await this.assertStdoutContains(command, "");
+
+    Logger.logInfo(`Executing command: \`${commandToExecute}\` inside the container`)
+    const testCommand = `docker run --rm ${this.slug} ${commandToExecute}`;
 
     // outputStreamType is either "stdout" or "stderr"
     if (outputStreamType === "stdout") {
-      await this.assertStdoutContains(command, expectedOutput);
+      await this.assertStdoutContains(testCommand, expectedOutput);
     } else if (outputStreamType === "stderr") {
-      await this.assertStderrContains(command, expectedOutput);
+      await this.assertStderrContains(testCommand, expectedOutput);
     } else {
       throw new Error(`Invalid outputStreamType: ${outputStreamType}`);
     }
