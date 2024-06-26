@@ -58,6 +58,8 @@ export default class RuntimeTester extends BaseTester {
     } else {
       throw new Error(`Invalid outputStreamType: ${outputStreamType}`);
     }
+
+    Logger.logSuccess(`Found Expected output: \`${expectedOutput}\``);
   }
 
   get slug() {
