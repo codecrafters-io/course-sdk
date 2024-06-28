@@ -33,5 +33,5 @@ jobs:
       - run: make install
 
       - name: "Check if go is present inside docker container"
-        run: course-sdk check-go all
+        run: course-sdk buildAndRun all "go version" "stdout" "go version"
         working-directory: courses/${{github.event.repository.name}}
