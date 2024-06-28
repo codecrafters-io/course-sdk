@@ -44,17 +44,19 @@ program
   });
 
 program
-  .command("check-go")
-  .description("Check Go is present and configured correctly. This is required in the shell challenge, where we need go to build the custom executable.")
+  .command("buildAndRun")
+  .description(
+    'Build dockerfile for any language, then run a command and validate its output. Example: \'course-sdk buildAndRun go "go version" stdout "go version"\'. This command will build the dockerfile for go, run "go version" and validate the stdout stream contains "go version"',
+  )
   .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
-  .action(async (languageFilter) => {
+  .addArgument(new Argument("[commandToExecute]", "command to execute. Example: 'go version'").argRequired())
+  .addArgument(new Argument("[outputStreamType]", "output stream type. Example: 'stdout', 'stderr'").argRequired())
+  .addArgument(new Argument("[expectedOutput]", "expected output. Example: 'go version'").argRequired())
+  .action(async (languageFilter, commandToExecute, outputStreamType, expectedOutput) => {
     if (languageFilter === "all") {
       languageFilter = "";
     }
-    
-    let commandToExecute = "go version"
-    let outputStreamType = "stdout"
-    let expectedOutput = "go version"
+
     await new ValidateCommand(languageFilter, commandToExecute, outputStreamType, expectedOutput).run();
   });
 
