@@ -1,0 +1,37 @@
+name: Check if go is present inside docker container
+
+on:
+  workflow_call:
+    inputs:
+      sdkRef:
+        required: false
+        type: string
+        default: main
+
+jobs:
+  check_go_exists:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: oven-sh/setup-bun@v1
+
+      - uses: actions/checkout@v3
+        with:
+          repository: "codecrafters-io/course-sdk"
+          ref: ${{inputs.sdkRef}}
+
+      - uses: actions/checkout@v3
+        with:
+          path: courses/${{github.event.repository.name}}
+
+      - run: bun install
+      - run: make install
+
+      - name: "Check if go is present inside docker container"
+        run: course-sdk build-and-run all "go version" "stdout" "go version"
+        working-directory: courses/${{github.event.repository.name}}

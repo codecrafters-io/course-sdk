@@ -1,12 +1,12 @@
-import { Command, Argument } from "@commander-js/extra-typings";
+import { Argument, Command } from "@commander-js/extra-typings";
 import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
-import { Option } from "commander";
+import BuildAndRunCommand from "./commands/build-and-run";
 
 const program = new Command();
 
-program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.1.3");
+program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.1.4");
 
 program
   .command("compile")
@@ -41,6 +41,23 @@ program
     }
 
     await new TestCommand(languageFilter).run();
+  });
+
+program
+  .command("build-and-run")
+  .description(
+    'Build dockerfile for any language, then run a command and validate its output. Example: \'course-sdk build-and-run go "go version" stdout "go version"\'. This command will build the dockerfile for go, run "go version" and assert that the stdout stream contains "go version"',
+  )
+  .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
+  .addArgument(new Argument("[commandToExecute]", "command to execute. Example: 'go version'").argRequired())
+  .addArgument(new Argument("[outputStreamType]", "output stream type. Example: 'stdout', 'stderr'").argRequired())
+  .addArgument(new Argument("[expectedOutput]", "expected output. Example: 'go version'").argRequired())
+  .action(async (languageFilter, commandToExecute, outputStreamType, expectedOutput) => {
+    if (languageFilter === "all") {
+      languageFilter = "";
+    }
+
+    await new BuildAndRunCommand(languageFilter, commandToExecute, outputStreamType, expectedOutput).run();
   });
 
 program.parse();
