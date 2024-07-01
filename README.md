@@ -5,8 +5,9 @@ This repository is used to develop & test CodeCrafters challenges.
 - Make sure that you have [Docker](https://docs.docker.com/engine/install/) installed.
 - For now, you'll need to compile the SDK from source using Bun.
   - Make sure you have [Bun](https://bun.sh/docs/installation) installed.
-  - Clone this repository and run `make install`
+  - Clone this repository and run `bun install && make install`
   - (In the future, we'll publish pre-compiled binaries for the SDK)
+  - `lstat` is not present in MacOS, create a symlink to `stat` in usr/local/bin `sudo ln -s /usr/bin/stat /usr/local/bin/lstat`
 - Test it with `course-sdk --version`.
 
 ## Developing Courses
