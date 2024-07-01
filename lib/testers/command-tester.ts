@@ -9,7 +9,7 @@ import Dockerfile from "../models/dockerfile";
 
 const exec = util.promisify(child_process.exec);
 
-export default class RuntimeTester extends BaseTester {
+export default class CommandTester extends BaseTester {
   course: Course;
   dockerfile: Dockerfile;
   copiedStarterDir: string | undefined;
