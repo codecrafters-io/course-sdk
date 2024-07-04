@@ -67,6 +67,10 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logSuccess("Script output verified");
 
+    // Commmit newly copied ./you_program.sh file from previous step
+    await exec(`git -C ${this.copiedStarterDir} add .`);
+    await exec(`git -C ${this.copiedStarterDir} commit -m "Copy .codecrafters/run.sh -> your_program.sh"`);
+
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
     if (process.env.CI === "true") {
