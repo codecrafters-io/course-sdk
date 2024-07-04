@@ -15,7 +15,9 @@ elif [ -f /codecrafters-precompile.sh ]; then
     echo ""
 fi
 
-# Copy contents of run.sh to your_program.sh
-cp "${CODECRAFTERS_SUBMISSION_DIR}/.codecrafters/run.sh" "${CODECRAFTERS_SUBMISSION_DIR}/your_program.sh"
+# Move .codecrafters/run.sh --> your_program.sh if present
+if [ -f "${CODECRAFTERS_SUBMISSION_DIR}/.codecrafters/run.sh" ]; then
+    cp "${CODECRAFTERS_SUBMISSION_DIR}/.codecrafters/run.sh" "${CODECRAFTERS_SUBMISSION_DIR}/your_program.sh"
+fi
 
 exec /tester/test.sh
