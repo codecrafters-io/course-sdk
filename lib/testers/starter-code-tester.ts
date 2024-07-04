@@ -67,6 +67,18 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logSuccess("Script output verified");
 
+    // If new program interface used
+    // Commit newly copied ./your_program.sh file from previous step
+    if (fs.existsSync(`${this.copiedStarterDir}/your_program.sh`)) {
+      const diff = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} diff --exit-code your_program.sh`, {
+        expectedExitCodes: [0, 1],
+      });
+      if (diff.exitCode === 1) {
+        await exec(`git -C ${this.copiedStarterDir} add your_program.sh`);
+        await exec(`git -C ${this.copiedStarterDir} commit -m "Copy .codecrafters/run.sh -> your_program.sh"`);
+      }
+    }
+
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
     if (process.env.CI === "true") {
