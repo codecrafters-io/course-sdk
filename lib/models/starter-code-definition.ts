@@ -82,7 +82,7 @@ export default class StarterCodeDefinition {
 
   private templateContext(): any {
     return {
-      language_pack: this.course.latestDockerfileForLanguage(this.language)!.languagePackWithVersion,
+      language_pack_with_version: this.course.latestDockerfileForLanguage(this.language)!.languagePackWithVersion,
       language_name: this.language.name,
       language_slug: this.language.slug,
       [`language_is_${this.language.slug}`]: true,
