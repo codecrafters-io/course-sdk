@@ -1,4 +1,5 @@
 import Language from "./models/language";
+import { FileMapping } from "./models/starter-code-definition";
 
 export class FriendlyError extends Error {}
 
@@ -29,6 +30,19 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
   constructor(language: Language) {
     super(
       `This language isn't supported by add-language yet! Template for ${language.slug} not found in https://github.com/codecrafters-io/language-templates.`
+    );
+  }
+}
+
+export class ConflictingFileMappingError extends FriendlyError {
+  constructor(fmFromYaml: FileMapping, fmFromStarterTemplatesDir: FileMapping) {
+    super(
+      `Conflicting file mappings found.
+
+From starter_templates: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
+In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}
+
+Either delete the file from starter_templates or remove the file mapping from starter-repository-definitions.yml.`
     );
   }
 }
