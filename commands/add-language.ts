@@ -26,6 +26,11 @@ export default class AddLanguageCommand extends BaseCommand {
     console.log("Copying dockerfiles...");
     console.log("");
     await this.#copyDockerfiles(course, languageTemplatesDir);
+
+    console.log("");
+    console.log("Copying starter templates...");
+    console.log("");
+    await this.#copyStarterTemplates(course, languageTemplatesDir);
   }
 
   async #copyDockerfiles(course: Course, languageTemplatesDir: string) {
@@ -33,6 +38,19 @@ export default class AddLanguageCommand extends BaseCommand {
 
     for (const dockerfilePath of dockerfilePaths) {
       await this.#copyFile(course, dockerfilePath, path.join("dockerfiles", path.basename(dockerfilePath)));
+    }
+  }
+
+  async #copyStarterTemplates(course: Course, languageTemplatesDir: string) {
+    const starterFilePaths = await glob(`${languageTemplatesDir}/starter-templates/**/*`, { dot: true });
+
+    for (const starterFilePath of starterFilePaths) {
+      if (fs.statSync(starterFilePath).isDirectory()) {
+        continue;
+      }
+
+      const relativePath = path.relative(`${languageTemplatesDir}/starter-templates`, starterFilePath);
+      await this.#copyFile(course, starterFilePath, path.join("starter_templates", this.languageSlug, relativePath));
     }
   }
 
@@ -45,6 +63,7 @@ export default class AddLanguageCommand extends BaseCommand {
     });
 
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
-    await fs.writeFileSync(targetPath, renderedTemplateContents);
+    await fs.promises.mkdir(path.dirname(targetPath), { recursive: true }); // Ensure the directory exists
+    await fs.promises.writeFile(targetPath, renderedTemplateContents);
   }
 }
