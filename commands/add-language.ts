@@ -56,6 +56,7 @@ export default class AddLanguageCommand extends BaseCommand {
 
   async #copyFile(course: Course, sourcePath: string, relativeTargetPath: string) {
     const sourceFileContents = fs.readFileSync(sourcePath, "utf8");
+    const sourceFileMode = (await fs.promises.stat(sourcePath)).mode;
     const targetPath = path.join(course.directory, relativeTargetPath);
 
     const renderedTemplateContents = Mustache.render(sourceFileContents, {
@@ -65,9 +66,6 @@ export default class AddLanguageCommand extends BaseCommand {
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
     await fs.promises.mkdir(path.dirname(targetPath), { recursive: true }); // Ensure the directory exists
     await fs.promises.writeFile(targetPath, renderedTemplateContents);
-
-    // Retain permissions from the source file
-    const sourceStats = await fs.promises.stat(sourcePath);
-    await fs.promises.chmod(targetPath, sourceStats.mode);
+    await fs.promises.chmod(targetPath, sourceFileMode);
   }
 }
