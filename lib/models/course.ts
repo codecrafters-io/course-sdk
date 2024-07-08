@@ -127,4 +127,8 @@ export default class Course {
 
     return this.stages.slice(index + 1);
   }
+
+  starterTemplatesDirForLanguage(language: Language): string {
+    return path.join(this.directory, "starter_templates", language.slug);
+  }
 }
