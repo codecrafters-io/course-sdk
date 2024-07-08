@@ -5,7 +5,7 @@ import Course from "./course";
 import Language from "./language";
 import { glob } from "glob";
 import path from "path";
-import { DuplicateFileMappingError } from "../errors";
+import { ConflictingFileMappingError } from "../errors";
 
 export class FileMapping {
   destinationPath: string;
@@ -69,8 +69,8 @@ export default class StarterCodeDefinition {
           (fm) => fm.destinationPath === fmFromYaml.destinationPath
         );
 
-        if (fmFromStarterTemplatesDir) {
-          throw new DuplicateFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
+        if (fmFromStarterTemplatesDir && fmFromYaml.templatePath !== fmFromStarterTemplatesDir.templatePath) {
+          throw new ConflictingFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
         }
       }
 

@@ -34,13 +34,15 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
   }
 }
 
-export class DuplicateFileMappingError extends FriendlyError {
+export class ConflictingFileMappingError extends FriendlyError {
   constructor(fmFromYaml: FileMapping, fmFromStarterTemplatesDir: FileMapping) {
     super(
-      `Duplicate file mappings found in starter-repository-definitions.yml.
+      `Conflicting file mappings found.
 
-Default: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
-In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}`
+From starter_templates: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
+In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}
+
+Either delete the file from starter_templates or remove the file mapping from starter-repository-definitions.yml.`
     );
   }
 }
