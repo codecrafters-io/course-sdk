@@ -55,10 +55,13 @@ export default class StarterCodeDefinition {
 
       const starterTemplatesDir = course.starterTemplatesDirForLanguage(language);
 
-      const fileMappingsFromStarterTemplatesDir = glob.sync(`${starterTemplatesDir}/**/*`, { dot: true }).map((starterTemplateFilePath) => {
-        const relativePath = path.relative(starterTemplatesDir, starterTemplateFilePath);
-        return new FileMapping(relativePath, path.join(starterTemplatesDir, relativePath));
-      });
+      const fileMappingsFromStarterTemplatesDir = glob
+        .sync(`${starterTemplatesDir}/**/*`, { dot: true })
+        .filter((starterTemplateFilePath) => fs.statSync(starterTemplateFilePath).isFile())
+        .map((starterTemplateFilePath) => {
+          const relativePath = path.relative(starterTemplatesDir, starterTemplateFilePath);
+          return new FileMapping(relativePath, `starter_templates/${language.slug}/${relativePath}`);
+        });
 
       return new StarterCodeDefinition(
         course,
