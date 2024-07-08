@@ -27,7 +27,6 @@ export default class ShellCommandExecutor {
     childProcess.stderr.pipe(stderrLogStream);
     childProcess.stdout.pipe(stdoutLogStream);
 
-
     return new Promise((resolve, reject) => {
       childProcess.on("close", (exitCode) => {
         if (!expectedExitCodes.includes(exitCode!)) {
@@ -39,7 +38,7 @@ export default class ShellCommandExecutor {
           resolve({
             stdout: stdoutCaptured.getBuffer().toString(),
             stderr: stderrCaptured.getBuffer().toString(),
-            exitCode: exitCode || -1,
+            exitCode: exitCode!,
           });
         }
       });
