@@ -20,7 +20,7 @@ export default class AddLanguageCommand extends BaseCommand {
     const course = Course.loadFromDirectory(process.cwd());
     const language = Language.findBySlug(this.languageSlug);
 
-    const languageTemplatesDir = await new GlobalLanguageTemplatesDownloader(language, "/tmp/course-sdk-glt-cache").download();
+    const languageTemplatesDir = await new GlobalLanguageTemplatesDownloader(language).download();
 
     console.log("");
     console.log("Copying dockerfiles...");
