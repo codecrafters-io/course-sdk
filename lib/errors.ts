@@ -32,3 +32,9 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
     );
   }
 }
+
+export class DuplicateFileMappingError extends FriendlyError {
+  constructor(targetPath: string, templatePath: string) {
+    super(`The mapping for ${templatePath}:${targetPath} is already inferred since it's present in starter_templates.`);
+  }
+}

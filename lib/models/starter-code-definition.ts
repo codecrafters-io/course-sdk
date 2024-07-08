@@ -5,6 +5,7 @@ import Course from "./course";
 import Language from "./language";
 import { glob } from "glob";
 import path from "path";
+import { DuplicateFileMappingError } from "../errors";
 
 export class FileMapping {
   destinationPath: string;
@@ -62,6 +63,12 @@ export default class StarterCodeDefinition {
           const relativePath = path.relative(starterTemplatesDir, starterTemplateFilePath);
           return new FileMapping(relativePath, `starter_templates/${language.slug}/${relativePath}`);
         });
+
+      for (const fmFromYaml of fileMappingsFromYAML) {
+        if (fileMappingsFromStarterTemplatesDir.some((fm) => fm.destinationPath === fmFromYaml.destinationPath)) {
+          throw new DuplicateFileMappingError(fmFromYaml.destinationPath, fmFromYaml.templatePath);
+        }
+      }
 
       return new StarterCodeDefinition(
         course,
