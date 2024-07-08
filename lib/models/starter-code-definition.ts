@@ -65,8 +65,12 @@ export default class StarterCodeDefinition {
         });
 
       for (const fmFromYaml of fileMappingsFromYAML) {
-        if (fileMappingsFromStarterTemplatesDir.some((fm) => fm.destinationPath === fmFromYaml.destinationPath)) {
-          throw new DuplicateFileMappingError(fmFromYaml.destinationPath, fmFromYaml.templatePath);
+        const fmFromStarterTemplatesDir = fileMappingsFromStarterTemplatesDir.find(
+          (fm) => fm.destinationPath === fmFromYaml.destinationPath
+        );
+
+        if (fmFromStarterTemplatesDir) {
+          throw new DuplicateFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
         }
       }
 
