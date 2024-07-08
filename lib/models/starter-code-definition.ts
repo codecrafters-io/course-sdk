@@ -64,7 +64,7 @@ export default class StarterCodeDefinition {
     return this.fileMappings.map((mapping: FileMapping) => {
       const fpath = `${templateDir}/${mapping.templatePath}`;
       const templateContents = fs.readFileSync(fpath);
-      const templateFileExtension = mapping.templatePath.split('.').pop() as string;
+      const templateFileExtension = mapping.templatePath.split(".").pop() as string;
       const shouldSkipTemplateInterpolation = !["md", "yml", "yaml"].includes(templateFileExtension);
 
       Mustache.escape = (text) => text;
@@ -82,6 +82,7 @@ export default class StarterCodeDefinition {
 
   private templateContext(): any {
     return {
+      language_pack: this.course.latestDockerfileForLanguage(this.language)!.languagePack,
       language_name: this.language.name,
       language_slug: this.language.slug,
       [`language_is_${this.language.slug}`]: true,

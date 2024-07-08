@@ -62,10 +62,6 @@ export default class Course {
     );
   }
 
-  compiledStarterRepositoryDirForLanguage(language: Language): string {
-    return path.join(this.compiledStarterRepositoriesDir, language.slug);
-  }
-
   get compiledStarterRepositoriesDir(): string {
     return path.join(this.directory, "compiled_starters");
   }
@@ -88,12 +84,6 @@ export default class Course {
 
   get sourceRepoUrl(): string {
     return `https://github.com/codecrafters-io/build-your-own-${this.slug}`;
-  }
-
-  stagesAfter(courseStage: CourseStage): CourseStage[] {
-    const index = this.stages.findIndex((stage) => stage.slug === courseStage.slug);
-
-    return this.stages.slice(index + 1);
   }
 
   get dockerfiles() {
@@ -122,5 +112,19 @@ export default class Course {
     }
 
     return latestDockerfiles;
+  }
+
+  compiledStarterRepositoryDirForLanguage(language: Language): string {
+    return path.join(this.compiledStarterRepositoriesDir, language.slug);
+  }
+
+  latestDockerfileForLanguage(language: Language): Dockerfile | undefined {
+    return this.latestDockerfiles.find((dockerfile) => dockerfile.language.slug === language.slug);
+  }
+
+  stagesAfter(courseStage: CourseStage): CourseStage[] {
+    const index = this.stages.findIndex((stage) => stage.slug === courseStage.slug);
+
+    return this.stages.slice(index + 1);
   }
 }
