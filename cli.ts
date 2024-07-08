@@ -1,5 +1,6 @@
 import AddLanguageCommand from "./commands/add-language";
 import BuildAndRunCommand from "./commands/build-and-run";
+import ClearCacheCommand from "./commands/clear-cache";
 import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
@@ -67,6 +68,13 @@ program
   .addArgument(new Argument("[language]", "language to add. Example: 'go'").argRequired())
   .action(async (languageSlug) => {
     await new AddLanguageCommand(languageSlug).run();
+  });
+
+program
+  .command("clear-cache")
+  .description("Clear the cache")
+  .action(async () => {
+    await new ClearCacheCommand().run();
   });
 
 program.parse();

@@ -6,12 +6,18 @@ import ansiColors from "ansi-colors";
 import { LanguageTemplateNotAvailableError } from "./errors";
 
 export default class GlobalLanguageTemplatesDownloader {
+  static DEFAULT_CACHE_DIR = "/tmp/course-sdk-glt-cache";
+
   language: Language;
   cacheDir: string;
 
-  constructor(language: Language, cacheDir: string) {
+  constructor(language: Language, cacheDir?: string) {
     this.language = language;
-    this.cacheDir = cacheDir;
+    this.cacheDir = cacheDir || GlobalLanguageTemplatesDownloader.DEFAULT_CACHE_DIR;
+  }
+
+  static clearCache() {
+    fs.rmSync(GlobalLanguageTemplatesDownloader.DEFAULT_CACHE_DIR, { recursive: true, force: true });
   }
 
   async download(): Promise<string> {
