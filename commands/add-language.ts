@@ -65,5 +65,9 @@ export default class AddLanguageCommand extends BaseCommand {
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
     await fs.promises.mkdir(path.dirname(targetPath), { recursive: true }); // Ensure the directory exists
     await fs.promises.writeFile(targetPath, renderedTemplateContents);
+
+    // Retain permissions from the source file
+    const sourceStats = await fs.promises.stat(sourcePath);
+    await fs.promises.chmod(targetPath, sourceStats.mode);
   }
 }
