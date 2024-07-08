@@ -46,7 +46,7 @@ program
   });
 
 program
-  .command("build-and-run")
+  .command("build-and-run", { hidden: true }) // Used for internal testing
   .description(
     'Build dockerfile for any language, then run a command and validate its output. Example: \'course-sdk build-and-run go "go version" stdout "go version"\'. This command will build the dockerfile for go, run "go version" and assert that the stdout stream contains "go version"'
   )
@@ -72,7 +72,7 @@ program
 
 program
   .command("clear-cache")
-  .description("Clear the cache")
+  .description("Clear caches used by other commands")
   .action(async () => {
     await new ClearCacheCommand().run();
   });
