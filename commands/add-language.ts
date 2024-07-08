@@ -1,3 +1,4 @@
+import Mustache from "mustache";
 import BaseCommand from "./base";
 import Language from "../lib/models/language";
 import GlobalLanguageTemplatesDownloader from "../lib/global-language-templates-downloader";
@@ -36,8 +37,14 @@ export default class AddLanguageCommand extends BaseCommand {
   }
 
   async #copyFile(course: Course, sourcePath: string, relativeTargetPath: string) {
+    const sourceFileContents = fs.readFileSync(sourcePath, "utf8");
     const targetPath = path.join(course.directory, relativeTargetPath);
+
+    const renderedTemplateContents = Mustache.render(sourceFileContents, {
+      course_slug: course.slug,
+    });
+
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
-    await fs.copyFileSync(sourcePath, targetPath);
+    await fs.writeFileSync(targetPath, renderedTemplateContents);
   }
 }
