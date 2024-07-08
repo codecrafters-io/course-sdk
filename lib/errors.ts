@@ -1,4 +1,5 @@
 import Language from "./models/language";
+import { FileMapping } from "./models/starter-code-definition";
 
 export class FriendlyError extends Error {}
 
@@ -34,7 +35,12 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
 }
 
 export class DuplicateFileMappingError extends FriendlyError {
-  constructor(targetPath: string, templatePath: string) {
-    super(`The mapping for ${templatePath}:${targetPath} is already inferred since it's present in starter_templates.`);
+  constructor(fmFromYaml: FileMapping, fmFromStarterTemplatesDir: FileMapping) {
+    super(
+      `Duplicate file mappings found in starter-repository-definitions.yml.
+
+Default: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
+In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}`
+    );
   }
 }
