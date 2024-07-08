@@ -3,6 +3,8 @@ import fs from "fs";
 import YAML from "js-yaml";
 import Course from "./course";
 import Language from "./language";
+import { glob } from "glob";
+import path from "path";
 
 export class FileMapping {
   destinationPath: string;
@@ -45,12 +47,23 @@ export default class StarterCodeDefinition {
     ) as StarterDefinitionYAML[];
 
     return starterDefinitionsYaml.map((starterDefinitionYaml) => {
+      const language = Language.findBySlug(starterDefinitionYaml.language);
+
+      const fileMappingsFromYAML = starterDefinitionYaml.file_mappings.map((fm) => {
+        return new FileMapping(fm.target, fm.source);
+      });
+
+      const starterTemplatesDir = course.starterTemplatesDirForLanguage(language);
+
+      const fileMappingsFromStarterTemplatesDir = glob.sync(`${starterTemplatesDir}/**/*`, { dot: true }).map((starterTemplateFilePath) => {
+        const relativePath = path.relative(starterTemplatesDir, starterTemplateFilePath);
+        return new FileMapping(relativePath, path.join(starterTemplatesDir, relativePath));
+      });
+
       return new StarterCodeDefinition(
         course,
-        Language.findBySlug(starterDefinitionYaml.language),
-        starterDefinitionYaml.file_mappings.map((fm) => {
-          return new FileMapping(fm.target, fm.source);
-        }),
+        language,
+        [...fileMappingsFromYAML, ...fileMappingsFromStarterTemplatesDir],
         starterDefinitionYaml.template_attributes
       );
     });
