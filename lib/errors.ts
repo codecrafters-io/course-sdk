@@ -2,6 +2,12 @@ import Language from "./models/language";
 
 export class FriendlyError extends Error {}
 
+export class DefinitionNotFoundError extends FriendlyError {
+  constructor(language: Language) {
+    super(`No definition found for language '${language.slug}' in starter-repository-definitions.yml`);
+  }
+}
+
 export class CourseDefinitionFileNotFoundError extends FriendlyError {
   constructor(directory: string) {
     super(
