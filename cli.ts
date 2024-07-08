@@ -1,8 +1,10 @@
-import { Argument, Command } from "@commander-js/extra-typings";
+import AddLanguageCommand from "./commands/add-language";
+import BuildAndRunCommand from "./commands/build-and-run";
+import ClearCacheCommand from "./commands/clear-cache";
 import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
-import BuildAndRunCommand from "./commands/build-and-run";
+import { Argument, Command } from "@commander-js/extra-typings";
 
 const program = new Command();
 
@@ -44,9 +46,9 @@ program
   });
 
 program
-  .command("build-and-run")
+  .command("build-and-run", { hidden: true }) // Used for internal testing
   .description(
-    'Build dockerfile for any language, then run a command and validate its output. Example: \'course-sdk build-and-run go "go version" stdout "go version"\'. This command will build the dockerfile for go, run "go version" and assert that the stdout stream contains "go version"',
+    'Build dockerfile for any language, then run a command and validate its output. Example: \'course-sdk build-and-run go "go version" stdout "go version"\'. This command will build the dockerfile for go, run "go version" and assert that the stdout stream contains "go version"'
   )
   .addArgument(new Argument("[language]", "language to test for. Example: 'go'. Use 'all' to test all languages").argRequired())
   .addArgument(new Argument("[commandToExecute]", "command to execute. Example: 'go version'").argRequired())
@@ -58,6 +60,21 @@ program
     }
 
     await new BuildAndRunCommand(languageFilter, commandToExecute, outputStreamType, expectedOutput).run();
+  });
+
+program
+  .command("add-language")
+  .description("Add a language to this course")
+  .addArgument(new Argument("[language]", "language to add. Example: 'go'").argRequired())
+  .action(async (languageSlug) => {
+    await new AddLanguageCommand(languageSlug).run();
+  });
+
+program
+  .command("clear-cache")
+  .description("Clear caches used by other commands")
+  .action(async () => {
+    await new ClearCacheCommand().run();
   });
 
 program.parse();
