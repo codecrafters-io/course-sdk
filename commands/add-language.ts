@@ -31,6 +31,11 @@ export default class AddLanguageCommand extends BaseCommand {
     console.log("Copying starter templates...");
     console.log("");
     await this.#copyStarterTemplates(course, languageTemplatesDir);
+
+    console.log("");
+    console.log("Templates copied!");
+    console.log("");
+    console.log(`Now try running "course-sdk test ${language.slug}" and fix stage 1 errors!`);
   }
 
   async #copyDockerfiles(course: Course, languageTemplatesDir: string) {
