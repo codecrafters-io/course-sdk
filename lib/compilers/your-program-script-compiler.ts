@@ -32,12 +32,12 @@ export default class YourProgramScriptCompiler {
       throw new CompileScriptFoundWithoutRunScriptError(this.language);
     }
 
-    const runScriptContents = fs.readFileSync(runScriptPath, "utf8");
+    const runScriptContents = this.minifyScriptContents(fs.readFileSync(runScriptPath, "utf8"));
 
-    let compileScriptContents = null;
+    let compileScriptContents = "";
 
     if (fs.existsSync(compileScriptPath)) {
-      compileScriptContents = fs.readFileSync(compileScriptPath, "utf8");
+      compileScriptContents = this.minifyScriptContents(fs.readFileSync(compileScriptPath, "utf8"));
     }
 
     const yourProgramScriptSections = [];
@@ -52,7 +52,7 @@ export default class YourProgramScriptCompiler {
 
     yourProgramScriptSections.push(`set -e # Exit early if any commands fail`);
 
-    if (compileScriptContents) {
+    if (compileScriptContents != "") {
       yourProgramScriptSections.push(this.generateCompileScriptSectionForYourProgramScript(compileScriptContents));
     }
 
@@ -84,7 +84,6 @@ ${this.minifyScriptContents(runScriptContents)}`;
       .filter((line) => line.trim() !== "") // Remove empty lines
       .filter((line) => !line.startsWith("#")) // Remove comments
       .filter((line) => !line.trim().startsWith("set -e")) // Remove set -e
-      .map((line) => line.trim())
       .join("\n");
   }
 }
