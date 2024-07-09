@@ -6,12 +6,18 @@ import child_process from "child_process";
 import ShellCommandExecutor from "./shell-command-executor";
 
 export default class TesterDownloader {
+  static DEFAULT_TESTERS_ROOT_DIR = "/tmp/testers";
+
   course: Course;
   testersRootDir: string;
 
-  constructor(course: Course, testersRootDir: string) {
+  constructor(course: Course, testersRootDir?: string) {
     this.course = course;
-    this.testersRootDir = testersRootDir;
+    this.testersRootDir = testersRootDir || TesterDownloader.DEFAULT_TESTERS_ROOT_DIR;
+  }
+
+  static clearCache() {
+    fs.rmSync(TesterDownloader.DEFAULT_TESTERS_ROOT_DIR, { recursive: true, force: true });
   }
 
   async downloadIfNeeded(): Promise<string> {
