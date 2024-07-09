@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import fetch from "node-fetch";
 import child_process from "child_process";
+import ShellCommandExecutor from "./shell-command-executor";
 
 export default class TesterDownloader {
   course: Course;
@@ -36,11 +37,11 @@ export default class TesterDownloader {
     });
 
     try {
-      const tempExtractDir = fs.mkdtempSync("/tmp/extract")
-      child_process.execSync(`tar xf ${compressedFilePath} -C ${tempExtractDir}`)
-      fs.renameSync(tempExtractDir, this.testerDir)
+      const tempExtractDir = fs.mkdtempSync("/tmp/extract");
+      await ShellCommandExecutor.execute(`tar xf ${compressedFilePath} -C ${tempExtractDir}`);
+      fs.renameSync(tempExtractDir, this.testerDir);
     } catch (error) {
-      console.error("Error extracting tester", error)
+      console.error("Error extracting tester", error);
     }
 
     fs.unlinkSync(compressedFilePath);
