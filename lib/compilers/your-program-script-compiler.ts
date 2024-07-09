@@ -59,6 +59,7 @@ export default class YourProgramScriptCompiler {
     yourProgramScriptSections.push(this.generateRunScriptSectionForYourProgramScript(runScriptContents));
 
     fs.writeFileSync(yourProgramScriptPath, yourProgramScriptSections.join("\n\n") + "\n");
+    fs.chmodSync(yourProgramScriptPath, 0o755); // Make the script executable
   }
 
   private generateCompileScriptSectionForYourProgramScript(compileScriptContents: string): string {
