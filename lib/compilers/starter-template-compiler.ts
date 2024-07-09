@@ -7,6 +7,7 @@ import { DefinitionNotFoundError } from "../errors";
 import { execSync } from "child_process";
 import { existsSync, mkdirSync, writeFileSync, chmodSync } from "fs";
 import { join, dirname } from "path";
+import YourProgramScriptCompiler from "./your-program-script-compiler";
 
 export default class StarterTemplateCompiler {
   private course: Course;
@@ -58,6 +59,8 @@ export default class StarterTemplateCompiler {
         throw new Error(`Template attribute ${key} references ${value}, which doesn't exist in the starter repository`);
       }
     }
+
+    await new YourProgramScriptCompiler(definition.language, directory).compile();
   }
 
   private async dockerShellCommandExecutor(): Promise<DockerShellCommandExecutor> {
