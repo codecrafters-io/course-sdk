@@ -6,7 +6,7 @@ import ansiColors from "ansi-colors";
 export default class ShellCommandExecutor {
   static execute(
     command: string,
-    options: { expectedExitCodes?: number[]; prefix?: string; shouldLogCommand?: boolean } = {}
+    options: { expectedExitCodes?: number[]; prefix?: string; shouldLogCommand?: boolean; shouldSuppressOutput?: boolean } = {}
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const prefix = options.prefix || "";
     const expectedExitCodes = options.expectedExitCodes || [0];
@@ -14,8 +14,8 @@ export default class ShellCommandExecutor {
     const childProcess = child_process.spawn(command, [], { shell: true });
     const stdoutCaptured = new MemoryWritableStream();
     const stderrCaptured = new MemoryWritableStream();
-    const stdoutLogStream = new PrefixedWritableStream(prefix, process.stdout);
-    const stderrLogStream = new PrefixedWritableStream(prefix, process.stderr);
+    const stdoutLogStream = options.shouldSuppressOutput ? new MemoryWritableStream() : new PrefixedWritableStream(prefix, process.stdout);
+    const stderrLogStream = options.shouldSuppressOutput ? new MemoryWritableStream() : new PrefixedWritableStream(prefix, process.stderr);
 
     if (options.shouldLogCommand) {
       stdoutLogStream.write(`${command}\n`);
