@@ -58,7 +58,7 @@ export default class YourProgramScriptCompiler {
 
     yourProgramScriptSections.push(this.generateRunScriptSectionForYourProgramScript(runScriptContents));
 
-    fs.writeFileSync(yourProgramScriptPath, yourProgramScriptSections.join("\n\n"));
+    fs.writeFileSync(yourProgramScriptPath, yourProgramScriptSections.join("\n\n") + "\n");
   }
 
   private generateCompileScriptSectionForYourProgramScript(compileScriptContents: string): string {
@@ -83,7 +83,7 @@ ${this.minifyScriptContents(runScriptContents)}`;
     return lines
       .filter((line) => line.trim() !== "") // Remove empty lines
       .filter((line) => !line.startsWith("#")) // Remove comments
-      .filter((line) => line.trim().startsWith("set -e")) // Remove set -e
+      .filter((line) => !line.trim().startsWith("set -e")) // Remove set -e
       .map((line) => line.trim())
       .join("\n");
   }
