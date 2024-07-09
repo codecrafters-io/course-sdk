@@ -46,3 +46,19 @@ Either delete the file from starter_templates or remove the file mapping from st
     );
   }
 }
+
+export class CompileScriptFoundWithoutRunScriptError extends FriendlyError {
+  constructor(language: Language) {
+    super(
+      `${language.slug}: Found .codecrafters/compile.sh without .codecrafters/run.sh. Please add .codecrafters/run.sh to your starter_template.`
+    );
+  }
+}
+
+export class YourProgramScriptFoundBeforeCompilationError extends FriendlyError {
+  constructor(language: Language) {
+    super(
+      `${language.slug}: your_program.sh is created programmatically from .codecrafters/compile.sh and .codecrafters/run.sh. Please remove your_program.sh from starter_templates.`
+    );
+  }
+}
