@@ -10,7 +10,7 @@ This repository is used to develop & test CodeCrafters challenges.
   - `lstat` is not present in MacOS, create a symlink to `stat` in usr/local/bin `sudo ln -s /usr/bin/stat /usr/local/bin/lstat`
 - Test it with `course-sdk --version`.
 
-## Developing Courses
+## Developing courses
 
 We'll use [`build-your-own-git`](https://github.com/codecrafters-io/build-your-own-git) as an example here.
 
