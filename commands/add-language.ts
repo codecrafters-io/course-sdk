@@ -33,9 +33,20 @@ export default class AddLanguageCommand extends BaseCommand {
     await this.#copyStarterTemplates(course, languageTemplatesDir);
 
     console.log("");
+    console.log("Copying config.yml...");
+    console.log("");
+    await this.#copyConfigYml(course, languageTemplatesDir);
+
+    console.log("");
     console.log("Templates copied!");
     console.log("");
     console.log(`Now try running "course-sdk test ${language.slug}" and fix stage 1 errors!`);
+  }
+
+  async #copyConfigYml(course: Course, languageTemplatesDir: string) {
+    const configYmlPath = path.join(languageTemplatesDir, "config.yml");
+
+    await this.#copyFile(course, configYmlPath, path.join("starter_templates", this.languageSlug, "config.yml"));
   }
 
   async #copyDockerfiles(course: Course, languageTemplatesDir: string) {
@@ -47,14 +58,14 @@ export default class AddLanguageCommand extends BaseCommand {
   }
 
   async #copyStarterTemplates(course: Course, languageTemplatesDir: string) {
-    const starterFilePaths = await glob(`${languageTemplatesDir}/starter-templates/**/*`, { dot: true });
+    const starterFilePaths = await glob(`${languageTemplatesDir}/code/**/*`, { dot: true });
 
     for (const starterFilePath of starterFilePaths) {
       if (fs.statSync(starterFilePath).isDirectory()) {
         continue;
       }
 
-      const relativePath = path.relative(`${languageTemplatesDir}/starter-templates`, starterFilePath);
+      const relativePath = path.relative(languageTemplatesDir, starterFilePath);
       await this.#copyFile(course, starterFilePath, path.join("starter_templates", this.languageSlug, relativePath));
     }
   }
