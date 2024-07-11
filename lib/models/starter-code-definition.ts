@@ -1,6 +1,5 @@
 import Mustache from "mustache";
 import fs from "fs";
-import YAML from "js-yaml";
 import Course from "./course";
 import Language from "./language";
 import { glob } from "glob";
@@ -51,15 +50,15 @@ export default class StarterCodeDefinition {
         });
 
       // Iterate over a copy since we're modifying the original array in the loop
-      for (const fmFromYaml of [...globalFileMappings]) {
-        const fmFromStarterTemplatesDir = languageFileMappings.find((fm) => fm.destinationPath === fmFromYaml.destinationPath);
+      for (const globalFileMapping of [...globalFileMappings]) {
+        const languageFileMapping = languageFileMappings.find((fm) => fm.destinationPath === globalFileMapping.destinationPath);
 
-        if (fmFromStarterTemplatesDir && fmFromYaml.templatePath !== fmFromStarterTemplatesDir.templatePath) {
+        if (languageFileMapping && globalFileMapping.templatePath !== languageFileMapping.templatePath) {
           // TODO: Find a better way to combine .gitignores!
-          if (fmFromYaml.destinationPath == ".gitignore") {
-            globalFileMappings.splice(globalFileMappings.indexOf(fmFromYaml), 1);
+          if (globalFileMapping.destinationPath == ".gitignore") {
+            globalFileMappings.splice(globalFileMappings.indexOf(globalFileMapping), 1);
           } else {
-            throw new ConflictingFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
+            throw new ConflictingFileMappingError(globalFileMapping, languageFileMapping);
           }
         }
       }
