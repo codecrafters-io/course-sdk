@@ -4,7 +4,12 @@ import YAML from "js-yaml";
 import fs from "fs";
 import { glob } from "glob";
 import path from "path";
-import { CourseDefinitionFileNotFoundError, InvalidCourseDefinitionFileError } from "../errors";
+import {
+  CourseDefinitionFileNotFoundError,
+  InvalidCourseDefinitionFileError,
+  StarterTemplateConfigFileDoesNotContainAttributesError,
+  StarterTemplateConfigFileNotFoundError,
+} from "../errors";
 import Language from "./language";
 
 export default class Course {
@@ -78,12 +83,21 @@ export default class Course {
     return path.join(this.directory, "starter_templates", "all", "code");
   }
 
-  get solutionsDir(): string {
-    return path.join(this.directory, "solutions");
+  get languages(): Language[] {
+    return glob
+      .sync(path.join(this.directory, "starter_templates", "*"))
+      .map((languageDir) => {
+        if (path.basename(languageDir) == "all") {
+          return null;
+        }
+
+        return Language.findBySlug(path.basename(languageDir));
+      })
+      .filter(Boolean) as Language[];
   }
 
-  get starterRepositoryDefinitionsFilePath(): string {
-    return path.join(this.directory, "starter-repository-definitions.yml");
+  get solutionsDir(): string {
+    return path.join(this.directory, "solutions");
   }
 
   get sourceRepoUrl(): string {
@@ -130,6 +144,22 @@ export default class Course {
     const index = this.stages.findIndex((stage) => stage.slug === courseStage.slug);
 
     return this.stages.slice(index + 1);
+  }
+
+  starterTemplateAttributesForLanguage(language: Language): Record<string, string> {
+    const configYamlPath = path.join(this.directory, "starter_templates", language.slug, "config.yml");
+
+    if (!fs.existsSync(configYamlPath)) {
+      throw new StarterTemplateConfigFileNotFoundError(configYamlPath);
+    }
+
+    const config = YAML.load(fs.readFileSync(configYamlPath, "utf8")) as Record<string, string>;
+
+    if (!config.attributes) {
+      throw new StarterTemplateConfigFileDoesNotContainAttributesError(configYamlPath);
+    }
+
+    return config.attributes as unknown as Record<string, string>;
   }
 
   starterTemplatesDirForLanguage(language: Language): string {

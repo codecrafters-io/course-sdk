@@ -3,9 +3,23 @@ import { FileMapping } from "./models/starter-code-definition";
 
 export class FriendlyError extends Error {}
 
-export class DefinitionNotFoundError extends FriendlyError {
+export class LanguageNotSupportedError extends FriendlyError {
   constructor(language: Language) {
-    super(`No definition found for language '${language.slug}' in starter-repository-definitions.yml`);
+    super(
+      `Language '${language.slug}' is not supported by this course (i.e. the ./starter_templates/${language.slug} directory does not exist)`
+    );
+  }
+}
+
+export class StarterTemplateConfigFileNotFoundError extends FriendlyError {
+  constructor(configYamlPath: string) {
+    super(`Starter template config file not found at ${configYamlPath}`);
+  }
+}
+
+export class StarterTemplateConfigFileDoesNotContainAttributesError extends FriendlyError {
+  constructor(configYamlPath: string) {
+    super(`Starter template config file at ${configYamlPath} does not contain 'attributes' key`);
   }
 }
 
@@ -35,14 +49,14 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
 }
 
 export class ConflictingFileMappingError extends FriendlyError {
-  constructor(fmFromYaml: FileMapping, fmFromStarterTemplatesDir: FileMapping) {
+  constructor(globalFileMapping: FileMapping, languageFileMapping: FileMapping) {
     super(
       `Conflicting file mappings found.
 
-From starter_templates: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
-In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}
+From starter_templates/all: ${globalFileMapping.templatePath} -> ${globalFileMapping.destinationPath}
+From starter_templates/<language>: ${languageFileMapping.templatePath} -> ${languageFileMapping.destinationPath}
 
-Either delete the file from starter_templates or remove the file mapping from starter-repository-definitions.yml.`
+Remove one of these to proceed.`
     );
   }
 }
