@@ -74,6 +74,10 @@ export default class Course {
     return this.stages[0];
   }
 
+  get globalStarterTemplatesDir(): string {
+    return path.join(this.directory, "starter_templates", "all", "code");
+  }
+
   get solutionsDir(): string {
     return path.join(this.directory, "solutions");
   }
