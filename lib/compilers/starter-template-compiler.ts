@@ -3,7 +3,7 @@ import DockerShellCommandExecutor from "../docker-shell-command-executor";
 import Language from "../models/language";
 import StarterCodeDefinition from "../models/starter-code-definition";
 import pMap from "p-map";
-import { DefinitionNotFoundError } from "../errors";
+import { LanguageNotSupportedError } from "../errors";
 import { execSync } from "child_process";
 import { existsSync, mkdirSync, writeFileSync, chmodSync } from "fs";
 import { join, dirname } from "path";
@@ -27,7 +27,7 @@ export default class StarterTemplateCompiler {
     const definition = this.definitions.find((definition) => definition.language.slug === language.slug);
 
     if (!definition) {
-      throw new DefinitionNotFoundError(language);
+      throw new LanguageNotSupportedError(language);
     }
 
     console.log(`compiling ${definition.course.slug}-${definition.language.slug}`);

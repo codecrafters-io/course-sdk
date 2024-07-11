@@ -3,9 +3,17 @@ import { FileMapping } from "./models/starter-code-definition";
 
 export class FriendlyError extends Error {}
 
-export class DefinitionNotFoundError extends FriendlyError {
+export class LanguageNotSupportedError extends FriendlyError {
   constructor(language: Language) {
-    super(`No definition found for language '${language.slug}' in starter-repository-definitions.yml`);
+    super(
+      `Language '${language.slug}' is not supported by this course (i.e. the ./starter_templates/${language.slug} directory does not exist)`
+    );
+  }
+}
+
+export class StarterTemplateAttributesFileNotFoundError extends FriendlyError {
+  constructor(attributesYamlPath: string) {
+    super(`Starter template attributes file not found at ${attributesYamlPath}`);
   }
 }
 
