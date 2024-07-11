@@ -43,14 +43,14 @@ export class LanguageTemplateNotAvailableError extends FriendlyError {
 }
 
 export class ConflictingFileMappingError extends FriendlyError {
-  constructor(fmFromYaml: FileMapping, fmFromStarterTemplatesDir: FileMapping) {
+  constructor(globalFileMapping: FileMapping, languageFileMapping: FileMapping) {
     super(
       `Conflicting file mappings found.
 
-From starter_templates: ${fmFromStarterTemplatesDir.templatePath} -> ${fmFromStarterTemplatesDir.destinationPath}
-In starter-repository-definitions.yml: ${fmFromYaml.templatePath} -> ${fmFromYaml.destinationPath}
+From starter_templates/all: ${globalFileMapping.templatePath} -> ${globalFileMapping.destinationPath}
+From starter_templates/<language>: ${languageFileMapping.templatePath} -> ${languageFileMapping.destinationPath}
 
-Either delete the file from starter_templates or remove the file mapping from starter-repository-definitions.yml.`
+Remove one of these to proceed.`
     );
   }
 }
