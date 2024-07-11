@@ -31,25 +31,7 @@ export default class StarterCodeDefinition {
   }
 
   static loadForCourse(course: Course): StarterCodeDefinition[] {
-    type StarterDefinitionYAML = {
-      language: string;
-      file_mappings: {
-        source: string;
-        target: string;
-      }[];
-      template_attributes: {
-        required_executable: string;
-        user_editable_file: string;
-      };
-    };
-
-    const starterDefinitionsYaml = YAML.load(
-      fs.readFileSync(course.starterRepositoryDefinitionsFilePath, "utf8")
-    ) as StarterDefinitionYAML[];
-
-    return starterDefinitionsYaml.map((starterDefinitionYaml) => {
-      const language = Language.findBySlug(starterDefinitionYaml.language);
-
+    return course.languages.map((language) => {
       const globalFileMappings = glob
         .sync(`${course.globalStarterTemplatesDir}/**/*`, { dot: true })
         .filter((starterTemplateFilePath) => fs.statSync(starterTemplateFilePath).isFile())
@@ -86,7 +68,7 @@ export default class StarterCodeDefinition {
         course,
         language,
         [...globalFileMappings, ...languageFileMappings],
-        starterDefinitionYaml.template_attributes
+        course.starterTemplateAttributesForLanguage(language)
       );
     });
   }
