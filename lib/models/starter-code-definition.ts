@@ -50,34 +50,42 @@ export default class StarterCodeDefinition {
     return starterDefinitionsYaml.map((starterDefinitionYaml) => {
       const language = Language.findBySlug(starterDefinitionYaml.language);
 
-      const fileMappingsFromYAML = starterDefinitionYaml.file_mappings.map((fm) => {
-        return new FileMapping(fm.target, fm.source);
-      });
+      const globalFileMappings = glob
+        .sync(`${course.globalStarterTemplatesDir}/**/*`, { dot: true })
+        .filter((starterTemplateFilePath) => fs.statSync(starterTemplateFilePath).isFile())
+        .map((starterTemplateFilePath) => {
+          const relativePath = path.relative(course.globalStarterTemplatesDir, starterTemplateFilePath);
+          return new FileMapping(relativePath, path.relative(course.directory, starterTemplateFilePath));
+        });
 
       const starterTemplatesDir = course.starterTemplatesDirForLanguage(language);
 
-      const fileMappingsFromStarterTemplatesDir = glob
+      const languageFileMappings = glob
         .sync(`${starterTemplatesDir}/**/*`, { dot: true })
         .filter((starterTemplateFilePath) => fs.statSync(starterTemplateFilePath).isFile())
         .map((starterTemplateFilePath) => {
           const relativePath = path.relative(starterTemplatesDir, starterTemplateFilePath);
-          return new FileMapping(relativePath, `starter_templates/${language.slug}/${relativePath}`);
+          return new FileMapping(relativePath, path.relative(course.directory, starterTemplateFilePath));
         });
 
-      for (const fmFromYaml of fileMappingsFromYAML) {
-        const fmFromStarterTemplatesDir = fileMappingsFromStarterTemplatesDir.find(
-          (fm) => fm.destinationPath === fmFromYaml.destinationPath
-        );
+      // Iterate over a copy since we're modifying the original array in the loop
+      for (const fmFromYaml of [...globalFileMappings]) {
+        const fmFromStarterTemplatesDir = languageFileMappings.find((fm) => fm.destinationPath === fmFromYaml.destinationPath);
 
         if (fmFromStarterTemplatesDir && fmFromYaml.templatePath !== fmFromStarterTemplatesDir.templatePath) {
-          throw new ConflictingFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
+          // TODO: Find a better way to combine .gitignores!
+          if (fmFromYaml.destinationPath == ".gitignore") {
+            globalFileMappings.splice(globalFileMappings.indexOf(fmFromYaml), 1);
+          } else {
+            throw new ConflictingFileMappingError(fmFromYaml, fmFromStarterTemplatesDir);
+          }
         }
       }
 
       return new StarterCodeDefinition(
         course,
         language,
-        [...fileMappingsFromYAML, ...fileMappingsFromStarterTemplatesDir],
+        [...globalFileMappings, ...languageFileMappings],
         starterDefinitionYaml.template_attributes
       );
     });
