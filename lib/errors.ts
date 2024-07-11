@@ -11,9 +11,15 @@ export class LanguageNotSupportedError extends FriendlyError {
   }
 }
 
-export class StarterTemplateAttributesFileNotFoundError extends FriendlyError {
-  constructor(attributesYamlPath: string) {
-    super(`Starter template attributes file not found at ${attributesYamlPath}`);
+export class StarterTemplateConfigFileNotFoundError extends FriendlyError {
+  constructor(configYamlPath: string) {
+    super(`Starter template config file not found at ${configYamlPath}`);
+  }
+}
+
+export class StarterTemplateConfigFileDoesNotContainAttributesError extends FriendlyError {
+  constructor(configYamlPath: string) {
+    super(`Starter template config file at ${configYamlPath} does not contain 'attributes' key`);
   }
 }
 

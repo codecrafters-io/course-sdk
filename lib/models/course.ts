@@ -4,7 +4,12 @@ import YAML from "js-yaml";
 import fs from "fs";
 import { glob } from "glob";
 import path from "path";
-import { CourseDefinitionFileNotFoundError, InvalidCourseDefinitionFileError, StarterTemplateAttributesFileNotFoundError } from "../errors";
+import {
+  CourseDefinitionFileNotFoundError,
+  InvalidCourseDefinitionFileError,
+  StarterTemplateConfigFileDoesNotContainAttributesError,
+  StarterTemplateConfigFileNotFoundError,
+} from "../errors";
 import Language from "./language";
 
 export default class Course {
@@ -142,13 +147,19 @@ export default class Course {
   }
 
   starterTemplateAttributesForLanguage(language: Language): Record<string, string> {
-    const attributesYamlPath = path.join(this.directory, "starter_templates", language.slug, "attributes.yml");
+    const configYamlPath = path.join(this.directory, "starter_templates", language.slug, "config.yml");
 
-    if (!fs.existsSync(attributesYamlPath)) {
-      throw new StarterTemplateAttributesFileNotFoundError(attributesYamlPath);
+    if (!fs.existsSync(configYamlPath)) {
+      throw new StarterTemplateConfigFileNotFoundError(configYamlPath);
     }
 
-    return YAML.load(fs.readFileSync(attributesYamlPath, "utf8")) as Record<string, string>;
+    const config = YAML.load(fs.readFileSync(configYamlPath, "utf8")) as Record<string, string>;
+
+    if (!config.attributes) {
+      throw new StarterTemplateConfigFileDoesNotContainAttributesError(configYamlPath);
+    }
+
+    return config.attributes as unknown as Record<string, string>;
   }
 
   starterTemplatesDirForLanguage(language: Language): string {
