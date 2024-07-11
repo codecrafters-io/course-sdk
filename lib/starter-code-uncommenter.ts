@@ -74,6 +74,7 @@ export default class StarterCodeUncommenter {
   // TODO: Implement postProcessors
 
   private codeFiles() {
+    // TODO: Ignore .gitignore files?
     return glob.sync(`${this.dir}/**/*.${this.language.codeFileExtension}`);
   }
 }
