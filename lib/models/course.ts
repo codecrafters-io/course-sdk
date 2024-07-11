@@ -133,6 +133,6 @@ export default class Course {
   }
 
   starterTemplatesDirForLanguage(language: Language): string {
-    return path.join(this.directory, "starter_templates", language.slug);
+    return path.join(this.directory, "starter_templates", language.slug, "code");
   }
 }
