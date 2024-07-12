@@ -55,7 +55,7 @@ export default class StarterTemplateCompiler {
     }
 
     for (const [key, value] of Object.entries(definition.templateAttrs)) {
-      if (key.endsWith("_file") && !definition.fileMappings.map((fm) => fm.destinationPath).includes(value as string)) {
+      if (key.endsWith("_file") && !definition.fileDefinitions.map((fd) => fd.destinationPath).includes(value as string)) {
         throw new Error(`Template attribute ${key} references ${value}, which doesn't exist in the starter repository`);
       }
     }
