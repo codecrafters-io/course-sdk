@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -o pipefail
 
 CODECRAFTERS_SUBMISSION_DIR=/app
 
