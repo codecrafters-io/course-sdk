@@ -191,7 +191,7 @@ export default class StarterCodeTester extends BaseTester {
       `-v '${this.copiedStarterDir}:/app'`,
       `-v '${path.resolve(this.testerDir)}:/tester:ro'`,
       `-v '${testScriptPath}:/init.sh:ro'`,
-      "-e CODECRAFTERS_SUBMISSION_DIR=/app",
+      "-e CODECRAFTERS_REPOSITORY_DIR=/app",
       `-e CODECRAFTERS_TEST_CASES_JSON='[${this.course.firstStage.testerTestCaseJson}]'`,
       `-e CODECRAFTERS_CURRENT_STAGE_SLUG=${this.course.firstStage.slug}`, // TODO: Remove this
       "-e TESTER_DIR=/tester",
