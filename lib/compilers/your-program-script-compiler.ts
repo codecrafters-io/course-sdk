@@ -67,7 +67,10 @@ export default class YourProgramScriptCompiler {
 #
 # - Edit this to change how your program compiles locally
 # - Edit .codecrafters/compile.sh to change how your program compiles remotely
-${this.minifyScriptContents(compileScriptContents)}`;
+(
+  cd "$(dirname "$0")" # Ensure compile steps are run within the repository directory
+${this.indent(this.minifyScriptContents(compileScriptContents), "  ")}
+)`;
   }
 
   private generateRunScriptSectionForYourProgramScript(runScriptContents: string): string {
@@ -85,6 +88,13 @@ ${this.minifyScriptContents(runScriptContents)}`;
       .filter((line) => line.trim() !== "") // Remove empty lines
       .filter((line) => !line.startsWith("#")) // Remove comments
       .filter((line) => !line.trim().startsWith("set -e")) // Remove set -e
+      .join("\n");
+  }
+
+  private indent(scriptContents: string, indentation: string): string {
+    return scriptContents
+      .split("\n")
+      .map((line) => indentation + line)
       .join("\n");
   }
 }
