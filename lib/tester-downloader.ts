@@ -45,12 +45,12 @@ export default class TesterDownloader {
     try {
       const tempExtractDir = fs.mkdtempSync("/tmp/extract");
       await ShellCommandExecutor.execute(`tar xf ${compressedFilePath} -C ${tempExtractDir}`);
+      fs.unlinkSync(compressedFilePath);
       fs.renameSync(tempExtractDir, this.testerDir);
     } catch (error) {
       console.error("Error extracting tester", error);
+      process.exit(1);
     }
-
-    fs.unlinkSync(compressedFilePath);
 
     return this.testerDir;
   }
