@@ -23,6 +23,7 @@ export default class Language {
       new Language("javascript", "JavaScript"),
       new Language("kotlin", "Kotlin"),
       new Language("nim", "Nim"),
+      new Language("ocaml", "OCaml"),
       new Language("php", "PHP"),
       new Language("python", "Python"),
       new Language("ruby", "Ruby"),
