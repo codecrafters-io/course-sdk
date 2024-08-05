@@ -70,6 +70,7 @@ export default class Language {
       javascript: "js",
       kotlin: "kt",
       nim: "nim",
+      ocaml: "ml",
       php: "php",
       python: "py",
       ruby: "rb",

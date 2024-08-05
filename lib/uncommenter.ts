@@ -1,11 +1,11 @@
 export default class Uncommenter {
-  private static POUND_SIGN = /(^\s*)(#\s{0,1})/;
-  private static DOUBLE_SLASHES = /(^\s*)(\/\/\s{0,1})/;
-  private static DOUBLE_HYPHENS = /(^\s*)(--\s{0,1})/;
+  private static POUND_SIGN = /(^\s*)#\s{0,1}(.*)$/;
+  private static DOUBLE_SLASHES = /(^\s*)\/\/\s{0,1}(.*)$/;
+  private static DOUBLE_HYPHENS = /(^\s*)--\s{0,1}(.*)$/;
 
   private static REGEX_PATTERNS: { [key: string]: RegExp } = {
     c: Uncommenter.DOUBLE_SLASHES,
-    clojure: /(^\s*)(;;\s{0,1})/,
+    clojure: /(^\s*);;\s{0,1}(.*)$/,
     cpp: Uncommenter.DOUBLE_SLASHES,
     csharp: Uncommenter.DOUBLE_SLASHES,
     crystal: Uncommenter.POUND_SIGN,
@@ -18,6 +18,7 @@ export default class Uncommenter {
     javascript: Uncommenter.DOUBLE_SLASHES,
     kotlin: Uncommenter.DOUBLE_SLASHES,
     nim: Uncommenter.POUND_SIGN,
+    ocaml: /(^\s*)\(\*\s{0,1}(.*)\*\)$/,
     php: Uncommenter.DOUBLE_SLASHES,
     python: Uncommenter.POUND_SIGN,
     ruby: Uncommenter.POUND_SIGN,
@@ -68,7 +69,10 @@ export default class Uncommenter {
 
   private uncommentLine(line: string): string {
     const matches = line.match(this.#lineRegex);
-    const uncommented = line.replace(matches![2], "");
+    const uncommented = matches!.slice(1).join("");
+
+    console.log(JSON.stringify(matches), JSON.stringify(uncommented));
+
     return uncommented.trim() === "" ? "" : uncommented;
   }
 

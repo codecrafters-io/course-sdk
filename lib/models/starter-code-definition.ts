@@ -87,7 +87,18 @@ export default class StarterCodeDefinition {
 
       const languageFileDefinitions = glob
         .sync(`${starterTemplatesDir}/**/*`, { dot: true })
-        .filter((starterTemplateFilePath) => fs.statSync(starterTemplateFilePath).isFile())
+        .filter((starterTemplateFilePath) => {
+          try {
+            return fs.statSync(starterTemplateFilePath).isFile();
+          } catch (e) {
+            if (fs.lstatSync(starterTemplateFilePath).isSymbolicLink() && !fs.existsSync(starterTemplateFilePath)) {
+              return false;
+            } else {
+              console.log(`Failed to run stat on ${starterTemplateFilePath}, error: ${e}`);
+              process.exit(1);
+            }
+          }
+        })
         .map((starterTemplateFilePath) => {
           const destinationPath = path.relative(starterTemplatesDir, starterTemplateFilePath);
           return new SingleTemplateFileDefinition(destinationPath, path.relative(course.directory, starterTemplateFilePath));
