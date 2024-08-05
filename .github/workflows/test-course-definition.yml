@@ -109,7 +109,7 @@ jobs:
       #     tags: tester:depot
 
       - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
-      - run: docker-compose run js-tools markdownlint --disable MD041 courses/${{github.event.repository.name}}/compiled_starters
+      - run: docker compose run js-tools markdownlint --disable MD041 courses/${{github.event.repository.name}}/compiled_starters
 
   go_lint:
     runs-on: ubuntu-latest
@@ -149,7 +149,7 @@ jobs:
       #     tags: tester:depot
 
       - run: docker build -t js-tools -f lib/dockerfiles/js-tools.Dockerfile .
-      - run: docker-compose run js-tools prettier --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check courses/${{github.event.repository.name}}/**/*.js
+      - run: docker compose run js-tools prettier --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check courses/${{github.event.repository.name}}/**/*.js
 
   rust_lint:
     runs-on: ubuntu-latest
@@ -274,7 +274,7 @@ jobs:
       #     load: true
       #     tags: js-tools
 
-      - run: docker-compose run js-tools ajv validate --spec draft2020 -s schemas/course-definition.json -d courses/${{github.event.repository.name}}/course-definition.yml
+      - run: docker compose run js-tools ajv validate --spec draft2020 -s schemas/course-definition.json -d courses/${{github.event.repository.name}}/course-definition.yml
 
   validate-stages-naming:
     runs-on: ubuntu-latest
