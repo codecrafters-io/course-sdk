@@ -196,6 +196,26 @@ b = c
 c = d
 `;
 
+const SAMPLE_OCAML_COMMENTED = `
+let main () =
+  (* Uncomment this to pass the first stage *)
+  (* let a = 1 in *)
+  (* let b = 2 in *)
+  (* Printf.printf "%d\n" (a + b) *)
+  ()
+
+let _ = main ()
+`;
+
+const SAMPLE_OCAML_UNCOMMENTED = `
+let main () =
+  let a = 1 in
+  let b = 2 in
+  Printf.printf "%d\n" (a + b)
+
+let _ = main ()
+`;
+
 test("python", () => {
   const actual = new Uncommenter("python", SAMPLE_PY_COMMENTED, UNCOMMENT_PATTERN).uncommented;
   const expected = SAMPLE_PY_UNCOMMENTED;
@@ -297,6 +317,18 @@ test("twice csharp", () => {
   const expected = SAMPLE_CSHARP_UNCOMMENTED;
   expect(actual).toBe(expected);
 });
+
+// test("ocaml", () => {
+//   const actual = new Uncommenter("ocaml", SAMPLE_OCAML_COMMENTED, UNCOMMENT_PATTERN).uncommented;
+//   const expected = SAMPLE_OCAML_UNCOMMENTED;
+//   expect(actual).toBe(expected);
+// });
+
+// test("twice ocaml", () => {
+//   const actual = new Uncommenter("ocaml", SAMPLE_OCAML_UNCOMMENTED, UNCOMMENT_PATTERN).uncommented;
+//   const expected = SAMPLE_OCAML_UNCOMMENTED;
+//   expect(actual).toBe(expected);
+// });
 
 test("two markers", () => {
   const actual = new Uncommenter("python", SAMPLE_TWO_MARKERS_COMMENTED, UNCOMMENT_PATTERN).uncommented;
