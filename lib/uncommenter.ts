@@ -71,9 +71,7 @@ export default class Uncommenter {
     const matches = line.match(this.#lineRegex);
     const uncommented = matches!.slice(1).join("");
 
-    console.log(JSON.stringify(matches), JSON.stringify(uncommented));
-
-    return uncommented.trim() === "" ? "" : uncommented;
+    return uncommented.trim() === "" ? "" : uncommented.trimEnd();
   }
 
   private withinUncommentBounds(index: number): boolean {
