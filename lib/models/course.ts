@@ -28,18 +28,9 @@ export default class Course {
   }
 
   static loadFromDirectory(directory: string): Course {
-    let currentDir = directory;
-    let definitionYamlPath;
+    const definitionYamlPath = path.join(directory, "course-definition.yml");
 
-    while (currentDir !== path.parse(currentDir).root) {
-      definitionYamlPath = path.join(currentDir, "course-definition.yml");
-      if (fs.existsSync(definitionYamlPath)) {
-        break;
-      }
-      currentDir = path.dirname(currentDir);
-    }
-
-    if (!definitionYamlPath || !fs.existsSync(definitionYamlPath)) {
+    if (!fs.existsSync(definitionYamlPath)) {
       throw new CourseDefinitionFileNotFoundError(directory);
     }
 
@@ -72,7 +63,7 @@ export default class Course {
       definitionYaml["stages"].map(
         (stageYaml, stageIndex) => new CourseStage(stageYaml["name"] as string, stageIndex + 1, stageYaml["slug"] as string)
       ),
-      path.dirname(definitionYamlPath)
+      directory
     );
   }
 
