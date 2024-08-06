@@ -35,7 +35,7 @@ export default class StarterCodeTester extends BaseTester {
   async doTest() {
     this.copiedStarterDir = tmp.dirSync().name;
     await exec(`rm -rf ${this.copiedStarterDir}`);
-    await exec(`cp -pr ${this.starterDir} ${this.copiedStarterDir}`);
+    await exec(`cp -r ${this.starterDir} ${this.copiedStarterDir}`);
     await exec(`git -C ${this.copiedStarterDir} init`);
     await exec(`git -C ${this.copiedStarterDir} add .`);
     await exec(`git -C ${this.copiedStarterDir} commit -m "Initial commit"`);
