@@ -77,6 +77,7 @@ export default class AddLanguageCommand extends BaseCommand {
 
     const renderedTemplateContents = Mustache.render(sourceFileContents, {
       course_slug: course.slug,
+      course_name: course.name,
     });
 
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
