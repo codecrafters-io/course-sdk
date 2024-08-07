@@ -81,11 +81,11 @@ export default class StarterTemplateCompiler {
 
     if (filepath.endsWith(".md")) {
       console.log(`  - postprocessing ${relativePath}`);
-      await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore ${relativePath}`);
+      await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore "${relativePath}"`);
     } else if (filepath.endsWith(".js")) {
       console.log(`  - postprocessing ${relativePath}`);
       await dockerShellCommandExecutor.exec(
-        `prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check ${relativePath}`
+        `prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check "${relativePath}"`
       );
     }
   }
