@@ -98,8 +98,7 @@ export default class StarterCodeTester extends BaseTester {
       Logger.logInfo(`There are uncommitted changes to compiled templates in ${this.copiedStarterDir}:`);
       Logger.logInfo(diff.stdout);
       Logger.logError("Either commit these changes or add the files to .gitignore and try again.");
-
-      throw new Error("TestFailedError");
+      process.exit(1);
     }
 
     Logger.logInfo("Checking if there are no untracked changes to compiled templates");

@@ -43,6 +43,14 @@ export default class AddLanguageCommand extends BaseCommand {
     console.log(`Now try running "course-sdk test ${language.slug}" and fix stage 1 errors!`);
   }
 
+  #buildTemplateContext(course: Course) {
+    return {
+      course_slug: course.slug,
+      course_slug_underscorized: course.slug.replace("-", "_"),
+      course_name: course.name,
+    };
+  }
+
   async #copyConfigYml(course: Course, languageTemplatesDir: string) {
     const configYmlPath = path.join(languageTemplatesDir, "config.yml");
 
@@ -65,7 +73,8 @@ export default class AddLanguageCommand extends BaseCommand {
         continue;
       }
 
-      const relativePath = path.relative(languageTemplatesDir, starterFilePath);
+      const relativePathTemplate = path.relative(languageTemplatesDir, starterFilePath);
+      const relativePath = Mustache.render(relativePathTemplate, this.#buildTemplateContext(course));
       await this.#copyFile(course, starterFilePath, path.join("starter_templates", this.languageSlug, relativePath));
     }
   }
@@ -75,10 +84,7 @@ export default class AddLanguageCommand extends BaseCommand {
     const sourceFileMode = (await fs.promises.stat(sourcePath)).mode;
     const targetPath = path.join(course.directory, relativeTargetPath);
 
-    const renderedTemplateContents = Mustache.render(sourceFileContents, {
-      course_slug: course.slug,
-      course_name: course.name,
-    });
+    const renderedTemplateContents = Mustache.render(sourceFileContents, this.#buildTemplateContext(course));
 
     console.log(`${ansiColors.yellow("[copy]")} ${relativeTargetPath}`);
     await fs.promises.mkdir(path.dirname(targetPath), { recursive: true }); // Ensure the directory exists
