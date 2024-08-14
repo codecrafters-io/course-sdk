@@ -64,8 +64,13 @@ export default class TesterDownloader {
       throw new Error(`Failed to fetch latest tester version. Status: ${response.status}. Response: ${await response.text()}`);
     }
 
-    const data = await response.json();
-    return data.tag_name;
+    const tagName = (await response.json()).tag_name;
+
+    if (!tagName) {
+      throw new Error(`Failed to fetch latest tester version. No tag name found in response: ${await response.text()}`);
+    }
+
+    return tagName;
   }
 
   get testerDir() {
