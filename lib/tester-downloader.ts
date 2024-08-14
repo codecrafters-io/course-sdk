@@ -60,7 +60,12 @@ export default class TesterDownloader {
       headers: process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {},
     });
 
-    return (await response.json()).tag_name;
+    if (response.status !== 200) {
+      throw new Error(`Failed to fetch latest tester version. Status: ${response.status}. Response: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    return data.tag_name;
   }
 
   get testerDir() {
