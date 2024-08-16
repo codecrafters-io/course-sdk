@@ -125,7 +125,7 @@ export default class Course {
 
     for (const languageSlug in dockerfilesGroupedByLanguageSlug) {
       const dockerfiles = dockerfilesGroupedByLanguageSlug[languageSlug];
-      const latestDockerfile = dockerfiles.sort((a, b) => b.semver().compare(a.semver()))[0];
+      const latestDockerfile = dockerfiles.sort((a, b) => b.semver.compare(a.semver))[0];
       latestDockerfiles.push(latestDockerfile);
     }
 
