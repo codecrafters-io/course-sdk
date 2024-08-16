@@ -141,7 +141,7 @@ export default class Course {
   }
 
   // Prepares repository dir for language
-  async prepareRepositoryDirForLanguage(language: Language): Promise<string> {
+  async prepareRepositoryDirForLanguage(language: Language, testerDir?: string): Promise<string> {
     const repositoryDir = tmp.dirSync().name;
     await exec(`rm -rf ${repositoryDir}`);
     await exec(`cp -r ${this.compiledStarterRepositoryDirForLanguage(language)} ${repositoryDir}`);
@@ -155,7 +155,12 @@ export default class Course {
     await exec(`touch ${repositoryDir}/test-runner/test-runner`);
 
     // Tester directory
-    await exec(`mkdir -p ${repositoryDir}/tester`);
+    if (testerDir) {
+      await exec(`rm -rf ${repositoryDir}/tester`);
+      await exec(`cp -r ${testerDir} ${repositoryDir}/tester`);
+    } else {
+      await exec(`mkdir -p ${repositoryDir}/tester`); // Create dummy dir
+    }
 
     return repositoryDir;
   }
