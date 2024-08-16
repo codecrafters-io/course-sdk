@@ -24,4 +24,4 @@ if [ -f "${CODECRAFTERS_REPOSITORY_DIR}/.codecrafters/run.sh" ]; then
     cp "${CODECRAFTERS_REPOSITORY_DIR}/.codecrafters/run.sh" "${CODECRAFTERS_REPOSITORY_DIR}/your_program.sh"
 fi
 
-exec /tester/test.sh
+exec "${TESTER_DIR}/test.sh"

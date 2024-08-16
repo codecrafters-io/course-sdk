@@ -35,7 +35,7 @@ export default class StarterCodeTester extends BaseTester {
   }
 
   async doTest() {
-    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language);
+    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language, this.testerDir);
     await this.dockerfile!.processContents();
 
     Logger.logHeader(`Testing starter: ${this.course.slug}-${this.language.slug}`);
@@ -194,13 +194,10 @@ export default class StarterCodeTester extends BaseTester {
     const command = [
       "docker run",
       "--rm",
-      `-v '${this.copiedStarterDir}:/app'`,
-      `-v '${path.resolve(this.testerDir)}:/tester:ro'`,
       `-v '${testScriptPath}:/init.sh:ro'`,
       "-e CODECRAFTERS_REPOSITORY_DIR=/app",
       `-e CODECRAFTERS_TEST_CASES_JSON='[${this.course.firstStage.testerTestCaseJson}]'`,
-      `-e CODECRAFTERS_CURRENT_STAGE_SLUG=${this.course.firstStage.slug}`, // TODO: Remove this
-      "-e TESTER_DIR=/tester",
+      "-e TESTER_DIR=/var/opt/tester",
       "-w /app",
       "--memory=2g",
       "--cpus=0.5",
