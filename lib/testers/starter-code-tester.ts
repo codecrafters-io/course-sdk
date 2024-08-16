@@ -80,19 +80,19 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
-    // if (process.env.CI === "true") {
-    //   Logger.logInfo("Making starter repo directory owned by current user");
-    //   await ShellCommandExecutor.execute(`sudo chown -R $(id -u):$(id -g) ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
-    // }
+    if (process.env.CI === "true") {
+      Logger.logInfo("Making starter repo directory owned by current user");
+      await ShellCommandExecutor.execute(`sudo chown -R $(id -u):$(id -g) ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
+    }
 
     Logger.logInfo("Restoring changes to .sh files");
-    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
+    await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
 
     Logger.logInfo("Removing test-runner & tester"); // We use this for the tester directories
-    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} rm -rf ${this.copiedStarterDir}/test-runner`);
-    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} rm -rf ${this.copiedStarterDir}/tester`);
+    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/test-runner`);
+    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/tester`);
 
-    const diff = await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} git -C ${this.copiedStarterDir} diff --exit-code`, {
+    const diff = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} diff --exit-code`, {
       expectedExitCodes: [0, 1],
     });
 
