@@ -158,6 +158,9 @@ export default class Course {
     if (testerDir) {
       await exec(`rm -rf ${repositoryDir}/tester`);
       await exec(`cp -r ${testerDir} ${repositoryDir}/tester`);
+
+      // Set permissions for tester directory (ensure the new "owner" will be able to read and execute)
+      await exec(`chmod -R o+rwX ${repositoryDir}/tester`);
     } else {
       await exec(`mkdir -p ${repositoryDir}/tester`); // Create dummy dir
     }
