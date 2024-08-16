@@ -40,6 +40,14 @@ export class InvalidCourseDefinitionFileError extends FriendlyError {
   }
 }
 
+export class InvalidDockerfileContentsError extends FriendlyError {
+  constructor(jsonResponse: string) {
+    super(
+      `CodeCrafters was unable to process this Dockerfile. Error: ${jsonResponse}. \n\nThink this is a mistake? Please file an issue at https://github.com/codecrafters-io/course-sdk/issues`
+    );
+  }
+}
+
 export class LanguageTemplateNotAvailableError extends FriendlyError {
   constructor(language: Language) {
     super(

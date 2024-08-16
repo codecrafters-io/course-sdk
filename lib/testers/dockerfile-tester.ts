@@ -26,11 +26,10 @@ export default class DockerfileTester extends BaseTester {
   }
 
   async doTest() {
-    this.copiedStarterDir = tmp.dirSync().name;
-    await exec(`rm -rf ${this.copiedStarterDir}`);
-    await exec(`cp -r ${this.starterDir} ${this.copiedStarterDir}`);
-
     Logger.logHeader(`Testing Dockerfile: ${this.slug}`);
+
+    await this.dockerfile.processContents();
+    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language);
 
     Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image without cache`);
     const timeTaken = await this.assertTimeUnder(400, this.buildImage.bind(this));
@@ -45,7 +44,7 @@ export default class DockerfileTester extends BaseTester {
   }
 
   async buildImage() {
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
+    const command = `docker build -t ${this.slug} -f ${this.dockerfile.processedPath} ${this.copiedStarterDir}`;
     const expectedOutput = `naming to docker.io/library/${this.slug}`;
     await this.assertStderrContains(command, expectedOutput);
   }
@@ -55,6 +54,6 @@ export default class DockerfileTester extends BaseTester {
   }
 
   get starterDir() {
-    return `${this.course.compiledStarterRepositoriesDir}/${this.language.slug}`;
+    return `${this.course.compiledStarterRepositoryDirForLanguage(this.language)}`;
   }
 }

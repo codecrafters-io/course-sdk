@@ -9,6 +9,7 @@ import Dockerfile from "../models/dockerfile";
 
 const exec = util.promisify(child_process.exec);
 
+// TODO: Make this work with dockerfile#processedContents
 export default class CommandTester extends BaseTester {
   course: Course;
   dockerfile: Dockerfile;

@@ -12,6 +12,7 @@ import StarterCodeUncommenter from "../starter-code-uncommenter";
 import LineWithCommentRemover from "../line-with-comment-remover";
 import testScriptFile from "../scripts/test.sh";
 import ShellCommandExecutor from "../shell-command-executor";
+import Dockerfile from "../models/dockerfile";
 
 const writeFile = util.promisify(fs.writeFile);
 
@@ -22,6 +23,7 @@ export default class StarterCodeTester extends BaseTester {
   course: Course;
   language: Language;
   testerDir: string;
+  _dockerfile?: Dockerfile;
 
   copiedStarterDir: string | undefined;
 
@@ -33,12 +35,8 @@ export default class StarterCodeTester extends BaseTester {
   }
 
   async doTest() {
-    this.copiedStarterDir = tmp.dirSync().name;
-    await exec(`rm -rf ${this.copiedStarterDir}`);
-    await exec(`cp -r ${this.starterDir} ${this.copiedStarterDir}`);
-    await exec(`git -C ${this.copiedStarterDir} init`);
-    await exec(`git -C ${this.copiedStarterDir} add .`);
-    await exec(`git -C ${this.copiedStarterDir} commit -m "Initial commit"`);
+    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language);
+    await this.dockerfile!.processContents();
 
     Logger.logHeader(`Testing starter: ${this.course.slug}-${this.language.slug}`);
 
@@ -89,6 +87,10 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logInfo("Restoring changes to .sh files");
     await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
+
+    Logger.logInfo("Removing test-runner & tester"); // We use this for the tester directories
+    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/test-runner`);
+    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/tester`);
 
     const diff = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} diff --exit-code`, { expectedExitCodes: [0, 1] });
 
@@ -154,8 +156,13 @@ export default class StarterCodeTester extends BaseTester {
     Logger.logSuccess(`Took ${timeTaken} secs`);
   }
 
+  // Cache so that Dockerfile.processedContents is stored
   get dockerfile() {
-    return this.course.latestDockerfiles.find((dockerfile) => dockerfile.languagePack === this.languagePack);
+    if (!this._dockerfile) {
+      this._dockerfile = this.course.latestDockerfiles.find((dockerfile) => dockerfile.languagePack === this.languagePack);
+    }
+
+    return this._dockerfile;
   }
 
   get slug() {
@@ -171,7 +178,7 @@ export default class StarterCodeTester extends BaseTester {
   }
 
   async buildImage() {
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile!.path} ${this.copiedStarterDir}`;
+    const command = `docker build -t ${this.slug} -f ${this.dockerfile!.processedPath} ${this.copiedStarterDir}`;
     const expectedOutput = `naming to docker.io/library/${this.slug}`;
     await this.assertStderrContains(command, expectedOutput);
   }

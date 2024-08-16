@@ -1,4 +1,5 @@
 import CourseStage from "./course-stage";
+import child_process from "child_process";
 import Dockerfile from "./dockerfile";
 import YAML from "js-yaml";
 import fs from "fs";
@@ -11,6 +12,9 @@ import {
   StarterTemplateConfigFileNotFoundError,
 } from "../errors";
 import Language from "./language";
+import tmp from "tmp";
+import util from "util";
+const exec = util.promisify(child_process.exec);
 
 export default class Course {
   slug: string;
@@ -125,7 +129,7 @@ export default class Course {
 
     for (const languageSlug in dockerfilesGroupedByLanguageSlug) {
       const dockerfiles = dockerfilesGroupedByLanguageSlug[languageSlug];
-      const latestDockerfile = dockerfiles.sort((a, b) => b.semver().compare(a.semver()))[0];
+      const latestDockerfile = dockerfiles.sort((a, b) => b.semver.compare(a.semver))[0];
       latestDockerfiles.push(latestDockerfile);
     }
 
@@ -134,6 +138,26 @@ export default class Course {
 
   compiledStarterRepositoryDirForLanguage(language: Language): string {
     return path.join(this.compiledStarterRepositoriesDir, language.slug);
+  }
+
+  // Prepares repository dir for language
+  async prepareRepositoryDirForLanguage(language: Language): Promise<string> {
+    const repositoryDir = tmp.dirSync().name;
+    await exec(`rm -rf ${repositoryDir}`);
+    await exec(`cp -r ${this.compiledStarterRepositoryDirForLanguage(language)} ${repositoryDir}`);
+
+    await exec(`git -C ${repositoryDir} init`);
+    await exec(`git -C ${repositoryDir} add .`);
+    await exec(`git -C ${repositoryDir} commit -m "Initial commit"`);
+
+    // Test runner binary
+    await exec(`mkdir -p ${repositoryDir}/test-runner`);
+    await exec(`touch ${repositoryDir}/test-runner/test-runner`);
+
+    // Tester directory
+    await exec(`mkdir -p ${repositoryDir}/tester`);
+
+    return repositoryDir;
   }
 
   latestDockerfileForLanguage(language: Language): Dockerfile | undefined {
