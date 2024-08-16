@@ -86,13 +86,15 @@ export default class StarterCodeTester extends BaseTester {
     // }
 
     Logger.logInfo("Restoring changes to .sh files");
-    await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
+    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
 
     Logger.logInfo("Removing test-runner & tester"); // We use this for the tester directories
-    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/test-runner`);
-    await ShellCommandExecutor.execute(`rm -rf ${this.copiedStarterDir}/tester`);
+    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} rm -rf ${this.copiedStarterDir}/test-runner`);
+    await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} rm -rf ${this.copiedStarterDir}/tester`);
 
-    const diff = await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} diff --exit-code`, { expectedExitCodes: [0, 1] });
+    const diff = await ShellCommandExecutor.execute(`${process.env.CI ? "sudo" : ""} git -C ${this.copiedStarterDir} diff --exit-code`, {
+      expectedExitCodes: [0, 1],
+    });
 
     if (diff.exitCode === 0) {
       Logger.logSuccess("No uncommitted changes to compiled templates found.");
