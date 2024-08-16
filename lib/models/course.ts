@@ -150,6 +150,10 @@ export default class Course {
     await exec(`git -C ${repositoryDir} add .`);
     await exec(`git -C ${repositoryDir} commit -m "Initial commit"`);
 
+    if (process.env.CI) {
+      await exec(`sudo chown -R 0:0 ${repositoryDir}`);
+    }
+
     // Test runner binary
     await exec(`mkdir -p ${repositoryDir}/test-runner`);
     await exec(`touch ${repositoryDir}/test-runner/test-runner`);
