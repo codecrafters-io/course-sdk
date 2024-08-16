@@ -32,6 +32,8 @@ export default class DockerfileTester extends BaseTester {
 
     Logger.logHeader(`Testing Dockerfile: ${this.slug}`);
 
+    await this.dockerfile.processContents();
+
     Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image without cache`);
     const timeTaken = await this.assertTimeUnder(400, this.buildImage.bind(this));
 
@@ -45,7 +47,7 @@ export default class DockerfileTester extends BaseTester {
   }
 
   async buildImage() {
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
+    const command = `docker build -t ${this.slug} -f ${this.dockerfile.processedPath} ${this.copiedStarterDir}`;
     const expectedOutput = `naming to docker.io/library/${this.slug}`;
     await this.assertStderrContains(command, expectedOutput);
   }
