@@ -35,8 +35,8 @@ export default class StarterCodeTester extends BaseTester {
   }
 
   async doTest() {
-    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language, this.testerDir);
     await this.dockerfile!.processContents();
+    this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language, this.testerDir);
 
     Logger.logHeader(`Testing starter: ${this.course.slug}-${this.language.slug}`);
 
@@ -80,10 +80,10 @@ export default class StarterCodeTester extends BaseTester {
 
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
-    if (process.env.CI === "true") {
-      Logger.logInfo("Making starter repo directory owned by current user");
-      await ShellCommandExecutor.execute(`sudo chown -R $(id -u):$(id -g) ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
-    }
+    // if (process.env.CI === "true") {
+    //   Logger.logInfo("Making starter repo directory owned by current user");
+    //   await ShellCommandExecutor.execute(`sudo chown -R $(id -u):$(id -g) ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
+    // }
 
     Logger.logInfo("Restoring changes to .sh files");
     await ShellCommandExecutor.execute(`git -C ${this.copiedStarterDir} restore *.sh`); // Hack to work around our precompilation step mangling .sh files
