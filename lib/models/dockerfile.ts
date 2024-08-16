@@ -63,8 +63,7 @@ export default class Dockerfile {
   }
 
   async processContents() {
-    const response = await fetch("https://paul-backend.ccdev.dev/services/course_sdk/process_dockerfile", {
-      // const response = await fetch("https://backend.codecrafters.io/services/course_sdk/process_dockerfile", {
+    const response = await fetch("https://backend.codecrafters.io/services/course_sdk/process_dockerfile", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
