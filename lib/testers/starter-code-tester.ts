@@ -195,6 +195,7 @@ export default class StarterCodeTester extends BaseTester {
       "docker run",
       "--rm",
       `-v '${testScriptPath}:/init.sh:ro'`,
+      `-v '${this.copiedStarterDir}:/app'`,
       "-e CODECRAFTERS_REPOSITORY_DIR=/app",
       `-e CODECRAFTERS_TEST_CASES_JSON='[${this.course.firstStage.testerTestCaseJson}]'`,
       "-e TESTER_DIR=/var/opt/tester",
