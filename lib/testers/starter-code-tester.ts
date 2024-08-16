@@ -81,7 +81,7 @@ export default class StarterCodeTester extends BaseTester {
     Logger.logInfo("Checking if there are no uncommitted changes to compiled templates");
 
     if (process.env.CI === "true") {
-      Logger.logInfo("Making starter repo directory owned by current user");
+      Logger.logInfo("Making starter repo directory owned by current user for checks");
       await ShellCommandExecutor.execute(`sudo chown -R $(id -u):$(id -g) ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
     }
 
@@ -148,6 +148,11 @@ export default class StarterCodeTester extends BaseTester {
           return;
         }
       }
+    }
+
+    if (process.env.CI === "true") {
+      Logger.logInfo("Making starter repo directory owned by root for running tests again");
+      await ShellCommandExecutor.execute(`sudo chown -R 0:0 ${this.copiedStarterDir}`); // Hack to fix GitHub actions permissions issue?
     }
 
     Logger.logInfo("Executing starter repo script with first stage uncommented");
