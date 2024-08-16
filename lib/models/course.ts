@@ -150,6 +150,7 @@ export default class Course {
     await exec(`git -C ${repositoryDir} add .`);
     await exec(`git -C ${repositoryDir} commit -m "Initial commit"`);
 
+    // On macOS, using mount seems to automatically mark files as root:root. This doesn't happen on GitHub Actions.
     if (process.env.CI) {
       await exec(`sudo chown -R 0:0 ${repositoryDir}`);
     }
