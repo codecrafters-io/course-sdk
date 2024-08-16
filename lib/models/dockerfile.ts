@@ -39,7 +39,7 @@ export default class Dockerfile {
 
   get processedContents(): string {
     if (!this._processedContentsCache) {
-      throw new Error("Not implemented");
+      throw new Error("processContents was not called!");
     }
 
     return this._processedContentsCache;
@@ -82,7 +82,7 @@ export default class Dockerfile {
       throw new Error(`Failed to process Dockerfile. Status: ${response.status}, Response: ${await response.text()}`);
     }
 
-    const responseBody = await response.json() as { dockerfile_contents: string };
+    const responseBody = (await response.json()) as { dockerfile_contents: string };
     this._processedContentsCache = responseBody.dockerfile_contents;
   }
 }

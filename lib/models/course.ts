@@ -146,6 +146,10 @@ export default class Course {
     await exec(`rm -rf ${repositoryDir}`);
     await exec(`cp -r ${this.compiledStarterRepositoryDirForLanguage(language)} ${repositoryDir}`);
 
+    await exec(`git -C ${repositoryDir} init`);
+    await exec(`git -C ${repositoryDir} add .`);
+    await exec(`git -C ${repositoryDir} commit -m "Initial commit"`);
+
     // Test runner binary
     await exec(`mkdir -p ${repositoryDir}/test-runner`);
     await exec(`touch ${repositoryDir}/test-runner/test-runner`);
