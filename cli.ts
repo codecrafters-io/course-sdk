@@ -5,6 +5,7 @@ import CompileCommand from "./commands/compile";
 import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
 import { Argument, Command } from "@commander-js/extra-typings";
+import UpgradeLanguageCommand from "./commands/upgrade-language";
 
 const program = new Command();
 
@@ -68,6 +69,14 @@ program
   .addArgument(new Argument("[language]", "language to add. Example: 'go'").argRequired())
   .action(async (languageSlug) => {
     await new AddLanguageCommand(languageSlug).run();
+  });
+
+program
+  .command("upgrade-language")
+  .description("Upgrade a language that this course already supports")
+  .addArgument(new Argument("[language]", "language to upgrade. Example: 'go'").argRequired())
+  .action(async (languageSlug) => {
+    await new UpgradeLanguageCommand(languageSlug).run();
   });
 
 program
