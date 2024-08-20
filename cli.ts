@@ -80,14 +80,6 @@ program
   });
 
 program
-  .command("add-language")
-  .description("Add a language to this course")
-  .addArgument(new Argument("[language]", "language to add. Example: 'go'").argRequired())
-  .action(async (languageSlug) => {
-    await new AddLanguageCommand(languageSlug).run();
-  });
-
-program
   .command("clear-cache")
   .description("Clear caches used by other commands")
   .action(async () => {
