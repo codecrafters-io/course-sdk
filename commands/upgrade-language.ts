@@ -43,7 +43,7 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     console.log("");
     console.log(`Reverting changes to ${userEditableFile}...`);
-    await exec(`git checkout ${userEditableFile}`);
+    await exec(`git checkout ${path.join(course.starterTemplatesDirForLanguage(language), userEditableFile)}`);
     console.log("");
 
     console.log(`Upgrade done! Run 'course-sdk test ${language.slug}' to verify.`);
