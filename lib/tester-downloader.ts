@@ -34,8 +34,13 @@ export default class TesterDownloader {
     const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
     console.log(`Downloading ${artifactUrl}`);
 
-    const response = await fetch(artifactUrl);
-    response.body.pipe(fileStream);
+    try {
+      const response = await fetch(artifactUrl);
+      response.body.pipe(fileStream);
+    } catch (error) {
+      console.error('Error downloading tester', error);
+      process.exit(1);
+    }
 
     await new Promise((resolve, reject) => {
       fileStream.on("finish", resolve);
