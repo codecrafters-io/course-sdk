@@ -245,8 +245,34 @@ jobs:
       - run: git config --global user.email "hello@codecrafters.io"
       - run: git config --global user.name "codecrafters-bot"
 
-      - run: course-sdk test ${{matrix.language}}
+      - name: course-sdk-test
+        run: |
+          echo repo.name: ${{github.event.repository.name}}
+          prefix="build-your-own-"
+          repo=${{github.event.repository.name}}
+          slug="${repo#$prefix}"
+          echo slug: $slug
+          course-sdk test ${{matrix.language}} && cp -r /tmp/testers/$slug $HOME/
+          echo ✅ $slug "tester copied to $HOME/$slug"
+        shell: bash
         working-directory: courses/${{github.event.repository.name}}
+
+      - name: sanity-check
+        run: |
+          echo repo.name: ${{github.event.repository.name}}
+          prefix="build-your-own-"
+          repo=${{github.event.repository.name}}
+          slug="${repo#$prefix}"
+          echo slug: $slug
+          echo "🗂️ ls -l $HOME/$slug:"
+          ls -l "$HOME/$slug"
+          if [ -d "$HOME/$slug" ]; then
+            echo ✅ $slug "tester directory exists."
+          else
+            echo ❌ $slug "tester directory does not exist."
+            exit 1
+          fi
+        shell: bash
 
   validate-schemas:
     runs-on: ubuntu-latest
