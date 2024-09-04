@@ -4,6 +4,13 @@ import path from "path";
 import fetch from "node-fetch";
 import child_process from "child_process";
 import ShellCommandExecutor from "./shell-command-executor";
+import { Transform } from "stream";
+
+type Callback = (error: Error | null, chunk: Chunk) => void;
+type Chunk = Array<{
+  chunk: any;
+  encoding: BufferEncoding;
+}>;
 
 export default class TesterDownloader {
   static DEFAULT_TESTERS_ROOT_DIR = "/tmp/testers";
@@ -35,11 +42,36 @@ export default class TesterDownloader {
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
-    response.body.pipe(fileStream);
+    console.log("📩 Response status code:", response.status);
+
+    let i = 0;
+    const limit = 32;
+    const inspector = new Transform({
+      transform(chunk: Chunk, encoding: BufferEncoding, callback: Callback) {
+        if (chunk.toString().length > 0) i++;
+        if (i < limit) {
+          console.log(`🧱 Chunk[length: ${chunk.toString().length}]:`, chunk.toString().slice(0, 32) + "...");
+        }
+        callback(null, chunk);
+      },
+    });
+    response.body.pipe(inspector).pipe(fileStream);
 
     await new Promise((resolve, reject) => {
-      fileStream.on("finish", resolve);
-      fileStream.on("error", reject);
+      const logAndResolve = (msg: string) => () => {
+        console.log(msg);
+        resolve(msg);
+      };
+      const logAndReject = (msg: string) => () => {
+        console.log(msg);
+        reject(msg);
+      };
+      fileStream.on("finish", logAndResolve("✅ fileStream finished"));
+      fileStream.on("error", logAndReject("❌ fileStream error"));
+      fileStream.on("close", () => console.log("👋🏼 fileStream closed"));
+      fileStream.on("drain", () => console.log("📢 fileStream drained"));
+      fileStream.on("pipe", () => console.log("📢 fileStream piped"));
+      fileStream.on("unpipe", () => console.log("⛓️‍💥 fileStream unpiped"));
     });
 
     try {
