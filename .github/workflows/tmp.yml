@@ -18,3 +18,4 @@ jobs:
           path: course
 
       - run: cd course && course-sdk temp
+      - run: ls -la /tmp/testers/test
