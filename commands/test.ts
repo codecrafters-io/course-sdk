@@ -49,7 +49,7 @@ export default class TestCommand extends BaseCommand {
   async starterCodeTestersForCourse(course: Course): Promise<StarterCodeTester[]> {
     const starterCodeDefinitions = StarterCodeDefinition.loadForCourse(course);
     const testerDownloader = new TesterDownloader(course);
-
+    TesterDownloader.clearCache();
     await testerDownloader.downloadIfNeeded();
 
     return Promise.all(

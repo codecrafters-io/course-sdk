@@ -6,6 +6,8 @@ import LintCommand from "./commands/lint";
 import TestCommand from "./commands/test";
 import { Argument, Command } from "@commander-js/extra-typings";
 import UpgradeLanguageCommand from "./commands/upgrade-language";
+import Course from "./lib/models/course";
+import TesterDownloader from "./lib/tester-downloader";
 
 const program = new Command();
 
@@ -84,6 +86,20 @@ program
   .description("Clear caches used by other commands")
   .action(async () => {
     await new ClearCacheCommand().run();
+  });
+
+program
+  .command("temp")
+  .description("blah")
+  .action(async () => {
+    const course = Course.loadFromDirectory(process.cwd());
+
+    TesterDownloader.clearCache(); // Wip first
+
+    const testerDownloader = new TesterDownloader(course);
+    console.log("Before download");
+    await testerDownloader.downloadIfNeeded();
+    console.log("Download done");
   });
 
 program.parse();

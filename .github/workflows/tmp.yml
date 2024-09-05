@@ -3,7 +3,7 @@ name: Temp
 on: push
 
 jobs:
-  test:
+  temp:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,4 +17,4 @@ jobs:
           repository: codecrafters-io/build-your-own-sqlite
           path: course
 
-      - run: cd course && course-sdk test go
+      - run: cd course && course-sdk temp
