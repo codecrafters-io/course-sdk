@@ -35,8 +35,8 @@ export default class TesterDownloader {
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
-    console.log("Response headers:", response.headers.raw());
-    console.log("");
+    // console.log("Response headers:", response.headers.raw());
+    // console.log("");
     console.log(`Response status code: ${response.status}`);
     console.log("");
 
