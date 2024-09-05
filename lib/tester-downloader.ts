@@ -1,9 +1,9 @@
 import Course from "./models/course";
+import ShellCommandExecutor from "./shell-command-executor";
 import fs from "fs";
 import path from "path";
-import fetch from "node-fetch";
-import child_process from "child_process";
-import ShellCommandExecutor from "./shell-command-executor";
+import { pipeline } from "node:stream";
+import { promisify } from "node:util";
 
 export default class TesterDownloader {
   static DEFAULT_TESTERS_ROOT_DIR = "/tmp/testers";
@@ -29,18 +29,19 @@ export default class TesterDownloader {
 
     fs.mkdirSync(this.testersRootDir, { recursive: true });
 
-    const fileStream = fs.createWriteStream(compressedFilePath);
     const latestVersion = await this.latestTesterVersion();
     const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
+
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
-    response.body.pipe(fileStream);
 
-    await new Promise((resolve, reject) => {
-      fileStream.on("finish", resolve);
-      fileStream.on("error", reject);
-    });
+    if (!response.ok) {
+      throw new Error(`Failed to download tester. Status: ${response.status}. Response: ${await response.text()}`);
+    }
+
+    const streamPipeline = promisify(pipeline);
+    await streamPipeline(response.body as any, fs.createWriteStream(compressedFilePath));
 
     try {
       const tempExtractDir = fs.mkdtempSync("/tmp/extract");
