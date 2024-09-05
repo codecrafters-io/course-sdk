@@ -40,15 +40,36 @@ export default class TesterDownloader {
     console.log(`Response status code: ${response.status}`);
     console.log("");
 
-    console.log("before pipe")
+    console.log("before pipe");
     response.body.pipe(fileStream);
-    console.log("after pipe")
+    console.log("after pipe");
 
     console.log("before await");
+
     await new Promise((resolve, reject) => {
-      fileStream.on("finish", resolve);
-      fileStream.on("error", reject);
+      console.log("inside callback");
+
+      function logEvent(event: string) {
+        return () => {
+          console.log(`event: ${event}`);
+        };
+      }
+
+      // fileStream.on("finish", resolve);
+      // fileStream.on("error", reject);
+
+      fileStream.on("close", logEvent("close"));
+      fileStream.on("drain", logEvent("drain"));
+      fileStream.on("error", logEvent("error"));
+      fileStream.on("finish", logEvent("finish"));
+      fileStream.on("open", logEvent("open"));
+      fileStream.on("pipe", logEvent("pipe"));
+      fileStream.on("ready", logEvent("ready"));
+      fileStream.on("unpipe", logEvent("unpipe"));
+
+      console.log("callback listeners added");
     });
+
     console.log("after await");
 
     try {
