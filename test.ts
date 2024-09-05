@@ -10,6 +10,12 @@ if (fs.existsSync(compressedFilePath)) {
   console.log(`Removed existing file: ${compressedFilePath}`);
 }
 
+if (fs.existsSync("/tmp/testers/test")) {
+  fs.rmSync("/tmp/testers/test", { recursive: true, force: true });
+  console.log(`Removed existing directory: /tmp/testers/test`);
+}
+
+
 fs.mkdirSync("/tmp/testers", { recursive: true });
 
 const fileStream = fs.createWriteStream(compressedFilePath);
