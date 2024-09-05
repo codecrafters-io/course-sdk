@@ -5,6 +5,7 @@ on: push
 jobs:
   temp:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - uses: oven-sh/setup-bun@v1

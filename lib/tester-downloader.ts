@@ -31,7 +31,8 @@ export default class TesterDownloader {
 
     const fileStream = fs.createWriteStream(compressedFilePath);
     const latestVersion = await this.latestTesterVersion();
-    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
+    // const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
+    const artifactUrl = `https://app.codecrafters.io/version.txt`;
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
@@ -49,19 +50,31 @@ export default class TesterDownloader {
     await new Promise((resolve, reject) => {
       console.log("inside callback");
 
+      function logEventAndResolve(event: string) {
+        return () => {
+          console.log(`event: ${event} (will resolve)`);
+          resolve(null);
+        };
+      }
+
+      function logEventAndReject(event: string) {
+        return () => {
+          console.log(`event: ${event} (will reject)`);
+          reject(new Error(`Error downloading tester: ${event}`));
+        };
+      }
+
       function logEvent(event: string) {
         return () => {
           console.log(`event: ${event}`);
         };
       }
 
-      // fileStream.on("finish", resolve);
-      // fileStream.on("error", reject);
+      fileStream.on("error", logEventAndReject("error"));
+      fileStream.on("finish", logEventAndResolve("finish"));
 
       fileStream.on("close", logEvent("close"));
       fileStream.on("drain", logEvent("drain"));
-      fileStream.on("error", logEvent("error"));
-      fileStream.on("finish", logEvent("finish"));
       fileStream.on("open", logEvent("open"));
       fileStream.on("pipe", logEvent("pipe"));
       fileStream.on("ready", logEvent("ready"));
