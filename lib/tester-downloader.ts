@@ -29,10 +29,10 @@ export default class TesterDownloader {
 
     fs.mkdirSync(this.testersRootDir, { recursive: true });
 
-    const fileStream = fs.createWriteStream(compressedFilePath);
-    const latestVersion = await this.latestTesterVersion();
+    // const fileStream = fs.createWriteStream(compressedFilePath);
+    // const latestVersion = await this.latestTesterVersion();
     // const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
-    const artifactUrl = `https://app.codecrafters.io/version.txt`;
+    const artifactUrl = `http://localhost:6661/`;
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
@@ -40,10 +40,6 @@ export default class TesterDownloader {
     // console.log("");
     console.log(`Response status code: ${response.status}`);
     console.log("");
-
-    console.log("before pipe");
-    response.body.pipe(fileStream);
-    console.log("after pipe");
 
     console.log("before await");
 
@@ -70,15 +66,15 @@ export default class TesterDownloader {
         };
       }
 
-      fileStream.on("error", logEventAndReject("error"));
-      fileStream.on("finish", logEventAndResolve("finish"));
-
-      fileStream.on("close", logEvent("close"));
-      fileStream.on("drain", logEvent("drain"));
-      fileStream.on("open", logEvent("open"));
-      fileStream.on("pipe", logEvent("pipe"));
-      fileStream.on("ready", logEvent("ready"));
-      fileStream.on("unpipe", logEvent("unpipe"));
+      response.body.on("error", logEventAndReject("response_error"));
+      response.body.on("finish", logEventAndResolve("response_finish"));
+      response.body.on("close", logEvent("response_close"));
+      response.body.on("drain", logEvent("response_drain"));
+      response.body.on("open", logEvent("response_open"));
+      response.body.on("pipe", logEvent("response_pipe"));
+      response.body.on("ready", logEvent("response_ready"));
+      response.body.on("unpipe", logEvent("response_unpipe"));
+      response.body.on("end", logEvent("response_end"));
 
       console.log("callback listeners added");
     });
