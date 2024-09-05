@@ -2,8 +2,9 @@ import Course from "./models/course";
 import fs from "fs";
 import path from "path";
 import fetch from "node-fetch";
-import child_process from "child_process";
 import ShellCommandExecutor from "./shell-command-executor";
+import { pipeline } from "node:stream";
+import { promisify } from "node:util";
 
 export default class TesterDownloader {
   static DEFAULT_TESTERS_ROOT_DIR = "/tmp/testers";
@@ -36,49 +37,15 @@ export default class TesterDownloader {
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
-    // console.log("Response headers:", response.headers.raw());
-    // console.log("");
-    console.log(`Response status code: ${response.status}`);
-    console.log("");
+
+    if (!response.ok) {
+      throw new Error(`Failed to download tester. Status: ${response.status}. Response: ${await response.text()}`);
+    }
+
+    const streamPipeline = promisify(pipeline);
 
     console.log("before await");
-
-    await new Promise((resolve, reject) => {
-      console.log("inside callback");
-
-      function logEventAndResolve(event: string) {
-        return () => {
-          console.log(`event: ${event} (will resolve)`);
-          resolve(null);
-        };
-      }
-
-      function logEventAndReject(event: string) {
-        return () => {
-          console.log(`event: ${event} (will reject)`);
-          reject(new Error(`Error downloading tester: ${event}`));
-        };
-      }
-
-      function logEvent(event: string) {
-        return () => {
-          console.log(`event: ${event}`);
-        };
-      }
-
-      response.body.on("error", logEventAndReject("response_error"));
-      response.body.on("finish", logEventAndResolve("response_finish"));
-      response.body.on("close", logEvent("response_close"));
-      response.body.on("drain", logEvent("response_drain"));
-      response.body.on("open", logEvent("response_open"));
-      response.body.on("pipe", logEvent("response_pipe"));
-      response.body.on("ready", logEvent("response_ready"));
-      response.body.on("unpipe", logEvent("response_unpipe"));
-      response.body.on("end", logEvent("response_end"));
-
-      console.log("callback listeners added");
-    });
-
+    await streamPipeline(response.body, fs.createWriteStream(compressedFilePath));
     console.log("after await");
 
     try {
