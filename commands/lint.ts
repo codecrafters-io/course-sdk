@@ -84,6 +84,7 @@ export default class LintCommand extends BaseCommand {
   async lintRustFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("rust-tools");
     await dockerShellCommandExecutor.exec(`find . -name '*.rs' -exec rustfmt --edition "2021" --check -- {} +`);
+    await dockerShellCommandExecutor.exec("cd compiled_starters/rust && cargo clippy --fix --allow-dirty");
   }
 
   async lintDockerFilesHelper(tmpDirectory: string) {
