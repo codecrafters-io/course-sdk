@@ -1,4 +1,4 @@
-FROM rust:1.70-buster
+FROM rust:1.80-bookworm
 
 WORKDIR /workdir
 
