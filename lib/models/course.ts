@@ -141,10 +141,10 @@ export default class Course {
   }
 
   // Prepares repository dir for language
-  async prepareRepositoryDirForLanguage(language: Language, testerDir?: string): Promise<string> {
+  async prepareRepositoryDirForLanguage(language: Language, testerDir?: string, sourceRepositoryDir?: string): Promise<string> {
     const repositoryDir = tmp.dirSync().name;
     await exec(`rm -rf ${repositoryDir}`);
-    await exec(`cp -r ${this.compiledStarterRepositoryDirForLanguage(language)} ${repositoryDir}`);
+    await exec(`cp -r ${sourceRepositoryDir || this.compiledStarterRepositoryDirForLanguage(language)} ${repositoryDir}`);
 
     await exec(`git -C ${repositoryDir} init`);
     await exec(`git -C ${repositoryDir} add .`);
