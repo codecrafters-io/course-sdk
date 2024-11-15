@@ -38,22 +38,26 @@ export default class SolutionTester extends BaseTester {
     Logger.logHeader(`Testing solutions: ${this.slug}`);
 
     if (!fs.existsSync(this.solutionsDir)) {
-      throw new Error(`No solutions directory found at ${this.solutionsDir}`);
+      throw new Error(`No solutions directory found at ${this.solutionsDir}.`);
     }
 
     if (!this.dockerfile) {
-      throw new Error(`Expected a dockerfile to exist for ${this.slug}`);
+      throw new Error(`Expected a dockerfile to exist for ${this.slug}.`);
     }
     await this.dockerfile.processContents();
 
-    for (const stage of this.course.stages) {
-      const solutionStageDir = path.join(this.solutionsDir, stage.solutionDir);
-      if (!fs.existsSync(solutionStageDir)) {
-        Logger.logInfo(`Skipping stage ${stage.solutionDir} (Not found)`);
+    const solutionDirs = fs.readdirSync(this.solutionsDir);
+    for (const solutionDir of solutionDirs) {
+      if (solutionDir === ".DS_Store") {
         continue;
       }
 
-      await this.testStage(stage);
+      const stage = this.findCourseStage(solutionDir);
+      if (!stage) {
+        throw new Error(`The solution directory "${solutionDir}" is not a valid stage.`);
+      }
+
+      await this.testStageSolution(stage);
     }
   }
 
@@ -105,7 +109,11 @@ export default class SolutionTester extends BaseTester {
     await this.assertStderrContains(command, expectedOutput);
   }
 
-  private async testStage(stage: CourseStage) {
+  private findCourseStage(solutionDir: string) {
+    return this.course.stages.find((stage) => stage.solutionDir === solutionDir);
+  }
+
+  private async testStageSolution(stage: CourseStage) {
     const codeDir = path.join(this.solutionsDir, stage.solutionDir, "code");
     this.copiedCodeDir = await this.course.prepareRepositoryDirForLanguage(this.language, this.testerDir, codeDir);
 
@@ -113,7 +121,9 @@ export default class SolutionTester extends BaseTester {
     const expectedYamlLanguagePack = this.dockerfile!.languagePackWithVersion;
     const actualYamlLanguagePack = codecraftersYml.language_pack;
     if (expectedYamlLanguagePack !== actualYamlLanguagePack) {
-      throw new Error(`Expected .codecrafters.yml to have language_pack: ${expectedYamlLanguagePack}, but found ${actualYamlLanguagePack}`);
+      throw new Error(
+        `Expected .codecrafters.yml to have language_pack: ${expectedYamlLanguagePack}, but found ${actualYamlLanguagePack}.`
+      );
     }
 
     Logger.logInfo(`Building image for stage ${stage.solutionDir}`);
