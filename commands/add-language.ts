@@ -48,8 +48,27 @@ export default class AddLanguageCommand extends BaseCommand {
       course_slug: course.slug,
       course_slug_underscorized: course.slug.replace("-", "_"),
       course_name: course.name,
+      uppercased_uuid1: this.#generateDeterministicUUID(course.slug, this.languageSlug, "1").toUpperCase(),
+      uppercased_uuid2: this.#generateDeterministicUUID(course.slug, this.languageSlug, "2").toUpperCase(),
     };
   }
+
+  #generateDeterministicUUID(courseSlug: string, languageSlug: string, suffix: string): string {
+    const input = `${suffix}-${courseSlug}-${languageSlug}`;
+    let hash = 0;
+    
+    // Generate a simple hash from the input string
+    for (let i = 0; i < input.length; i++) {
+      const char = input.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    // Convert the hash to a UUID-like format
+    const hashStr = Math.abs(hash).toString(16).padStart(8, '0');
+    return `${hashStr.slice(0, 8)}-${hashStr.slice(0, 4)}-4${hashStr.slice(1, 4)}-${hashStr.slice(0, 4)}-${hashStr.slice(0, 12)}`;
+  }
+
 
   async #copyConfigYml(course: Course, languageTemplatesDir: string) {
     const configYmlPath = path.join(languageTemplatesDir, "config.yml");
