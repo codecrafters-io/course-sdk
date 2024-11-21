@@ -48,8 +48,8 @@ export default class AddLanguageCommand extends BaseCommand {
       course_slug: course.slug,
       course_slug_underscorized: course.slug.replace("-", "_"),
       course_name: course.name,
-      uppercased_uuid1: this.#generateDeterministicUUID(course.slug, this.languageSlug, "1").toUpperCase(),
-      uppercased_uuid2: this.#generateDeterministicUUID(course.slug, this.languageSlug, "2").toUpperCase(),
+      uppercased_uuid_1: this.#generateDeterministicUUID(course.slug, this.languageSlug, "1").toUpperCase(),
+      uppercased_uuid_2: this.#generateDeterministicUUID(course.slug, this.languageSlug, "2").toUpperCase(),
     };
   }
 
