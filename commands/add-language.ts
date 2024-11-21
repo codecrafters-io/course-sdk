@@ -64,11 +64,20 @@ export default class AddLanguageCommand extends BaseCommand {
       hash = hash & hash; // Convert to 32-bit integer
     }
 
-    // Convert the hash to a UUID-like format
-    const hashStr = Math.abs(hash).toString(16).padStart(8, '0');
-    return `${hashStr.slice(0, 8)}-${hashStr.slice(0, 4)}-4${hashStr.slice(1, 4)}-${hashStr.slice(0, 4)}-${hashStr.slice(0, 12)}`;
-  }
+    // Create multiple hash values for different segments
+    const hash1 = Math.abs(hash).toString(16).padStart(8, '0').slice(0, 8);
+    const hash2 = Math.abs(hash * 31).toString(16).padStart(4, '0').slice(0, 4);
+    const hash3 = Math.abs(hash * 47).toString(16).padStart(4, '0').slice(0, 4);
+    const hash4 = Math.abs(hash * 67).toString(16).padStart(4, '0').slice(0, 4);
+    const hash5 = Math.abs(hash * 97).toString(16).padStart(12, '0').slice(0, 12);
 
+    // Ensure UUID v4 compliance: Set version to '4' and variant to '8-b'
+    const versionedHash3 = `4${hash3.slice(1)}`;
+    const variantHash4 = ((parseInt(hash4[0], 16) & 0x3) | 0x8).toString(16) + hash4.slice(1);
+    
+    // Format as UUID v4 with correct version (4) and variant (8-b) bits
+    return `${hash1}-${hash2}-${versionedHash3}-${variantHash4}-${hash5}`.toUpperCase();
+  }
 
   async #copyConfigYml(course: Course, languageTemplatesDir: string) {
     const configYmlPath = path.join(languageTemplatesDir, "config.yml");
