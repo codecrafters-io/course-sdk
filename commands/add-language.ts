@@ -72,22 +72,10 @@ export default class AddLanguageCommand extends BaseCommand {
 
     // Create multiple hash values for different segments
     const hash1 = Math.abs(hash).toString(16).padStart(8, "0").slice(0, 8);
-    const hash2 = Math.abs(hash * 31)
-      .toString(16)
-      .padStart(4, "0")
-      .slice(0, 4);
-    const hash3 = Math.abs(hash * 47)
-      .toString(16)
-      .padStart(4, "0")
-      .slice(0, 4);
-    const hash4 = Math.abs(hash * 67)
-      .toString(16)
-      .padStart(4, "0")
-      .slice(0, 4);
-    const hash5 = Math.abs(hash * 97)
-      .toString(16)
-      .padStart(12, "0")
-      .slice(0, 12);
+    const hash2 = Math.abs(hash * 31).toString(16).padStart(4, "0").slice(0, 4);
+    const hash3 = Math.abs(hash * 47).toString(16).padStart(4, "0").slice(0, 4);
+    const hash4 = Math.abs(hash * 67).toString(16).padStart(4, "0").slice(0, 4);
+    const hash5 = Math.abs(hash * 97).toString(16).padStart(12, "0").slice(0, 12);
 
     // Ensure UUID v4 compliance: Set version to '4' and variant to '8-b'
     const versionedHash3 = `4${hash3.slice(1)}`;
