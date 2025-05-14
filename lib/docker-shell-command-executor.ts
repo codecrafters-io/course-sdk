@@ -25,7 +25,7 @@ export default class DockerShellCommandExecutor {
   static async buildImage(dockerfileType: DockerfileType) {
     const dockerfilePath = tmp.fileSync().name;
     await writeFile(dockerfilePath, this.dockerfileContents(dockerfileType));
-    await ShellCommandExecutor.execute(`docker build -t course-sdk-${dockerfileType} -f ${dockerfilePath} .`, {
+    await ShellCommandExecutor.execute(`docker buildx -t course-sdk-${dockerfileType} -f ${dockerfilePath} .`, {
       prefix: ansiColors.yellow("[docker-build] "),
     });
   }

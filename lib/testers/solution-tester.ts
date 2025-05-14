@@ -104,7 +104,7 @@ export default class SolutionTester extends BaseTester {
   }
 
   private async buildImage(copiedCodeDir: string) {
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile!.processedPath} ${copiedCodeDir}`;
+    const command = `docker buildx -t ${this.slug} -f ${this.dockerfile!.processedPath} ${copiedCodeDir}`;
     const expectedOutput = `naming to docker.io/library/${this.slug}`;
     await this.assertStderrContains(command, expectedOutput);
   }
