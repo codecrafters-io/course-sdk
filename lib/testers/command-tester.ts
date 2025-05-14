@@ -41,10 +41,10 @@ export default class CommandTester extends BaseTester {
 
   async buildImageAndExecuteCommand(commandToExecute: string, outputStreamType: string, expectedOutput: string) {
     Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image`);
-    const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
+    const command = `docker buildx -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
     await this.assertStdoutContains(command, "");
 
-    Logger.logInfo(`Executing command: \`${commandToExecute}\` inside the container`)
+    Logger.logInfo(`Executing command: \`${commandToExecute}\` inside the container`);
     const testCommand = `docker run --rm ${this.slug} ${commandToExecute}`;
 
     // outputStreamType is either "stdout" or "stderr"
