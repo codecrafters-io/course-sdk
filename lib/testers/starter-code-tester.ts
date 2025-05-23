@@ -10,7 +10,7 @@ import path from "path";
 import YAML from "js-yaml";
 import StarterCodeUncommenter from "../starter-code-uncommenter";
 import LineWithCommentRemover from "../line-with-comment-remover";
-import testScriptFile from "../scripts/test.sh";
+import testScriptFile from "../scripts/test.sh" with { type: "file" };
 import ShellCommandExecutor from "../shell-command-executor";
 import Dockerfile from "../models/dockerfile";
 
