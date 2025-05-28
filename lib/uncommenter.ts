@@ -19,6 +19,7 @@ export default class Uncommenter {
     kotlin: Uncommenter.DOUBLE_SLASHES,
     nim: Uncommenter.POUND_SIGN,
     ocaml: /(^\s*)\(\*\s{0,1}(.*)\*\)$/,
+    odin: Uncommenter.DOUBLE_SLASHES,
     php: Uncommenter.DOUBLE_SLASHES,
     python: Uncommenter.POUND_SIGN,
     ruby: Uncommenter.POUND_SIGN,
