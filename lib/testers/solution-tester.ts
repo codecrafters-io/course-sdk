@@ -11,7 +11,7 @@ import Dockerfile from "../models/dockerfile";
 import Language from "../models/language";
 import CourseStage from "../models/course-stage";
 // @ts-ignore
-import testScriptFile from "../scripts/test.sh";
+import testScriptFile from "../scripts/test.sh" with { type: "file" };
 
 const exec = util.promisify(child_process.exec);
 const readFile = util.promisify(fs.readFile);
