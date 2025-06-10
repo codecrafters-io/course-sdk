@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import ansiColors from "ansi-colors";
 import AddLanguageCommand from "./add-language";
-import { exec } from "child_process";
+import { execSync } from "child_process";
 
 export default class UpgradeLanguageCommand extends BaseCommand {
   languageSlug: string;
@@ -41,10 +41,14 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     await new AddLanguageCommand(this.languageSlug).doRun();
 
+    const filesToRevert = [userEditableFile, ...language.filesToRevert];
+
     console.log("");
-    console.log(`Reverting changes to ${userEditableFile}...`);
-    await exec(`git checkout ${path.join(course.starterTemplatesDirForLanguage(language), userEditableFile)}`);
-    console.log("");
+    filesToRevert.forEach((file) => {
+      console.log(`Reverting changes to ${file}...`);
+      execSync(`git checkout ${path.join(course.starterTemplatesDirForLanguage(language), file)}`);
+      console.log("");
+    });
 
     console.log(`Upgrade done! Run 'course-sdk test ${language.slug}' to verify.`);
   }

@@ -86,6 +86,14 @@ export default class Language {
     return extensions[this.slug];
   }
 
+  get filesToRevert(): string[] {
+    const files: { [key: string]: string[] } = {
+      gleam: ["gleam.toml", "manifest.toml"],
+    };
+
+    return files[this.slug];
+  }
+
   get languagePack() {
     if (this.slug === "javascript") return "nodejs";
     if (this.slug === "csharp") return "dotnet";
