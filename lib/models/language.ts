@@ -86,10 +86,22 @@ export default class Language {
     return extensions[this.slug];
   }
 
-  get filesToRevert(): string[] {
+  get filesToIgnoreDuringUpgrade(): string[] {
     const files: { [key: string]: string[] } = {
+      c: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
+      cpp: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
       gleam: ["gleam.toml", "manifest.toml"],
+      go: ["go.mod", "go.sum"],
+      java: ["pom.xml"],
+      python: ["Pipfile", "Pipfile.lock"],
+      rust: ["Cargo.toml", "Cargo.lock"],
     };
+
+    if (!files[this.slug]) {
+      throw new Error(
+        `course-sdk doesn't know how to upgrade ${this.name}. Please add the files to ignore during upgrade to the filesToIgnoreDuringUpgrade method.`
+      );
+    }
 
     return files[this.slug];
   }
