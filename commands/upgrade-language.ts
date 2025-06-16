@@ -41,7 +41,7 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     await new AddLanguageCommand(this.languageSlug).doRun();
 
-    const filesToRevert = [userEditableFile, ...language.filesToIgnoreDuringUpgrade];
+    const filesToRevert = [userEditableFile, ...language.dependencyFiles];
 
     console.log("");
     filesToRevert.forEach((file) => {

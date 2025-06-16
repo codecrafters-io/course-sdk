@@ -25,7 +25,7 @@ class ManualSolutionsCompiler {
   async compileForLanguage(language: Language) {
     console.log(`- compiling manual solutions for ${this.course.slug}-${language.slug}`);
 
-    const filesToOverwrite = FILES_TO_OVERWRITE.concat(language.filesToIgnoreDuringUpgrade);
+    const filesToOverwrite = FILES_TO_OVERWRITE.concat(language.dependencyFiles);
 
     const stages = this.course.stages;
     const firstStage = stages[0];
