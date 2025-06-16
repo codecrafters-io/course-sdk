@@ -86,7 +86,7 @@ export default class Language {
     return extensions[this.slug];
   }
 
-  get filesToIgnoreDuringUpgrade(): string[] {
+  get dependencyFiles(): string[] {
     const files: { [key: string]: string[] } = {
       c: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
       cpp: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
@@ -95,11 +95,12 @@ export default class Language {
       java: ["pom.xml"],
       python: ["Pipfile", "Pipfile.lock"],
       rust: ["Cargo.toml", "Cargo.lock"],
+      scala: ["build.sbt", "project/assembly.sbt", "project/build.properties"],
     };
 
     if (!files[this.slug]) {
       throw new Error(
-        `course-sdk doesn't know how to upgrade ${this.name}. Please add the files to ignore during upgrade to the filesToIgnoreDuringUpgrade method.`
+        `course-sdk doesn't know how to upgrade ${this.name}. Please upgrade the dependencyFiles getter method in the Language model.`
       );
     }
 
