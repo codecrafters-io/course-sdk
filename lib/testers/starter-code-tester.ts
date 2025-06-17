@@ -10,10 +10,10 @@ import path from "path";
 import YAML from "js-yaml";
 import StarterCodeUncommenter from "../starter-code-uncommenter";
 import LineWithCommentRemover from "../line-with-comment-remover";
+// @ts-ignore
+import testScriptFile from "../scripts/test.sh" with { type: "text" };
 import ShellCommandExecutor from "../shell-command-executor";
 import Dockerfile from "../models/dockerfile";
-
-const testScriptFile = path.join(__dirname, "../scripts/test.sh")
 
 const writeFile = util.promisify(fs.writeFile);
 const exec = util.promisify(child_process.exec);
@@ -194,7 +194,7 @@ export default class StarterCodeTester extends BaseTester {
     // TODO: Using tmp.fileSync() here causes "Text file busy" errors on GitHub runners
     const testScriptPath = tmp.tmpNameSync();
 
-    await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
+    await writeFile(testScriptPath, testScriptFile);
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
 
