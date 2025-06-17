@@ -1,3 +1,5 @@
+import Course from "./course";
+
 export default class Language {
   slug: string;
   name: string;
@@ -87,24 +89,22 @@ export default class Language {
   }
 
   get dependencyFiles(): string[] {
-    const files: { [key: string]: string[] } = {
-      c: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
-      cpp: ["CMakeLists.txt", "vcpkg.json", "vcpkg-configuration.json"],
-      gleam: ["gleam.toml", "manifest.toml"],
-      go: ["go.mod", "go.sum"],
-      java: ["pom.xml"],
-      python: ["Pipfile", "Pipfile.lock"],
-      rust: ["Cargo.toml", "Cargo.lock"],
-      scala: ["build.sbt", "project/assembly.sbt", "project/build.properties"],
-    };
+    const course = Course.loadFromDirectory(process.cwd());
 
-    if (!files[this.slug]) {
-      throw new Error(
-        `course-sdk doesn't know how to upgrade ${this.name}. Please upgrade the dependencyFiles getter method in the Language model.`
-      );
+    const dockerfile = course.latestDockerfiles.find((d) => d.languagePack === this.languagePack);
+    if (!dockerfile) {
+      throw new Error(`language.dependencyFiles: No dockerfile found for ${this.name}.`);
     }
 
-    return files[this.slug];
+    const matchResult = dockerfile.contents.match(/^ENV CODECRAFTERS_DEPENDENCY_FILE_PATHS="([^"]+)"$/m);
+    if (!matchResult) {
+      return []; // As of 2025-06-17, Odin and PHP don't have dependency files
+    }
+
+    return matchResult[1]
+      .split(/[,\s]+/)
+      .map((file) => file.trim())
+      .filter((file) => file.length > 0);
   }
 
   get languagePack() {
