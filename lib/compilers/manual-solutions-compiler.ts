@@ -5,8 +5,6 @@ import Course from "../models/course";
 import Language from "../models/language";
 import { glob } from "glob";
 
-const FILES_TO_OVERWRITE = [".codecrafters/compile.sh", ".codecrafters/run.sh", "codecrafters.yml", "README.md", "your_program.sh"];
-
 class ManualSolutionsCompiler {
   course: Course;
 
@@ -25,8 +23,6 @@ class ManualSolutionsCompiler {
   async compileForLanguage(language: Language) {
     console.log(`- compiling manual solutions for ${this.course.slug}-${language.slug}`);
 
-    const filesToOverwrite = FILES_TO_OVERWRITE.concat(language.dependencyFiles);
-
     const stages = this.course.stages;
     const firstStage = stages[0];
 
@@ -40,12 +36,20 @@ class ManualSolutionsCompiler {
         continue;
       }
 
-      for (const file of filesToOverwrite) {
-        const sourcePath = path.join(firstStageCodeDirectory, file);
-        const targetPath = path.join(currentStageCodeDirectory, file);
+      const firstStageFiles = await glob("**/*", {
+        cwd: firstStageCodeDirectory,
+        dot: true, // Include hidden files
+        nodir: true, // Only include files, not directories
+      });
 
-        if (fs.existsSync(sourcePath)) {
-          fs.copyFileSync(sourcePath, targetPath);
+      for (const file of firstStageFiles) {
+        if (!file.endsWith(language.codeFileExtension)) {
+          const sourcePath = path.join(firstStageCodeDirectory, file);
+          const targetPath = path.join(currentStageCodeDirectory, file);
+
+          if (fs.existsSync(sourcePath)) {
+            fs.copyFileSync(sourcePath, targetPath);
+          }
         }
       }
     }
