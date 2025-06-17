@@ -25,11 +25,10 @@ class ManualSolutionsCompiler {
 
     const stages = this.course.stages;
     const firstStage = stages[0];
+    const firstStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, firstStage.solutionDir, "code");
 
     for (let i = 1; i < stages.length - 1; i++) {
       const currentStage = stages[i];
-
-      const firstStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, firstStage.solutionDir, "code");
       const currentStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, currentStage.solutionDir, "code");
 
       if (!fs.existsSync(currentStageCodeDirectory)) {
