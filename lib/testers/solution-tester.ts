@@ -10,8 +10,8 @@ import Course from "../models/course";
 import Dockerfile from "../models/dockerfile";
 import Language from "../models/language";
 import CourseStage from "../models/course-stage";
-// @ts-ignore
-import testScriptFile from "../scripts/test.sh";
+
+const testScriptFile = path.join(__dirname, "../scripts/test.sh")
 
 const exec = util.promisify(child_process.exec);
 const readFile = util.promisify(fs.readFile);

@@ -10,12 +10,12 @@ import path from "path";
 import YAML from "js-yaml";
 import StarterCodeUncommenter from "../starter-code-uncommenter";
 import LineWithCommentRemover from "../line-with-comment-remover";
-import testScriptFile from "../scripts/test.sh";
 import ShellCommandExecutor from "../shell-command-executor";
 import Dockerfile from "../models/dockerfile";
 
-const writeFile = util.promisify(fs.writeFile);
+const testScriptFile = path.join(__dirname, "../scripts/test.sh")
 
+const writeFile = util.promisify(fs.writeFile);
 const exec = util.promisify(child_process.exec);
 const readFile = util.promisify(fs.readFile);
 
