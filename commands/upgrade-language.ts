@@ -41,7 +41,8 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     await new AddLanguageCommand(this.languageSlug).doRun();
 
-    const filesToRevert = [userEditableFile, ...language.dependencyFiles];
+    const dockerfile = course.latestDockerfileForLanguage(language);
+    const filesToRevert = [userEditableFile, ...dockerfile!.dependencyFiles];
 
     console.log("");
     filesToRevert.forEach((file) => {
