@@ -13,7 +13,7 @@ class ManualSolutionsCompiler {
   }
 
   async compileAll() {
-    const languages = this.languages();
+    const languages = this.course.languages;
 
     for (const language of languages) {
       await this.compileForLanguage(language);
@@ -26,7 +26,7 @@ class ManualSolutionsCompiler {
     const stages = this.course.stages;
     const firstStage = stages[0];
     const firstStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, firstStage.solutionDir, "code");
-    const firstStageFiles = await glob("**/*", {
+    const firstStageFilePaths = await glob("**/*", {
       cwd: firstStageCodeDirectory,
       dot: true,
       nodir: true,
@@ -39,23 +39,14 @@ class ManualSolutionsCompiler {
         continue;
       }
 
-      for (const file of firstStageFiles) {
-        if (!file.endsWith(language.codeFileExtension)) {
-          const sourcePath = path.join(firstStageCodeDirectory, file);
-          const targetPath = path.join(currentStageCodeDirectory, file);
+      for (const filePath of firstStageFilePaths) {
+        if (!filePath.endsWith(language.codeFileExtension)) {
+          const sourcePath = path.join(firstStageCodeDirectory, filePath);
+          const targetPath = path.join(currentStageCodeDirectory, filePath);
           fs.copyFileSync(sourcePath, targetPath);
         }
       }
     }
-  }
-
-  protected languages(): Language[] {
-    const languageDirectories = fs
-      .readdirSync(this.course.solutionsDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    return languageDirectories.map((languageDirectory) => Language.findBySlug(languageDirectory));
   }
 }
 
