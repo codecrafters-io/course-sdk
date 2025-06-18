@@ -17,7 +17,7 @@ export default class Dockerfile {
     return fs.readFileSync(this.path, "utf8");
   }
 
-  get dependencyFiles(): string[] {
+  get dependencyFilePaths(): string[] {
     const matchResult = this.contents.match(/^ENV CODECRAFTERS_DEPENDENCY_FILE_PATHS="([^"]+)"$/m);
     if (!matchResult) {
       return []; // As of 2025-06-18, Odin and PHP don't have dependency files
@@ -25,8 +25,8 @@ export default class Dockerfile {
 
     return matchResult[1]
       .split(/[,\s]+/)
-      .map((file) => file.trim())
-      .filter((file) => file.length > 0);
+      .map((path) => path.trim())
+      .filter((path) => path.length > 0);
   }
 
   get filename() {
