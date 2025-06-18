@@ -1,5 +1,6 @@
 import { FirstStageExplanationsCompiler } from "../lib/compilers/first-stage-explanations-compiler";
 import FirstStageSolutionsCompiler from "../lib/compilers/first-stage-solutions-compiler";
+import ManualSolutionsCompiler from "../lib/compilers/manual-solutions-compiler";
 import SolutionDiffsCompiler from "../lib/compilers/solution-diffs-compiler";
 import StarterTemplateCompiler from "../lib/compilers/starter-template-compiler";
 import DockerShellCommandExecutor from "../lib/docker-shell-command-executor";
@@ -29,6 +30,7 @@ export default class CompileCommand extends BaseCommand {
       new StarterTemplateCompiler(course),
       new FirstStageSolutionsCompiler(course),
       new FirstStageExplanationsCompiler(course),
+      new ManualSolutionsCompiler(course),
       new SolutionDiffsCompiler(course),
     ];
 
