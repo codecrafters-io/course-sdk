@@ -26,16 +26,14 @@ class ManualSolutionsCompiler {
     const stages = this.course.stages;
     const firstStage = stages[0];
     const firstStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, firstStage.solutionDir, "code");
-
     const firstStageFiles = await glob("**/*", {
       cwd: firstStageCodeDirectory,
       dot: true,
       nodir: true,
     });
 
-    for (let i = 1; i < stages.length - 1; i++) {
-      const currentStage = stages[i];
-      const currentStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, currentStage.solutionDir, "code");
+    for (const stage of stages.slice(1)) {
+      const currentStageCodeDirectory = path.join(this.course.solutionsDir, language.slug, stage.solutionDir, "code");
 
       if (!fs.existsSync(currentStageCodeDirectory)) {
         continue;
@@ -45,10 +43,7 @@ class ManualSolutionsCompiler {
         if (!file.endsWith(language.codeFileExtension)) {
           const sourcePath = path.join(firstStageCodeDirectory, file);
           const targetPath = path.join(currentStageCodeDirectory, file);
-
-          if (fs.existsSync(sourcePath)) {
-            fs.copyFileSync(sourcePath, targetPath);
-          }
+          fs.copyFileSync(sourcePath, targetPath);
         }
       }
     }

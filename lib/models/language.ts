@@ -1,5 +1,3 @@
-import Course from "./course";
-
 export default class Language {
   slug: string;
   name: string;
@@ -86,25 +84,6 @@ export default class Language {
     };
 
     return extensions[this.slug];
-  }
-
-  get dependencyFiles(): string[] {
-    const course = Course.loadFromDirectory(process.cwd());
-
-    const dockerfile = course.latestDockerfiles.find((d) => d.languagePack === this.languagePack);
-    if (!dockerfile) {
-      throw new Error(`language.dependencyFiles: No dockerfile found for ${this.name}.`);
-    }
-
-    const matchResult = dockerfile.contents.match(/^ENV CODECRAFTERS_DEPENDENCY_FILE_PATHS="([^"]+)"$/m);
-    if (!matchResult) {
-      return []; // As of 2025-06-17, Odin and PHP don't have dependency files
-    }
-
-    return matchResult[1]
-      .split(/[,\s]+/)
-      .map((file) => file.trim())
-      .filter((file) => file.length > 0);
   }
 
   get languagePack() {
