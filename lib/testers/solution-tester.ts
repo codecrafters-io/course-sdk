@@ -11,7 +11,7 @@ import Dockerfile from "../models/dockerfile";
 import Language from "../models/language";
 import CourseStage from "../models/course-stage";
 // @ts-ignore
-import testScriptFile from "../scripts/test.sh";
+import testScriptFile from "../scripts/test.sh" with { type: 'text'};
 
 const exec = util.promisify(child_process.exec);
 const readFile = util.promisify(fs.readFile);
@@ -82,7 +82,7 @@ export default class SolutionTester extends BaseTester {
     // TODO: Using tmp.fileSync() here causes "Text file busy" errors on GitHub runners
     const testScriptPath = tmp.tmpNameSync();
 
-    await writeFile(testScriptPath, fs.readFileSync(testScriptFile).toString());
+    await writeFile(testScriptPath, testScriptFile);
     await exec(`chmod +x ${testScriptPath}`);
     await exec(`sync`); // Avoid "Text file busy" errors
 
