@@ -253,6 +253,8 @@ jobs:
 
       - run: course-sdk test ${{matrix.language}}
         working-directory: courses/${{github.event.repository.name}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   validate-schemas:
     runs-on: ubuntu-latest
