@@ -122,7 +122,7 @@
           "description_md": {
             "type": "string",
             "minLength": 1,
-            "description": "A markdown description for this stage, rendered in the 'Your Task' card."
+            "description": "Deprecated! TODO: Remove this, replace with files like stage_descriptions/base_1_xy3.md."
           },
           "difficulty": {
             "type": "string",
@@ -140,7 +140,7 @@
             "description": "Link to the source code for the test cases of this stage. Optional."
           }
         },
-        "required": ["description_md", "difficulty", "marketing_md", "name", "slug"]
+        "required": ["difficulty", "marketing_md", "name", "slug"]
       }
     }
   },
