@@ -33,20 +33,20 @@ export default class Dockerfile {
     return path.basename(this.path);
   }
 
-  get languagePackWithVersion() {
+  get buildpackWithVersion() {
     return this.filename.replace(/\.Dockerfile$/, "");
   }
 
-  get languagePack() {
-    return this.languagePackWithVersion.split("-")[0];
+  get buildpack() {
+    return this.buildpackWithVersion.split("-")[0];
   }
 
   get language() {
-    if (this.languagePack === null) {
+    if (this.buildpack === null) {
       throw new Error(`Dockerfile path ${this.path} does not match expected format`);
     }
 
-    return Language.findByLanguagePack(this.languagePack);
+    return Language.findByBuildpack(this.buildpack);
   }
 
   get processedContents(): string {
@@ -65,7 +65,7 @@ export default class Dockerfile {
   }
 
   get semver(): semver.SemVer {
-    const versionString = this.languagePackWithVersion.replace(`${this.language.slug}-`, "");
+    const versionString = this.buildpackWithVersion.replace(`${this.language.slug}-`, "");
 
     if (semver.coerce(versionString) === null) {
       throw new Error(`Dockerfile path ${this.path} does not match expected format`);
