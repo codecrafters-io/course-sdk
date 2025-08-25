@@ -9,7 +9,7 @@ import UpgradeLanguageCommand from "./commands/upgrade-language";
 
 const program = new Command();
 
-program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.2.0");
+program.name("course-sdk").description("CLI to develop & test CodeCrafters challenges").version("0.2.1");
 
 program
   .command("compile")

@@ -44,11 +44,11 @@ export default class StarterCodeTester extends BaseTester {
       throw new Error(`Expected a dockerfile to exist for ${this.slug}`);
     }
 
-    const codecraftersYml = YAML.load(await readFile(`${this.copiedStarterDir}/codecrafters.yml`, "utf8")) as { language_pack: string };
-    const expectedYamlLanguagePack = this.dockerfile.languagePackWithVersion;
-    const actualYamlLanguagePack = codecraftersYml.language_pack;
-    if (expectedYamlLanguagePack !== actualYamlLanguagePack) {
-      throw new Error(`Expected .codecrafters.yml to have language_pack: ${expectedYamlLanguagePack}, but found ${actualYamlLanguagePack}`);
+    const codecraftersYml = YAML.load(await readFile(`${this.copiedStarterDir}/codecrafters.yml`, "utf8")) as { buildpack: string; language_pack: string };
+    const expectedYamlBuildpack = this.dockerfile.buildpackWithVersion;
+    const actualYamlBuildpack = codecraftersYml.buildpack || codecraftersYml.language_pack;
+    if (expectedYamlBuildpack !== actualYamlBuildpack) {
+      throw new Error(`Expected .codecrafters.yml to have buildpack: ${expectedYamlBuildpack}, but found ${actualYamlBuildpack}`);
     }
 
     Logger.logInfo("Building image");
@@ -166,18 +166,18 @@ export default class StarterCodeTester extends BaseTester {
   // Cache so that Dockerfile.processedContents is stored
   get dockerfile() {
     if (!this._dockerfile) {
-      this._dockerfile = this.course.latestDockerfiles.find((dockerfile) => dockerfile.languagePack === this.languagePack);
+      this._dockerfile = this.course.latestDockerfiles.find((dockerfile) => dockerfile.buildpack === this.buildpack);
     }
 
     return this._dockerfile;
   }
 
   get slug() {
-    return `${this.course.slug}-${this.languagePack}`;
+    return `${this.course.slug}-${this.buildpack}`;
   }
 
-  get languagePack() {
-    return this.language.languagePack;
+  get buildpack() {
+    return this.language.buildpack;
   }
 
   get starterDir() {

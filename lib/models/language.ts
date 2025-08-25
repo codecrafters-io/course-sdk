@@ -48,11 +48,11 @@ export default class Language {
     return language;
   }
 
-  static findByLanguagePack(language_pack: string) {
-    if (language_pack.startsWith("nodejs")) return this.findBySlug("javascript");
-    if (language_pack.startsWith("dotnet")) return this.findBySlug("csharp");
-    if (language_pack.startsWith("bun")) return this.findBySlug("typescript");
-    return this.findBySlug(language_pack.split("-")[0]);
+  static findByBuildpack(buildpack: string) {
+    if (buildpack.startsWith("nodejs")) return this.findBySlug("javascript");
+    if (buildpack.startsWith("dotnet")) return this.findBySlug("csharp");
+    if (buildpack.startsWith("bun")) return this.findBySlug("typescript");
+    return this.findBySlug(buildpack.split("-")[0]);
   }
 
   get codeFileExtension(): string {
@@ -86,7 +86,7 @@ export default class Language {
     return extensions[this.slug];
   }
 
-  get languagePack() {
+  get buildpack() {
     if (this.slug === "javascript") return "nodejs";
     if (this.slug === "csharp") return "dotnet";
     if (this.slug === "typescript") return "bun";

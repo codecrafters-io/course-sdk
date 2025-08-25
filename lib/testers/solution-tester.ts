@@ -64,14 +64,14 @@ export default class SolutionTester extends BaseTester {
   // Cache so that Dockerfile.processedContents is stored
   private get dockerfile() {
     if (!this._dockerfile) {
-      this._dockerfile = this.course.latestDockerfiles.find((dockerfile) => dockerfile.languagePack === this.languagePack);
+      this._dockerfile = this.course.latestDockerfiles.find((dockerfile) => dockerfile.buildpack === this.buildpack);
     }
 
     return this._dockerfile;
   }
 
-  private get languagePack() {
-    return this.language.languagePack;
+  private get buildpack() {
+    return this.language.buildpack;
   }
 
   private get slug() {
@@ -117,12 +117,12 @@ export default class SolutionTester extends BaseTester {
     const codeDir = path.join(this.solutionsDir, stage.solutionDir, "code");
     this.copiedCodeDir = await this.course.prepareRepositoryDirForLanguage(this.language, this.testerDir, codeDir);
 
-    const codecraftersYml = YAML.load(await readFile(`${this.copiedCodeDir}/codecrafters.yml`, "utf8")) as { language_pack: string };
-    const expectedYamlLanguagePack = this.dockerfile!.languagePackWithVersion;
-    const actualYamlLanguagePack = codecraftersYml.language_pack;
-    if (expectedYamlLanguagePack !== actualYamlLanguagePack) {
+    const codecraftersYml = YAML.load(await readFile(`${this.copiedCodeDir}/codecrafters.yml`, "utf8")) as { buildpack: string; language_pack: string };
+    const expectedYamlBuildpack = this.dockerfile!.buildpackWithVersion;
+    const actualYamlBuildpack = codecraftersYml.buildpack || codecraftersYml.language_pack;
+    if (expectedYamlBuildpack !== actualYamlBuildpack) {
       throw new Error(
-        `Expected .codecrafters.yml to have language_pack: ${expectedYamlLanguagePack}, but found ${actualYamlLanguagePack}.`
+        `Expected .codecrafters.yml to have buildpack: ${expectedYamlBuildpack}, but found ${actualYamlBuildpack}.`
       );
     }
 
