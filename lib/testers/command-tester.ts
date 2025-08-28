@@ -40,7 +40,7 @@ export default class CommandTester extends BaseTester {
   }
 
   async buildImageAndExecuteCommand(commandToExecute: string, outputStreamType: string, expectedOutput: string) {
-    Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image`);
+    Logger.logInfo(`Building ${this.dockerfile.buildpackWithVersion} image`);
     const command = `docker build -t ${this.slug} -f ${this.dockerfile.path} ${this.copiedStarterDir}`;
     await this.assertStdoutContains(command, "");
 
@@ -60,11 +60,11 @@ export default class CommandTester extends BaseTester {
   }
 
   get language() {
-    return Language.findByLanguagePack(this.dockerfile.languagePackWithVersion);
+    return Language.findByBuildpack(this.dockerfile.buildpackWithVersion);
   }
 
   get slug() {
-    return `${this.course.slug}-${this.dockerfile.languagePackWithVersion}`;
+    return `${this.course.slug}-${this.dockerfile.buildpackWithVersion}`;
   }
 
   get starterDir() {
