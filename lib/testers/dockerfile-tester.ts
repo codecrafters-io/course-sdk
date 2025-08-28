@@ -22,7 +22,7 @@ export default class DockerfileTester extends BaseTester {
   }
 
   get language() {
-    return Language.findByLanguagePack(this.dockerfile.languagePackWithVersion);
+    return Language.findByBuildpack(this.dockerfile.buildpackWithVersion);
   }
 
   async doTest() {
@@ -31,13 +31,13 @@ export default class DockerfileTester extends BaseTester {
     await this.dockerfile.processContents();
     this.copiedStarterDir = await this.course.prepareRepositoryDirForLanguage(this.language);
 
-    Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image without cache`);
+    Logger.logInfo(`Building ${this.dockerfile.buildpackWithVersion} image without cache`);
     const timeTaken = await this.assertTimeUnder(400, this.buildImage.bind(this));
 
     Logger.logInfo(`Took ${timeTaken} secs`);
     Logger.logInfo("");
 
-    Logger.logInfo(`Building ${this.dockerfile.languagePackWithVersion} image with cache`);
+    Logger.logInfo(`Building ${this.dockerfile.buildpackWithVersion} image with cache`);
     const timeTakenWithCache = await this.assertTimeUnder(5, this.buildImage.bind(this));
 
     Logger.logSuccess(`Took ${timeTakenWithCache} secs`);
@@ -50,7 +50,7 @@ export default class DockerfileTester extends BaseTester {
   }
 
   get slug() {
-    return `${this.course.slug}-${this.dockerfile.languagePackWithVersion}`;
+    return `${this.course.slug}-${this.dockerfile.buildpackWithVersion}`;
   }
 
   get starterDir() {
