@@ -25,14 +25,14 @@ export default class LintCommand extends BaseCommand {
     await this.buildToolsImage("js-tools");
 
     console.log("");
-    console.log("Linting JavaScript files...")
+    console.log("Linting JavaScript files...");
     console.log("");
     await this.lintJavaScriptFiles();
     console.log("Linting of JavaScript files complete.");
     console.log("");
 
     console.log("");
-    console.log("Linting Markdown files...")
+    console.log("Linting Markdown files...");
     console.log("");
     await this.lintMarkdownFiles();
     console.log("Linting of Markdown files complete.");
@@ -41,7 +41,7 @@ export default class LintCommand extends BaseCommand {
     await this.buildToolsImage("go-tools");
 
     console.log("");
-    console.log("Linting Go files...")
+    console.log("Linting Go files...");
     console.log("");
     await this.lintGoFiles();
     console.log("Linting of Go files complete.");
@@ -50,7 +50,7 @@ export default class LintCommand extends BaseCommand {
     await this.buildToolsImage("rust-tools");
 
     console.log("");
-    console.log("Linting Rust files...")
+    console.log("Linting Rust files...");
     console.log("");
     await this.lintRustFiles();
     console.log("Linting of Rust files complete.");
@@ -59,7 +59,7 @@ export default class LintCommand extends BaseCommand {
     await this.buildToolsImage("docker-tools");
 
     console.log("");
-    console.log("Linting Docker files...")
+    console.log("Linting Docker files...");
     console.log("");
     await this.lintDockerFiles();
     console.log("Linting of Docker files complete.");
@@ -73,24 +73,34 @@ export default class LintCommand extends BaseCommand {
 
   async lintJavaScriptFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
-    await dockerShellCommandExecutor.exec(`prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check "./**/*.js"`);
+    await dockerShellCommandExecutor.exec(
+      `prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern --check "./**/*.js"`
+    );
   }
 
   async lintMarkdownFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
-    await dockerShellCommandExecutor.exec(`prettier --prose-wrap="always" --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern "./**/*.md"`);
+    await dockerShellCommandExecutor.exec(
+      `prettier --prose-wrap="always" --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern "./**/*.md"`
+    );
   }
 
   async lintRustFiles() {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("rust-tools");
     await dockerShellCommandExecutor.exec(`find . -name '*.rs' -exec rustfmt --edition "2021" --check -- {} +`);
-    await dockerShellCommandExecutor.exec("[ -d compiled_starters/rust ] || exit 0 && (cd compiled_starters/rust && cargo clippy --fix --allow-dirty)");
+    await dockerShellCommandExecutor.exec(
+      "[ -d compiled_starters/rust ] || exit 0 && (cd compiled_starters/rust && cargo clippy --fix --allow-dirty)"
+    );
   }
 
   async lintDockerFilesHelper(tmpDirectory: string) {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("docker-tools");
     await ShellCommandExecutor.execute(`cp -a dockerfiles/ ${tmpDirectory}/`);
+
+    // Hadolint doesn't support --exclude in COPY commands yet
+    // ref: https://github.com/hadolint/language-docker/issues/96
     await dockerShellCommandExecutor.exec(`sed -i "/^COPY /s/--exclude=[^ ]*//g" ${tmpDirectory}/*.Dockerfile`);
+
     await dockerShellCommandExecutor.exec(`hadolint --ignore DL3059 ${tmpDirectory}/*.Dockerfile`);
   }
 
@@ -109,4 +119,3 @@ export default class LintCommand extends BaseCommand {
     await ShellCommandExecutor.execute(`rm -rf ${tmpDirectory}`);
   }
 }
-
