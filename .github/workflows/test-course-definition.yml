@@ -316,7 +316,7 @@ jobs:
         working-directory: tools/llm-linter
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          LLM_LINT_MODEL: o3
+          LLM_LINT_MODEL: gpt-5
         shell: bash
         run: |
           set -euo pipefail
@@ -335,7 +335,7 @@ jobs:
         working-directory: tools/llm-linter
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          LLM_LINT_MODEL: o3
+          LLM_LINT_MODEL: gpt-5
         shell: bash
         run: |
           set -euo pipefail
