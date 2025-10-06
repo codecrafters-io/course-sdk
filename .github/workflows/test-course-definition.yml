@@ -251,12 +251,9 @@ jobs:
         run: |
           set -euo pipefail
       
-          # If this is a pull request, use the GitHub API for changed files
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR=${{ github.event.pull_request.number }}
             OWNER_REPO="${{ github.repository }}"
-      
-            # paginate in case of many files
             files=()
             page=1
             while :; do
@@ -264,14 +261,11 @@ jobs:
                 "https://api.github.com/repos/${OWNER_REPO}/pulls/${PR}/files?per_page=100&page=$page")"
               page_files="$(echo "$resp" | jq -r '.[].filename')"
               [[ -z "$page_files" ]] && break
-              while IFS= read -r f; do
-                [[ -n "$f" ]] && files+=("$f")
-              done <<< "$page_files"
+              while IFS= read -r f; do [[ -n "$f" ]] && files+=("$f"); done <<< "$page_files"
               (( ${#files[@]} < 100*page )) && break
               ((page++))
             done
       
-            # filter to stage_descriptions/**/*.md
             targets=()
             for f in "${files[@]}"; do
               [[ "$f" == stage_descriptions/*.md || "$f" == stage_descriptions/**/*.md ]] && targets+=("$f")
@@ -282,20 +276,18 @@ jobs:
               exit 0
             fi
       
-            # Prefix to match the linter working directory (tools/llm-linter)
+            # ABSOLUTE paths (no more ../ ambiguity)
             abs=()
             for f in "${targets[@]}"; do
-              abs+=( "../courses/${{ github.event.repository.name }}/${f}" )
+              abs+=( "$GITHUB_WORKSPACE/courses/${{ github.event.repository.name }}/$f" )
             done
-      
-            # Write a null-delimited list to a file for safe consumption
             printf '%s\0' "${abs[@]}" > "$GITHUB_WORKSPACE/targets.zlist"
             echo "none=false" >> "$GITHUB_OUTPUT"
             echo "zlist=$GITHUB_WORKSPACE/targets.zlist" >> "$GITHUB_OUTPUT"
             exit 0
           fi
       
-          # Fallback for non-PR events: expand glob locally
+          # Non-PR fallback: expand glob locally and make absolute
           shopt -s globstar nullglob
           files=( stage_descriptions/**/*.md stage_descriptions/*.md )
           if ((${#files[@]} == 0)); then
@@ -305,7 +297,7 @@ jobs:
       
           abs=()
           for f in "${files[@]}"; do
-            abs+=( "../courses/${{ github.event.repository.name }}/${f}" )
+            abs+=( "$GITHUB_WORKSPACE/courses/${{ github.event.repository.name }}/$f" )
           done
           printf '%s\0' "${abs[@]}" > "$GITHUB_WORKSPACE/targets.zlist"
           echo "none=false" >> "$GITHUB_OUTPUT"
@@ -321,6 +313,11 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -d '' files < "${{ steps.targets.outputs.zlist }}"
+      
+          echo "Verifying file existence before lint:"
+          for f in "${files[@]}"; do
+            [[ -f "$f" ]] && echo "OK  $f" || { echo "MISSING  $f"; fi; done
+      
           mkdir -p reports
           bun run src/index.ts \
             --format html \
@@ -328,7 +325,7 @@ jobs:
             --report reports/lint.json \
             --show-pass-details \
             "${files[@]}"
-      
+
       # Fallback: no changes detected → lint all (with proper glob expansion)
       - name: Run LLM rules (fallback - all files)
         if: steps.targets.outputs.none == 'true'
