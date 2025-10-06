@@ -196,3 +196,182 @@ jobs:
           path: courses/${{github.event.repository.name}}
 
       - run: scripts/validate_stages_naming.sh "courses/${{github.event.repository.name}}"
+
+  test_stage_descriptions:
+    name: LLM Rules — Stage Instructions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Avoid leaking secrets to forked PRs
+    if: github.event.pull_request.head.repo.fork == false
+
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.2
+
+      # Checkout course-sdk (keeps paths consistent with other jobs)
+      - uses: actions/checkout@v4
+        with:
+          repository: "codecrafters-io/course-sdk"
+          ref: ${{ inputs.sdkRef }}
+
+      # Checkout the course repo (the PR target)
+      - uses: actions/checkout@v4
+        with:
+          path: courses/${{ github.event.repository.name }}
+
+      # Checkout the private LLM rules runner (use a PAT or GitHub App token)
+      - name: Checkout llm-rules runner
+        uses: actions/checkout@v4
+        with:
+          repository: codecrafters-io/llm-rules-test
+          ref: main
+          path: tools/llm-linter
+          token: ${{ secrets.LLM_LINTER_TOKEN }}
+
+      - name: Install linter deps
+        working-directory: tools/llm-linter
+        run: bun install
+
+      # (Optional) limit to changed files only. Comment this block out to lint all files.
+      - name: Compute target stage files
+        id: targets
+        shell: bash
+        working-directory: courses/${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          # Default: all stage_descriptions/**/*.md if we cannot compute a diff (e.g., on push)
+          DEFAULT_LIST=$(ls -1 stage_descriptions/**/*.md 2>/dev/null || true)
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --no-tags --prune --depth=2 origin +refs/heads/*:refs/remotes/origin/* || true
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            BASE="${BASE_SHA:-origin/${BASE_REF:-origin/main}}"
+            mapfile -t FILES < <(git diff --name-only "$BASE"...HEAD -- 'stage_descriptions/**/*.md' || true)
+          else
+            mapfile -t FILES < <(echo "$DEFAULT_LIST")
+          fi
+
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "none=true" >> "$GITHUB_OUTPUT"
+          else
+            # Prefix with repo root for the linter working dir
+            PREFIXED=()
+            for f in "${FILES[@]}"; do
+              [[ -z "$f" ]] && continue
+              PREFIXED+=("../courses/${{ github.event.repository.name }}/${f}")
+            done
+            printf -v JOINED '%s ' "${PREFIXED[@]}"
+            echo "none=false" >> "$GITHUB_OUTPUT"
+            echo "list=${JOINED}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run LLM rules (all stages if no diff)
+        if: steps.targets.outputs.none == 'false'
+        working-directory: tools/llm-linter
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Model & output formats configurable as needed
+          LLM_LINT_MODEL: gpt-5
+        run: |
+          mkdir -p reports
+          # Pretty HTML/MD + JSON summary (used for JUnit conversion below)
+          bun run src/index.ts \
+            --format html \
+            --out reports/llm-lint \
+            --report reports/lint.json \
+            --show-pass-details \
+            ${{ steps.targets.outputs.list }}
+
+      - name: Run LLM rules (fallback: all files)
+        if: steps.targets.outputs.none == 'true'
+        working-directory: tools/llm-linter
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LLM_LINT_MODEL: gpt-5
+        run: |
+          mkdir -p reports
+          # Lint all stage files in the course if diff is empty
+          bun run src/index.ts \
+            --format html \
+            --out reports/llm-lint \
+            --report reports/lint.json \
+            --show-pass-details \
+            ../courses/${{ github.event.repository.name }}/stage_descriptions/**/*.md
+
+      # Convert the JSON summary to JUnit XML for GitHub annotations/checks
+      - name: Convert JSON → JUnit XML
+        working-directory: tools/llm-linter
+        run: |
+          bun --eval '
+            import { readFileSync, writeFileSync } from "node:fs";
+            const jsonPath = "reports/lint.json";
+            const outPath  = "reports/junit.xml";
+            const data = JSON.parse(readFileSync(jsonPath, "utf8"));
+
+            // Build JUnit XML
+            // - One <testsuite> per file
+            // - One <testcase> per rule
+            // - <failure> nodes for failed rules (message = rationale; body = suggested fixes)
+            // - Provide a file attribute and line number (line="1") as we do not have precise spans yet.
+            const esc = (s) => String(s)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+
+            const suites = data.files.map((f) => {
+              const tests = f.rules.length;
+              const failures = f.rules.filter(r => !r.pass).length;
+              const cases = f.rules.map((r) => {
+                const name = `${r.id}`;
+                const file = f.file;
+                const fixBody = Array.isArray(r.suggested_fixes) && r.suggested_fixes.length
+                  ? r.suggested_fixes.map(x => `- ${typeof x === "string" ? x : JSON.stringify(x)}`).join("\n")
+                  : "";
+                if (r.pass) {
+                  return `<testcase name="${esc(name)}" classname="${esc(file)}" file="${esc(file)}" line="1"></testcase>`;
+                } else {
+                  const msg = r.rationale ? esc(r.rationale) : "Failed rule";
+                  const body = (r.rationale ? `rationale: ${r.rationale}\n` : "") + (fixBody ? `suggested fixes:\n${fixBody}\n` : "");
+                  return `<testcase name="${esc(name)}" classname="${esc(file)}" file="${esc(file)}" line="1">
+      <failure message="${msg}">${esc(body)}</failure>
+    </testcase>`;
+                }
+              }).join("\n");
+
+              return `<testsuite name="${esc(f.file)}" tests="${tests}" failures="${failures}">
+    ${cases}
+  </testsuite>`;
+            }).join("\n");
+
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="llm-doc-linter" tests="${data.files.reduce((a,f)=>a+f.rules.length,0)}" failures="${data.files.reduce((a,f)=>a+f.rules.filter(r=>!r.pass).length,0)}">\n${suites}\n</testsuites>\n`;
+
+            writeFileSync(outPath, xml, "utf8");
+            console.log("Wrote JUnit to", outPath);
+          '
+
+      - name: Upload JUnit XML
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-lint-junit
+          path: tools/llm-linter/reports/junit.xml
+
+      # Publish test results as a Check + PR annotations
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2.20.0
+        with:
+          files: tools/llm-linter/reports/junit.xml
+          check_name: "LLM Doc Lint"
+          report_individual_runs: true
+          annotate_only: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
