@@ -246,34 +246,28 @@ jobs:
         working-directory: courses/${{ github.event.repository.name }}
         run: |
           set -euo pipefail
-          # Default: all stage_descriptions/**/*.md if we cannot compute a diff (e.g., on push)
-          DEFAULT_LIST=$(ls -1 stage_descriptions/**/*.md 2>/dev/null || true)
-
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             git fetch --no-tags --prune --depth=2 origin +refs/heads/*:refs/remotes/origin/* || true
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
-            BASE="${BASE_SHA:-origin/${BASE_REF:-origin/main}}"
-            mapfile -t FILES < <(git diff --name-only "$BASE"...HEAD -- 'stage_descriptions/**/*.md' || true)
+            base="${{ github.event.pull_request.base.sha || format('origin/{0}', github.event.pull_request.base.ref) }}"
+            mapfile -t rel < <(git diff --name-only "$base"...HEAD -- 'stage_descriptions/**/*.md' || true)
           else
-            mapfile -t FILES < <(echo "$DEFAULT_LIST")
+            shopt -s globstar nullglob
+            mapfile -t rel < <(printf "%s\n" stage_descriptions/**/*.md)
           fi
-
-          if [ ${#FILES[@]} -eq 0 ]; then
+      
+          if ((${#rel[@]} == 0)); then
             echo "none=true" >> "$GITHUB_OUTPUT"
-          else
-            # Prefix with repo root for the linter working dir
-            PREFIXED=()
-            for f in "${FILES[@]}"; do
-              [[ -z "$f" ]] && continue
-              PREFIXED+=("../courses/${{ github.event.repository.name }}/${f}")
-            done
-            printf -v JOINED '%s ' "${PREFIXED[@]}"
-            echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "list=${JOINED}" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+      
+          # Prefix with repo root for linter working dir
+          abs=()
+          for f in "${rel[@]}"; do abs+=( "../courses/${{ github.event.repository.name }}/${f}" ); done
+          printf '%s\0' "${abs[@]}" > $GITHUB_WORKSPACE/targets.zlist
+          echo "none=false" >> "$GITHUB_OUTPUT"
+          echo "zlist=$GITHUB_WORKSPACE/targets.zlist" >> "$GITHUB_OUTPUT"
 
-      - name: Run LLM rules (all stages if no diff)
+      - name: Run LLM rules (changed files)
         if: steps.targets.outputs.none == 'false'
         working-directory: tools/llm-linter
         env:
@@ -281,30 +275,40 @@ jobs:
           # Model & output formats configurable as needed
           LLM_LINT_MODEL: gpt-5
         run: |
+          set -euo pipefail
+          mapfile -d '' files < "${{ steps.targets.outputs.zlist }}"
           mkdir -p reports
-          # Pretty HTML/MD + JSON summary (used for JUnit conversion below)
           bun run src/index.ts \
             --format html \
             --out reports/llm-lint \
             --report reports/lint.json \
             --show-pass-details \
-            ${{ steps.targets.outputs.list }}
+            "${files[@]}"
 
-      - name: Run LLM rules
+      - name: Run LLM rules (fallback - all files)
         if: steps.targets.outputs.none == 'true'
         working-directory: tools/llm-linter
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LLM_LINT_MODEL: gpt-5
         run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+      
+          # Build an array of files
+          files=( ../courses/${{ github.event.repository.name }}/stage_descriptions/**/*.md )
+          if ((${#files[@]} == 0)); then
+            echo "No stage files found under stage_descriptions/"
+            exit 0
+          fi
+      
           mkdir -p reports
-          # Lint all stage files in the course if diff is empty
           bun run src/index.ts \
             --format html \
             --out reports/llm-lint \
             --report reports/lint.json \
             --show-pass-details \
-            ../courses/${{ github.event.repository.name }}/stage_descriptions/**/*.md
+            "${files[@]}"
 
       # Convert the JSON summary to JUnit XML for GitHub annotations/checks
       - name: Convert JSON → JUnit XML
