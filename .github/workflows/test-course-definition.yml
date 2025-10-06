@@ -315,8 +315,17 @@ jobs:
           mapfile -d '' files < "${{ steps.targets.outputs.zlist }}"
       
           echo "Verifying file existence before lint:"
+          missing=0
           for f in "${files[@]}"; do
-            [[ -f "$f" ]] && echo "OK  $f" || { echo "MISSING  $f"; fi; done
+            if [[ -f "$f" ]]; then
+              echo "OK     $f"
+            else
+              echo "::warning title=Missing file::$f not found"
+              missing=1
+            fi
+          done
+          # If you want to hard-fail here when something is missing, uncomment:
+          # ((missing)) && exit 1
       
           mkdir -p reports
           bun run src/index.ts \
@@ -337,8 +346,18 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
-          files=( ../courses/${{ github.event.repository.name }}/stage_descriptions/**/*.md )
+          files=( "$GITHUB_WORKSPACE/courses/${{ github.event.repository.name }}"/stage_descriptions/**/*.md )
           ((${#files[@]} == 0)) && { echo "No stage files found"; exit 0; }
+      
+          echo "Verifying file existence before lint:"
+          for f in "${files[@]}"; do
+            if [[ -f "$f" ]]; then
+              echo "OK     $f"
+            else
+              echo "::warning title=Missing file::$f not found"
+            fi
+          done
+      
           mkdir -p reports
           bun run src/index.ts \
             --format html \
@@ -346,7 +365,6 @@ jobs:
             --report reports/lint.json \
             --show-pass-details \
             "${files[@]}"
-
 
       # Convert the JSON summary to JUnit XML for GitHub annotations/checks
       - name: Convert JSON → JUnit XML
