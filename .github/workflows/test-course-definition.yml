@@ -236,6 +236,12 @@ jobs:
       - name: Install linter deps
         working-directory: tools/llm-linter
         run: bun install
+
+      - name: Verify linter scripts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          chmod +x tools/llm-linter/scripts/*.sh || true
   
       - name: Compute target stage files
         id: targets
