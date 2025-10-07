@@ -236,15 +236,6 @@ jobs:
       - name: Install linter deps
         working-directory: tools/llm-linter
         run: bun install
-
-      - name: Verify linter scripts
-        shell: bash
-        run: |
-          set -euxo pipefail
-          ls -la tools
-          ls -la tools/llm-linter || true
-          ls -la tools/llm-linter/scripts || true
-          chmod +x tools/llm-linter/scripts/*.sh || true
   
       - name: Compute target stage files
         id: targets
@@ -282,6 +273,18 @@ jobs:
         with:
           name: llm-lint-junit
           path: tools/llm-linter/reports/junit.xml
+
+      - name: Render PR comment markdown
+        working-directory: tools/llm-linter
+        run: bun scripts/render_pr_comment.mjs > pr-comment.md
+      
+      - name: Upsert PR comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: tools/llm-linter/pr-comment.md
+          edit-mode: replace
+
 
       # Publish test results as a Check + PR annotations
       - name: Publish Test Results
