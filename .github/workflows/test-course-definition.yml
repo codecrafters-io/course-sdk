@@ -273,7 +273,6 @@ jobs:
           REPO_ROOT: ${{ github.workspace }}/courses/${{ github.event.repository.name }}
         run: bun scripts/json_to_junit.mjs
 
-
       - name: Upload JUnit XML
         uses: actions/upload-artifact@v4
         with:
@@ -290,7 +289,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: tools/llm-linter/pr-comment.md
           edit-mode: replace
-
 
       # Publish test results as a Check + PR annotations
       - name: Publish Test Results
