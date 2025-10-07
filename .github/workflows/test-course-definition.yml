@@ -214,226 +214,59 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.2
-
-      # Checkout course-sdk (keeps paths consistent with other jobs)
+  
       - uses: actions/checkout@v4
         with:
           repository: "codecrafters-io/course-sdk"
           ref: ${{ inputs.sdkRef }}
-
-      # Checkout the course repo (the PR target)
+  
       - uses: actions/checkout@v4
         with:
           path: courses/${{ github.event.repository.name }}
-          ref: ${{ github.sha }}   # PR merge commit for pull_request jobs
-          fetch-depth: 0           # full history avoids future surprises
-
-      # Checkout the private LLM rules runner (use a PAT or GitHub App token)
-      - name: Checkout llm-rules runner
-        uses: actions/checkout@v4
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+  
+      - uses: actions/checkout@v4
         with:
           repository: codecrafters-io/llm-rules-test
-          ref: master
+          ref: main
           path: tools/llm-linter
           token: ${{ secrets.LLM_LINTER_TOKEN }}
-
+  
       - name: Install linter deps
         working-directory: tools/llm-linter
         run: bun install
-
-      # (Optional) limit to changed files only. Comment this block out to lint all files.
+  
       - name: Compute target stage files
         id: targets
         shell: bash
-        working-directory: courses/${{ github.event.repository.name }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-      
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            PR=${{ github.event.pull_request.number }}
-            OWNER_REPO="${{ github.repository }}"
-            files=()
-            page=1
-            while :; do
-              resp="$(curl -sS -H "Authorization: Bearer $GH_TOKEN" \
-                "https://api.github.com/repos/${OWNER_REPO}/pulls/${PR}/files?per_page=100&page=$page")"
-              page_files="$(echo "$resp" | jq -r '.[].filename')"
-              [[ -z "$page_files" ]] && break
-              while IFS= read -r f; do [[ -n "$f" ]] && files+=("$f"); done <<< "$page_files"
-              (( ${#files[@]} < 100*page )) && break
-              ((page++))
-            done
-      
-            targets=()
-            for f in "${files[@]}"; do
-              [[ "$f" == stage_descriptions/*.md || "$f" == stage_descriptions/**/*.md ]] && targets+=("$f")
-            done
-      
-            if ((${#targets[@]} == 0)); then
-              echo "none=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-      
-            # ABSOLUTE paths (no more ../ ambiguity)
-            abs=()
-            for f in "${targets[@]}"; do
-              abs+=( "$GITHUB_WORKSPACE/courses/${{ github.event.repository.name }}/$f" )
-            done
-            printf '%s\0' "${abs[@]}" > "$GITHUB_WORKSPACE/targets.zlist"
-            echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "zlist=$GITHUB_WORKSPACE/targets.zlist" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-      
-          # Non-PR fallback: expand glob locally and make absolute
-          shopt -s globstar nullglob
-          files=( stage_descriptions/**/*.md stage_descriptions/*.md )
-          if ((${#files[@]} == 0)); then
-            echo "none=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-      
-          abs=()
-          for f in "${files[@]}"; do
-            abs+=( "$GITHUB_WORKSPACE/courses/${{ github.event.repository.name }}/$f" )
-          done
-          printf '%s\0' "${abs[@]}" > "$GITHUB_WORKSPACE/targets.zlist"
-          echo "none=false" >> "$GITHUB_OUTPUT"
-          echo "zlist=$GITHUB_WORKSPACE/targets.zlist" >> "$GITHUB_OUTPUT"
-
-      - name: Run LLM rules (changed files)
+          REPO_NAME: ${{ github.event.repository.name }}
+          OWNER_REPO: ${{ github.repository }}
+          COURSE_DIR: ${{ github.workspace }}/courses/${{ github.event.repository.name }}
+          OUT_ZLIST: ${{ github.workspace }}/targets.zlist
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tools/llm-linter/scripts/compute_targets.sh
+  
+      - name: Run LLM rules
         if: steps.targets.outputs.none == 'false'
-        working-directory: tools/llm-linter
+        id: run_linter
+        shell: bash
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          LLM_LINT_MODEL: gpt-5
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -d '' files < "${{ steps.targets.outputs.zlist }}"
-          mkdir -p reports
-          
-          set +e
-          bun run src/index.ts \
-            --format html \
-            --out reports/llm-lint \
-            --report reports/lint.json \
-            --include-source \
-            "${files[@]}"
-              code=$?
-            set -e
-            echo "exitcode=$code" >> "$GITHUB_OUTPUT"
-
-      # Convert the JSON summary to JUnit XML for GitHub annotations/checks
-      - name: Convert JSON → JUnit XML
+          MODEL: gpt-5
+          LINTER_DIR: tools/llm-linter
+          ZLIST: ${{ steps.targets.outputs.zlist }}
+        run: tools/llm-linter/scripts/run_linter.sh
+  
+      - name: Convert JSON → JUnit
         working-directory: tools/llm-linter
-        run: |
-          set -euo pipefail
-          if [[ ! -f reports/lint.json ]]; then
-            echo "No reports/lint.json found; skipping JUnit conversion."
-            exit 0
-          fi
-      
-          bun --eval '
-            import { readFileSync, writeFileSync } from "node:fs";
-            const data = JSON.parse(readFileSync("reports/lint.json", "utf8"));
-            const REPO_ROOT = process.env.REPO_ROOT?.replace(/\\/g,"/") || "";
-            const esc = (s) => String(s)
-              .replace(/&/g,"&amp;")
-              .replace(/</g,"&lt;")
-              .replace(/>/g,"&gt;")
-              .replace(/"/g,"&quot;");
-      
-            const toRepoRel = (absOrRel) => {
-              let p = String(absOrRel).replace(/\\/g,"/");
-              // If it starts with the checked-out course path, strip it:
-              if (REPO_ROOT && p.startsWith(REPO_ROOT + "/")) {
-                p = p.slice(REPO_ROOT.length + 1);
-              }
-              // If it still starts with "./", trim it
-              if (p.startsWith("./")) p = p.slice(2);
-              return p;
-            };
-      
-            // Find first line (1-based) of q within src; if not found, return 1
-            function findLine(src, q) {
-              if (!src || !q) return 1;
-              // Try exact, then a loosened version (collapse whitespace)
-              let idx = src.indexOf(q);
-              if (idx === -1) {
-                const space = (s) => s.replace(/\s+/g," ").trim();
-                const s1 = space(src);
-                const q1 = space(q);
-                idx = s1.indexOf(q1);
-                if (idx === -1) return 1;
-                // Map back to original: best-effort – fall back to 1 if complicated
-                // (Simplify: return 1 for this path to avoid misreporting)
-                return 1;
-              }
-              const pre = src.slice(0, idx);
-              const line = pre.split(/\r?\n/).length;
-              return Math.max(1, line);
-            }
-      
-            const testCount = data.files.reduce((a,f)=>a + f.rules.length, 0);
-            const failCount = data.files.reduce((a,f)=>a + f.rules.filter(r=>!r.pass).length, 0);
-      
-            const suites = data.files.map((f) => {
-              const fileRepoRel = toRepoRel(f.file);
-              const src = f.source || "";
-              const tests = f.rules.length;
-              const failures = f.rules.filter(r=>!r.pass).length;
-      
-              const cases = f.rules.map((r) => {
-                const name = r.id;
-                // Derive a line if we can
-                let line = 1;
-                if (!r.pass) {
-                  // Look for an object with "quote" in suggested_fixes
-                  if (Array.isArray(r.suggested_fixes)) {
-                    for (const fx of r.suggested_fixes) {
-                      if (fx && typeof fx === "object" && fx.quote && typeof fx.quote === "string") {
-                        line = findLine(src, fx.quote);
-                        break;
-                      }
-                    }
-                  }
-                }
-                if (r.pass) {
-                  return `<testcase name="${esc(name)}" classname="${esc(fileRepoRel)}" file="${esc(fileRepoRel)}" line="${line}"></testcase>`;
-                } else {
-                  const msg = r.rationale ? esc(r.rationale) : "Failed rule";
-                  const fixes = Array.isArray(r.suggested_fixes) && r.suggested_fixes.length
-                    ? r.suggested_fixes.slice(0,5).map((x) => {
-                        if (typeof x === "string") return `- ${x}`;
-                        const t = x.type ? `[${x.type}] ` : "";
-                        const q = x.quote ? `quote: "${x.quote}"` : "";
-                        const repl = x.replacement ? ` -> ${x.replacement}` : "";
-                        return `- ${t}${q}${repl}`.trim();
-                      }).join("\n")
-                    : "";
-                  const body = (r.rationale ? `rationale: ${r.rationale}\n` : "") + (fixes ? `suggested fixes:\n${fixes}\n` : "");
-                  return `<testcase name="${esc(name)}" classname="${esc(fileRepoRel)}" file="${esc(fileRepoRel)}" line="${line}">
-                  <failure message="${msg}">${esc(body)}</failure>
-                </testcase>`;
-                }
-              }).join("\n");
-      
-              return `<testsuite name="${esc(fileRepoRel)}" tests="${tests}" failures="${failures}">
-                ${cases}
-              </testsuite>`;
-              }).join("\n");
-      
-            const xml = `<?xml version="1.0" encoding="UTF-8"?>
-                <testsuites name="llm-doc-linter" tests="${testCount}" failures="${failCount}">
-                  ${suites}
-                </testsuites>
-              `;
-            writeFileSync("reports/junit.xml", xml, "utf8");
-            console.log("Wrote JUnit to reports/junit.xml");
-          '
+        env:
+          REPO_ROOT: ${{ github.workspace }}/courses/${{ github.event.repository.name }}
+        run: bun scripts/json_to_junit.mjs
+
 
       - name: Upload JUnit XML
         uses: actions/upload-artifact@v4
