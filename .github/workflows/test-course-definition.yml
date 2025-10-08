@@ -231,7 +231,6 @@ jobs:
           repository: codecrafters-io/llm-rules-test
           ref: master
           path: tools/llm-linter
-          token: ${{ secrets.LLM_LINTER_TOKEN }}
   
       - name: Install linter deps
         working-directory: tools/llm-linter
@@ -261,7 +260,7 @@ jobs:
         id: run_linter
         shell: bash
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LLM_RULE_EVALUATOR_OPENAI_API_KEY: ${{ secrets.LLM_RULE_EVALUATOR_OPENAI_API_KEY }}
           MODEL: gpt-5
           LINTER_DIR: tools/llm-linter
           ZLIST: ${{ steps.targets.outputs.zlist }}
