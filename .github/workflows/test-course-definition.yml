@@ -267,22 +267,26 @@ jobs:
         run: tools/llm-linter/scripts/run_linter.sh
   
       - name: Convert JSON → JUnit
+        if: steps.targets.outputs.none == 'false'
         working-directory: tools/llm-linter
         env:
           REPO_ROOT: ${{ github.workspace }}/courses/${{ github.event.repository.name }}
         run: bun scripts/json_to_junit.mjs
 
       - name: Upload JUnit XML
+        if: steps.targets.outputs.none == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: llm-lint-junit
           path: tools/llm-linter/reports/junit.xml
 
       - name: Render PR comment markdown
+        if: steps.targets.outputs.none == 'false'
         working-directory: tools/llm-linter
         run: bun scripts/render_pr_comment.mjs > pr-comment.md
       
       - name: Upsert PR comment
+        if: steps.targets.outputs.none == 'false'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -291,6 +295,7 @@ jobs:
 
       # Publish test results as a Check + PR annotations
       - name: Publish Test Results
+        if: steps.targets.outputs.none == 'false'
         uses: EnricoMi/publish-unit-test-result-action@v2.20.0
         with:
           files: tools/llm-linter/reports/junit.xml
