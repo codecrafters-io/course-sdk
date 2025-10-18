@@ -75,6 +75,18 @@
           "minLength": 1,
           "description": "The difficulty of the course. Accepted values: `easy`, `medium`, `hard`."
         },
+        "frequently_asked_questions": {
+          "type": "array",
+          "description": "A list of frequently asked questions about the course.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "question_markdown": { "type": "string", "minLength": 1 },
+              "answer_markdown": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
         "sample_extension_idea_title": {
           "type": "string",
           "minLength": 1,
