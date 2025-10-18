@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "properties": {
     "slug": {
       "type": "string",
@@ -97,7 +97,13 @@
               "link": { "type": "string", "minLength": 1 },
               "text": { "type": "string", "minLength": 1 }
             },
-            "required": ["author_name", "author_description", "author_avatar", "link", "text"]
+            "required": [
+              "author_name",
+              "author_description",
+              "author_avatar",
+              "link",
+              "text"
+            ]
           }
         }
       },
@@ -107,7 +113,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "properties": {
           "slug": {
             "type": "string",
@@ -118,11 +124,6 @@
             "type": "string",
             "minLength": 1,
             "description": "The name of this stage. Example: `Respond to PING`"
-          },
-          "description_md": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Deprecated! TODO: Remove this, replace with files like stage_descriptions/base_1_xy3.md."
           },
           "difficulty": {
             "type": "string",
