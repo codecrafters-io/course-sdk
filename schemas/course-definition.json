@@ -109,6 +109,30 @@
       },
       "required": ["difficulty", "testimonials"]
     },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A unique identifier for this extension. Example: `redis-geospatial`"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The name of this extension. Example: `Geospatial Queries`"
+          },
+          "description_markdown": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A markdown description of this extension."
+          }
+        }
+      }
+    },
     "stages": {
       "type": "array",
       "items": {
