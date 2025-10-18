@@ -171,6 +171,20 @@
             "minLength": 1,
             "description": "A short markdown description of this stage, used in the course overview page."
           },
+          "primary_extension_slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The slug of the primary extension for this stage. Example: `redis-geospatial`"
+          },
+          "secondary_extension_slugs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The slug of a secondary extension for this stage. Example: `redis-geospatial`"
+            },
+            "description": "The slugs of the secondary extensions for this stage. Example: `redis-geospatial`"
+          },
           "tester_source_code_url": {
             "type": "string",
             "minLength": 1,
