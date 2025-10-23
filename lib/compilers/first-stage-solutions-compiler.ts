@@ -54,7 +54,7 @@ export default class FirstStageSolutionsCompiler {
     diffs.forEach((diff) => {
       if (diff.toString() === "") {
         console.error("Expected uncommenting code to return a diff");
-        console.error("Are you sure there's a contiguous block of comments after the 'Uncomment this' marker?");
+        console.error("Are you sure there's a contiguous block of comments after the 'Uncomment the' marker?");
 
         process.exit(1);
       }
