@@ -125,7 +125,7 @@ export default class StarterCodeTester extends BaseTester {
     for (const diff of diffs) {
       if (diff.toString() === "") {
         Logger.logError("Expected uncommenting code to return a diff");
-        Logger.logError("Are you sure there's a contiguous block of comments after the 'Uncomment the' marker?");
+        Logger.logError("Are you sure there's a contiguous block of comments after the 'Uncomment this' marker?");
         return;
       }
 

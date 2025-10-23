@@ -6,12 +6,12 @@ test("", () => {
 
 import Uncommenter from "./uncommenter";
 
-const UNCOMMENT_PATTERN = /Uncomment the/;
+const UNCOMMENT_PATTERN = /Uncomment this/;
 
 const SAMPLE_PY_COMMENTED = `
 abcd = true
 
-# Uncomment the code below to pass the first stage
+# Uncomment this to pass the first stage
 #
 # # This is an assignment
 # a = b
@@ -40,7 +40,7 @@ yay = true
 
 const SAMPLE_GO_COMMENTED = `
 func main() {
-  // Uncomment the code below to pass the first stage
+  // Uncomment this to pass the first stage
   //
   // // This is an assignment
   // a := 1
@@ -64,7 +64,7 @@ func main() {
 
 const SAMPLE_HASKELL_COMMENTD = `
 main = do
- -- Uncomment the code below to pass the first stage
+ -- Uncomment this to pass the first stage
  -- a <- readLine
  -- b <- readLine
  -- -- Nested Comment
@@ -81,7 +81,7 @@ main = do
 
 const SAMPLE_JAVA_COMMENTED = `
 public static void main(String[] args) {
-  // Uncomment the code below to pass the first stage
+  // Uncomment this to pass the first stage
   //
   // // This is an assignment
   // int a = 1;
@@ -105,7 +105,7 @@ public static void main(String[] args) {
 
 const SAMPLE_KOTLIN_COMMENTED = `
 fun main(args: Array<String>) {
-  // Uncomment the code below to pass the first stage
+  // Uncomment this to pass the first stage
   //
   // // This is an assignment
   // val a = 1;
@@ -129,7 +129,7 @@ fun main(args: Array<String>) {
 
 const SAMPLE_PHP_COMMENTED = `
 <?php
-// Uncomment the code below to pass the first stage.
+// Uncomment this to pass the first stage.
 // $a = 1;
 // $b = 1;
 
@@ -147,7 +147,7 @@ $b = 1;
 `;
 
 const SAMPLE_JAVASCRIPT_COMMENTED = `
-// Uncomment the code below to pass the first stage
+// Uncomment this to pass the first stage
 // var a = 1;
 // var b = 2;
 // console.log(a + b);
@@ -160,7 +160,7 @@ console.log(a + b);
 `;
 
 const SAMPLE_CSHARP_COMMENTED = `
-// Uncomment the code below to pass the first stage
+// Uncomment this to pass the first stage
 // var a = 1;
 // var b = 2;
 // Console.WriteLine(a + b);
@@ -175,12 +175,12 @@ Console.WriteLine(a + b);
 const SAMPLE_TWO_MARKERS_COMMENTED = `
 a = b
 
-# Uncomment the code below to pass the first stage
+# Uncomment this to pass the first stage
 #
 # # First uncommented block
 # b = c
 
-# Uncomment the code below to pass the first stage
+# Uncomment this to pass the first stage
 #
 # # Second uncommented block
 # c = d
@@ -198,7 +198,7 @@ c = d
 
 const SAMPLE_OCAML_COMMENTED = `
 let main () =
-  (* Uncomment the code below to pass the first stage *)
+  (* Uncomment this to pass the first stage *)
   (* let a = 1 in *)
   (* let b = 2 in *)
   (* Printf.printf "%d\\n" (a + b) *)
@@ -343,7 +343,7 @@ test("uncommentedBlocksWithMarker", () => {
     `
     a = b
 
-    # Uncomment the code below to pass the first stage
+    # Uncomment this to pass the first stage
     # a = b
 
     c = d
@@ -351,7 +351,7 @@ test("uncommentedBlocksWithMarker", () => {
     UNCOMMENT_PATTERN
   ).uncommentedBlocksWithMarker;
 
-  const expected = `    # Uncomment the code below to pass the first stage
+  const expected = `    # Uncomment this to pass the first stage
     a = b`;
 
   expect(actual[0]).toBe(expected);
