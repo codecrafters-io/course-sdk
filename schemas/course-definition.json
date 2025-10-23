@@ -38,6 +38,14 @@
       "not": { "type": "null" },
       "description": "The percentage of users who complete this course. Set to 5% if we don't have data yet."
     },
+    "concept_slugs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Slugs for the concepts covered in the course."
+      }
+    },
     "languages": {
       "type": "array",
       "items": {
@@ -160,6 +168,14 @@
             "type": "string",
             "minLength": 1,
             "description": "The name of this stage. Example: `Respond to PING`"
+          },
+          "concept_slugs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Slugs for the concepts covered in this stage."
+            }
           },
           "difficulty": {
             "type": "string",
