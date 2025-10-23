@@ -15,7 +15,7 @@ export default class StarterCodeUncommenter {
   private dir: string;
   private language: Language;
 
-  private static UNCOMMENT_MARKER_PATTERN = /Uncomment this/;
+  private static UNCOMMENT_MARKER_PATTERN = /Uncomment the/;
 
   constructor(dir: string, language: Language) {
     this.dir = dir;
