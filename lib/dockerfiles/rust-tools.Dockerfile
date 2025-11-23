@@ -1,4 +1,4 @@
-FROM rust:1.80-bookworm
+FROM rust:1.91-trixie
 
 WORKDIR /workdir
 
