@@ -32,6 +32,13 @@ export default class LintCommand extends BaseCommand {
     console.log("");
 
     console.log("");
+    console.log("Linting YAML files...");
+    console.log("");
+    await this.lintYamlFiles();
+    console.log("Linting of YAML files complete.");
+    console.log("");
+
+    console.log("");
     console.log("Linting Markdown files...");
     console.log("");
     await this.lintMarkdownFiles();
@@ -82,6 +89,13 @@ export default class LintCommand extends BaseCommand {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
     await dockerShellCommandExecutor.exec(
       `prettier --prose-wrap="always" --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern "./**/*.md"`
+    );
+  }
+
+  async lintYamlFiles() {
+    const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("js-tools");
+    await dockerShellCommandExecutor.exec(
+      `prettier --write --ignore-path ./.prettierignore --no-error-on-unmatched-pattern "./**/config.yml"`
     );
   }
 
