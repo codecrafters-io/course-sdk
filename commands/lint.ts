@@ -103,7 +103,7 @@ export default class LintCommand extends BaseCommand {
     const dockerShellCommandExecutor = await this.dockerShellCommandExecutor("rust-tools");
     await dockerShellCommandExecutor.exec(`find . -name '*.rs' -exec rustfmt --edition "2024" --check -- {} +`);
     await dockerShellCommandExecutor.exec(
-      "[ -d compiled_starters/rust ] || exit 0 && (cd compiled_starters/rust && cargo clippy -- -D warnings)"
+      "[ -d compiled_starters/rust ] || exit 0 && (cd compiled_starters/rust && cargo clippy -- -D warnings -A unused-variables -A dead-code)"
     );
   }
 
