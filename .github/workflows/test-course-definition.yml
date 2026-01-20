@@ -106,6 +106,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # Avoid leaking secrets to forked PRs
+    if: github.event.pull_request.head.repo.fork == false
+
     permissions:
       contents: read
 
