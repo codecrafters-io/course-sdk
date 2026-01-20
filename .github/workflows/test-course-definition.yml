@@ -155,6 +155,7 @@ jobs:
         working-directory: courses/${{github.event.repository.name}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Figure out a way to allow course-specific environment variables
           CODECRAFTERS_SECRET_OPENROUTER_API_KEY: ${{ secrets.CODECRAFTERS_SECRET_OPENROUTER_API_KEY }}
 
   validate-schemas:
