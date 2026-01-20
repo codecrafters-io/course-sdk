@@ -152,6 +152,7 @@ jobs:
         working-directory: courses/${{github.event.repository.name}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODECRAFTERS_SECRET_OPENROUTER_API_KEY: ${{ secrets.CODECRAFTERS_SECRET_OPENROUTER_API_KEY }}
 
   validate-schemas:
     runs-on: ubuntu-latest
