@@ -113,7 +113,7 @@ export default class BaseTester {
   protected getCodecraftersSecretEnvFlags(): string[] {
     const flags: string[] = [];
     for (const [key, value] of Object.entries(process.env)) {
-      if (key.startsWith("CODECRAFTERS_SECRET_") && value !== undefined) {
+      if ((key.startsWith("CODECRAFTERS_SECRET_") || key.startsWith("OPENROUTER")) && value !== undefined) {
         // Escape single quotes in the value by replacing ' with '\''
         const escapedValue = value.replace(/'/g, "'\\''");
         flags.push(`-e ${key}='${escapedValue}'`);
