@@ -157,6 +157,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Figure out a way to allow course-specific environment variables
           CODECRAFTERS_SECRET_OPENROUTER_API_KEY: ${{ secrets.CODECRAFTERS_SECRET_OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
 
   validate-schemas:
     runs-on: ubuntu-latest
