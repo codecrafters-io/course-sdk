@@ -105,4 +105,20 @@ export default class BaseTester {
 
     return timeTaken;
   }
+
+  /**
+   * Collects all environment variables that start with CODECRAFTERS_SECRET_
+   * and returns them as Docker -e flag arguments
+   */
+  protected getCodecraftersSecretEnvFlags(): string[] {
+    const flags: string[] = [];
+    for (const [key, value] of Object.entries(process.env)) {
+      if (key.startsWith("CODECRAFTERS_SECRET_") && value !== undefined) {
+        // Escape single quotes in the value by replacing ' with '\''
+        const escapedValue = value.replace(/'/g, "'\\''");
+        flags.push(`-e ${key}='${escapedValue}'`);
+      }
+    }
+    return flags;
+  }
 }
