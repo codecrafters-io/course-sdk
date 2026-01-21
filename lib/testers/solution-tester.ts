@@ -94,7 +94,7 @@ export default class SolutionTester extends BaseTester {
       "-e CODECRAFTERS_REPOSITORY_DIR=/app",
       `-e CODECRAFTERS_TEST_CASES_JSON='[${stage.testerTestCaseJson}]'`,
       "-e TESTER_DIR=/var/opt/tester",
-      ...this.getCodecraftersSecretEnvFlags(),
+      ...this.getClaudeCodeEnvFlags(),
       "-w /app",
       "--memory=2g",
       "--cpus=0.5",
