@@ -206,6 +206,7 @@ export default class StarterCodeTester extends BaseTester {
       "-e CODECRAFTERS_REPOSITORY_DIR=/app",
       `-e CODECRAFTERS_TEST_CASES_JSON='[${this.course.firstStage.testerTestCaseJson}]'`,
       "-e TESTER_DIR=/var/opt/tester",
+      ...this.getCodecraftersSecretEnvFlags(),
       "-w /app",
       "--memory=2g",
       "--cpus=0.5",
