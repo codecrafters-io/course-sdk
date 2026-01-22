@@ -157,12 +157,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Figure out a way to allow course-specific environment variables
           CODECRAFTERS_SECRET_OPENROUTER_API_KEY: ${{ secrets.CODECRAFTERS_SECRET_OPENROUTER_API_KEY }}
-          # StarterCodeTester runs starter code without spawning tester
-          # In those cases, these two variables are not set (since tester is responsible for setting them)
-          # So, we bypass the proxy in this case by setting the variables to OpenRouter's api itself and
-          # Openrouter's url instead of proxy
-          OPENROUTER_API_KEY: ${{ secrets.CODECRAFTERS_SECRET_OPENROUTER_API_KEY }}
-          OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
 
   validate-schemas:
     runs-on: ubuntu-latest
