@@ -110,20 +110,17 @@ export default class BaseTester {
    * Collects specific environment variables specific to claude code
    * and returns them as Docker -e flag arguments
    */
-  protected getClaudeCodeEnvFlags(): string[] {
-    const allowedKeys = [
-      "CODECRAFTERS_SECRET_OPENROUTER_API_KEY",
-      "OPENROUTER_API_KEY",
-      "OPENROUTER_BASE_URL",
-    ];
+  protected getCodecraftersSecretEnvFlags(): string[] {
     const flags: string[] = [];
+
     for (const [key, value] of Object.entries(process.env)) {
-      if (allowedKeys.includes(key) && value !== undefined) {
+      if (key.startsWith("CODECRAFTERS_SECRET") && value !== undefined) {
         // Escape single quotes in the value by replacing ' with '\''
         const escapedValue = value.replace(/'/g, "'\\''");
         flags.push(`-e ${key}='${escapedValue}'`);
       }
     }
+    
     return flags;
   }
 }
