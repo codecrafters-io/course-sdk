@@ -107,8 +107,7 @@ export default class BaseTester {
   }
 
   /**
-   * Collects specific environment variables specific to claude code
-   * and returns them as Docker -e flag arguments
+   * Collects specific environment variables to pass on to the tester container
    */
   protected getCodecraftersSecretEnvFlags(): string[] {
     const flags: string[] = [];
