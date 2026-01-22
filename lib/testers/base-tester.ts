@@ -105,4 +105,21 @@ export default class BaseTester {
 
     return timeTaken;
   }
+
+  /**
+   * Collects specific environment variables to pass on to the tester container
+   */
+  protected getCodecraftersSecretEnvFlags(): string[] {
+    const flags: string[] = [];
+
+    for (const [key, value] of Object.entries(process.env)) {
+      if (key.startsWith("CODECRAFTERS_SECRET") && value !== undefined) {
+        // Escape single quotes in the value by replacing ' with '\''
+        const escapedValue = value.replace(/'/g, "'\\''");
+        flags.push(`-e ${key}='${escapedValue}'`);
+      }
+    }
+    
+    return flags;
+  }
 }
