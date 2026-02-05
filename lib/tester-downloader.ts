@@ -31,7 +31,7 @@ export default class TesterDownloader {
 
     const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${this.latestTesterVersion}.tar.gz`);
     fs.mkdirSync(this.testersRootDir, { recursive: true });
-    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
+    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${this.latestTesterVersion}/${this.latestTesterVersion}_linux_amd64.tar.gz`;
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
