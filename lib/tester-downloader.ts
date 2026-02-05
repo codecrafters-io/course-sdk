@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 
 export default class TesterDownloader {
   static DEFAULT_TESTERS_ROOT_DIR = "/tmp/testers";
-  
+
   course: Course;
   testersRootDir: string;
   // Cache latest tester version
