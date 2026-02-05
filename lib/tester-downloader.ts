@@ -23,15 +23,17 @@ export default class TesterDownloader {
   }
 
   async downloadIfNeeded(): Promise<string> {
-    this.latestTesterVersion = await this.fetchLatestTesterVersion();
+    const latestVersion = await this.fetchLatestTesterVersion();
+    this.latestTesterVersion = latestVersion;
+    const targetDir = this.getTesterDirFromVersion(latestVersion);
 
-    if (await fs.promises.exists(this.testerDir)) {
-      return this.testerDir;
+    if (await fs.promises.exists(targetDir)) {
+      return targetDir;
     }
 
-    const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${this.latestTesterVersion}.tar.gz`);
+    const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${latestVersion}.tar.gz`);
     fs.mkdirSync(this.testersRootDir, { recursive: true });
-    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${this.latestTesterVersion}/${this.latestTesterVersion}_linux_amd64.tar.gz`;
+    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${latestVersion}/${latestVersion}_linux_amd64.tar.gz`;
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
@@ -46,13 +48,13 @@ export default class TesterDownloader {
       const tempExtractDir = fs.mkdtempSync("/tmp/extract");
       await ShellCommandExecutor.execute(`tar xf ${compressedFilePath} -C ${tempExtractDir}`);
       fs.unlinkSync(compressedFilePath);
-      fs.renameSync(tempExtractDir, this.testerDir);
+      fs.renameSync(tempExtractDir, targetDir);
     } catch (error) {
       console.error("Error extracting tester", error);
       process.exit(1);
     }
 
-    return this.testerDir;
+    return targetDir;
   }
 
   async fetchLatestTesterVersion() {

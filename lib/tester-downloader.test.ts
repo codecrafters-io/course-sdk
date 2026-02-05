@@ -5,12 +5,8 @@ import fs from "fs";
 
 test("downloadIfNeeded", async () => {
   const course = new Course("redis", "dummy", "dummy", [], "dummy");
-  await new TesterDownloader(course).downloadIfNeeded();
+  const testerDir = await new TesterDownloader(course).downloadIfNeeded();
   
-  const testersRoot = "/tmp/testers";
-  const entries = fs.readdirSync(testersRoot);
-  const redisDir = entries.find(entry => entry.startsWith("redis-"));
-  
-  expect(redisDir).toBeDefined();
-  expect(fs.existsSync(`${testersRoot}/${redisDir}/test.sh`)).toBe(true);
+  expect(fs.existsSync(testerDir)).toBe(true);
+  expect(fs.existsSync(`${testerDir}/test.sh`)).toBe(true);
 });
