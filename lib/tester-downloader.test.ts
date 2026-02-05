@@ -6,7 +6,11 @@ import fs from "fs";
 test("downloadIfNeeded", async () => {
   const course = new Course("redis", "dummy", "dummy", [], "dummy");
   await new TesterDownloader(course).downloadIfNeeded();
-
-  expect(fs.existsSync("/tmp/testers/redis")).toBe(true);
-  expect(fs.existsSync("/tmp/testers/redis/test.sh")).toBe(true);
+  
+  const testersRoot = "/tmp/testers";
+  const entries = fs.readdirSync(testersRoot);
+  const redisDir = entries.find(entry => entry.startsWith("redis-"));
+  
+  expect(redisDir).toBeDefined();
+  expect(fs.existsSync(`${testersRoot}/${redisDir}/test.sh`)).toBe(true);
 });
