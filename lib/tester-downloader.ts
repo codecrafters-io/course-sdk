@@ -80,7 +80,7 @@ export default class TesterDownloader {
     return this.getTesterDirFromVersion(this.latestTesterVersion)
   }
 
-  getTesterDirFromVersion(version: string) {
+  private getTesterDirFromVersion(version: string) {
     return path.join(this.testersRootDir, `${this.course.slug}-${version}`);
   }
 
