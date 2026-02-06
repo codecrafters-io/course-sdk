@@ -4,6 +4,7 @@ import * as path from "path";
 import Language from "./models/language";
 import { glob } from "glob";
 import Diff from "./diff";
+import ignore from "ignore";
 
 class UncommentMarkerNotFound extends Error {
   constructor(markerPattern: string, files: string[]) {
@@ -74,7 +75,22 @@ export default class StarterCodeUncommenter {
   // TODO: Implement postProcessors
 
   private codeFiles() {
-    // TODO: Ignore .gitignore files?
-    return glob.sync(`${this.dir}/**/*.${this.language.codeFileExtension}`);
+    const ign = ignore();
+    const gitIgnorePath = path.join(this.dir, '.gitignore');
+
+    if (fs.existsSync(gitIgnorePath)) {
+      ign.add(fs.readFileSync(gitIgnorePath, 'utf-8'));
+    }
+
+    const allFilesPattern = `${this.dir}/**/*.${this.language.codeFileExtension}`;
+    const allFiles = glob.sync(allFilesPattern);
+
+    return allFiles.filter(file => {
+      const relativePath = path.relative(this.dir, file);
+      if (!ign.ignores(relativePath)) {
+        return true;
+      }
+      return false;
+    });
   }
 }
