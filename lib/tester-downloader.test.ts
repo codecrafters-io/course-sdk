@@ -5,12 +5,13 @@ import fs from "fs";
 
 test("downloadIfNeeded", async () => {
   const course = new Course("redis", "dummy", "dummy", [], "dummy");
-  await new TesterDownloader(course).downloadIfNeeded();
+  const testerDir = await new TesterDownloader(course).downloadIfNeeded();
   
-  const testersRoot = "/tmp/testers";
-  const entries = fs.readdirSync(testersRoot);
-  const redisDir = entries.find(entry => entry.startsWith("redis-"));
-  
-  expect(redisDir).toBeDefined();
-  expect(fs.existsSync(`${testersRoot}/${redisDir}/test.sh`)).toBe(true);
+  // TODO: I'll remove this comment after PR review
+  // The testerDir is dependent on the latest available tester version,
+  // Right now we're just testing against the result from the function itself
+  // We cannot hardcode testerDir as before, what would be a good way to test this? 
+  // Or should I leave this as it is?
+  expect(fs.existsSync(testerDir)).toBe(true);
+  expect(fs.existsSync(`${testerDir}/test.sh`)).toBe(true);
 });
