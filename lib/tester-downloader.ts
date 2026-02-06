@@ -11,7 +11,7 @@ export default class TesterDownloader {
   course: Course;
   testersRootDir: string;
   // Cache latest tester version
-  private latestTesterVersion?: string;
+  private latestVersion?: string;
 
   constructor(course: Course, testersRootDir?: string) {
     this.course = course;
@@ -23,15 +23,15 @@ export default class TesterDownloader {
   }
 
   async downloadIfNeeded(): Promise<string> {
-    this.latestTesterVersion = await this.fetchLatestTesterVersion();
+    this.latestVersion = await this.fetchLatestTesterVersion();
 
     if (await fs.promises.exists(this.testerDir)) {
       return this.testerDir;
     }
 
-    const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${this.latestTesterVersion}.tar.gz`);
+    const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${this.latestVersion}.tar.gz`);
     fs.mkdirSync(this.testersRootDir, { recursive: true });
-    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${this.latestTesterVersion}/${this.latestTesterVersion}_linux_amd64.tar.gz`;
+    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${this.latestVersion}/${this.latestVersion}_linux_amd64.tar.gz`;
     console.log(`Downloading ${artifactUrl}`);
 
     const response = await fetch(artifactUrl);
@@ -74,10 +74,10 @@ export default class TesterDownloader {
   }
 
   get testerDir() {
-    if (!this.latestTesterVersion) {
+    if (!this.latestVersion) {
       throw new Error("Must call downloadIfNeeded() before accessing testerDir");
     }
-    return this.getTesterDirFromVersion(this.latestTesterVersion)
+    return this.getTesterDirFromVersion(this.latestVersion)
   }
 
   private getTesterDirFromVersion(version: string) {
