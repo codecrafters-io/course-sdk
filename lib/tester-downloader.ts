@@ -77,11 +77,7 @@ export default class TesterDownloader {
     if (!this.latestVersion) {
       throw new Error("Must call downloadIfNeeded() before accessing testerDir");
     }
-    return this.getTesterDirFromVersion(this.latestVersion)
-  }
-
-  private getTesterDirFromVersion(version: string) {
-    return path.join(this.testersRootDir, `${this.course.slug}-${version}`);
+    return path.join(this.testersRootDir, `${this.course.slug}-${this.latestVersion}`);
   }
 
   get testerRepositoryName() {
