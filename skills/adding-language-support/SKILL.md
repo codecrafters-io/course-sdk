@@ -1,7 +1,7 @@
 ---
 name: Add Language Support
 description: Adds support for a new language to a Codecrafters course by generating starter code, compiling, and testing until successful. Use this skill when the user wants to add support for a new language (e.g., 'Add support for Rust').
-compatibility: Requires bun and `course-sdk` CLI (read installation instructions at https://github.com/codecrafters-io/course-sdk.git).
+compatibility: Requires bun, docker, and `course-sdk` CLI (read installation instructions at https://github.com/codecrafters-io/course-sdk.git).
 ---
 
 # Goal
