@@ -1,6 +1,7 @@
 ---
 name: Add Language Support
 description: Adds support for a new language to a Codecrafters course by generating starter code, compiling, and testing until successful. Use this skill when the user wants to add support for a new language (e.g., 'Add support for Rust').
+compatibility: Requires bun and `course-sdk` CLI (read installation instructions at https://github.com/codecrafters-io/course-sdk.git).
 ---
 
 # Goal
@@ -19,7 +20,7 @@ Execute this SDK command to scaffold the basic directory structure:
 ## 2. Pattern Analysis & Implementation
 You must ensure the new language follows the exact implementation patterns of existing languages in this course.
 1. **Read** the `starter_templates` directory of 2-3 existing working languages (e.g., `starter_templates/go`, `starter_templates/python`) to understand the challenge logic, SDKs, dependencies, and patterns.
-2. **Resolve dependencies for the new language:** If existing starters use a vendor SDK (e.g. OpenAI), **first check whether that vendor provides an official client for the target language** (e.g. search for "official OpenAI Go SDK"). Use the vendor's official SDK for that language if it exists; only then fall back to a community or "most similar" SDK.
+2. **Resolve dependencies for the new language:** If existing starters use a vendor SDK (e.g. OpenAI), first check whether that vendor provides an official client for the target language. Use the vendor's official SDK for that language if it exists; only then fall back to a community or "most similar" SDK.
 3. **Read** the newly generated starter file for the target language (in `starter_templates/<LANGUAGE>`).
 4. **Edit** the target language's source code to implement the necessary boilerplate and "Stage 1" logic.
    - *Constraint:* Prefer the same vendor's official SDK in the new language. If no official SDK exists for that language, use the most similar community SDK or dependency.
