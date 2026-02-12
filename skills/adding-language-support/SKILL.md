@@ -11,11 +11,11 @@ Add fully functioning support for a new programming language to the current cour
 
 ## 1. Environment Setup
 Ensure all necessary tools are installed before proceeding:
-1. **Bun:** Run `curl -fsSL https://bun.sh/install | bash` and source the shell configuration (e.g., `source ~/.bashrc`).
+1. **Bun:** Check if Bun is installed. If not, run `curl -fsSL https://bun.sh/install | bash` and source the shell configuration (e.g., `source ~/.bashrc`).
 2. **Docker:** Ensure Docker is installed. Start and verify the daemon:
    - `sudo service docker start`
    - `sudo docker info`
-3. **course-sdk:** Run `bun install` and `make install` in the repository root to compile the SDK.
+3. **course-sdk:** Check if `course-sdk` is installed. If not, run `bun install` and `make install` in the repository root to compile the SDK.
 
 ## 2. Initialization
 Execute this SDK command to scaffold the basic directory structure:
