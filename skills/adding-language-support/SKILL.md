@@ -11,9 +11,9 @@ Add fully functioning support for a new programming language to the current cour
 
 ## 1. Environment Setup
 Ensure all necessary tools are installed before proceeding:
-1. **Install Bun:** Run `curl -fsSL https://bun.sh/install | bash` and source the shell configuration (e.g., `source ~/.bashrc`).
-2. **Install Docker:** Ensure Docker is installed and the daemon is running.
-3. **Install course-sdk:** Run `bun install` and `make install` in the repository root to compile the SDK.
+1. **Bun:** Run `curl -fsSL https://bun.sh/install | bash` and source the shell configuration (e.g., `source ~/.bashrc`).
+2. **Docker:** Ensure Docker is installed and the daemon is running.
+3. **course-sdk:** Run `bun install` and `make install` in the repository root to compile the SDK.
 
 ## 2. Initialization
 Execute this SDK command to scaffold the basic directory structure:
@@ -34,11 +34,11 @@ Repeat this process until tests pass:
 
 1. **Compile**: Run `course-sdk compile <LANGUAGE>`.
    - *If it fails:* Read the error output, analyze the source code, fix the syntax/build error, and retry.
-2. **Test**: Run `course-sdk test <LANGUAGE>`. Do not timeout.
+2. **Test**: Run `sudo -E course-sdk test <LANGUAGE>`. Do not timeout.
    - *If it fails:* Compare the expected output vs. actual output. Check how other languages handle this specific test case. Adjust the code and retry.
 
 ## 5. Final Verification
-Once `course-sdk test <LANGUAGE>` passes, run a final comparison:
+Once `sudo -E course-sdk test <LANGUAGE>` passes, run a final comparison:
 - Check if the code style is clean.
 - Ensure no unnecessary files were created.
 - Confirm the implementation matches the simplicity of other starter templates.
