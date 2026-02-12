@@ -34,7 +34,7 @@ You must ensure the new language follows the exact implementation patterns of ex
 ## 4. The Iteration Loop (Compile & Test)
 Repeat this process until tests pass:
 
-1. **Compile**: Run `course-sdk compile <LANGUAGE>`.
+1. **Compile**: Run `sudo -E course-sdk compile <LANGUAGE>`.
    - *If it fails:* Read the error output, analyze the source code, fix the syntax/build error, and retry.
 2. **Test**: Run `sudo -E course-sdk test <LANGUAGE>`. Do not timeout.
    - *If it fails:* Compare the expected output vs. actual output. Check how other languages handle this specific test case. Adjust the code and retry.
