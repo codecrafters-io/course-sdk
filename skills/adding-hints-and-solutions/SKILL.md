@@ -46,7 +46,7 @@ For each requested stage, in order:
    - *Constraint:* Each stage's solution should be an incremental diff from the previous stage. Do NOT include logic for future stages.
    - *Constraint:* Match the code style and complexity of reference implementations. Keep it minimal.
    - *Constraint:* Use the same SDKs/dependencies established in the language's Stage 1 implementation.
-   - *Constraint:* Do NOT manually edit files in `compiled_starters/`. Only work in `solutions/<LANGUAGE>/`.
+   - *Constraint:* Do NOT manually edit files in any directory other than `solutions/<LANGUAGE>/`.
 
 ## 5. Write Hints
 For each requested stage, add hints to `solutions/<LANGUAGE>/config.yml`:
