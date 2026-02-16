@@ -1,6 +1,6 @@
 ---
 name: Add Stage Hints and Solutions
-description: Creates solutions and hints for specific base stages of a Codecrafters course in a given language. Use this skill when the user wants to implement solutions for stages beyond Stage 1 (e.g., 'Add solutions for stages 2-5 in Rust').
+description: Creates solutions and hints for specific base stages of a Codecrafters course in a given language. Use this skill when the user wants to implement solutions for stages beyond Stage 1 (e.g., 'Add solutions for base stages 2-5 in Rust').
 compatibility: Requires bun, docker, and `course-sdk` CLI (read installation instructions at https://github.com/codecrafters-io/course-sdk.git).
 ---
 
@@ -25,38 +25,32 @@ Before writing any code, understand what you're building:
    - The code diff or progression from one stage to the next.
    - The `/code/config.yml` structure — how `hints` are written for each stage.
    - Any stage-specific patterns (e.g., new files introduced, dependency changes).
-4. **Read the compiled starter for the target language** at `compiled_starters/<LANGUAGE>/` — this is the baseline code that students begin with from Stage 1.
+4. **Read the previous stage's solution for the target language** at `solutions/<LANGUAGE>/<previous-stage>/code/` — this is the baseline code you'll build on.
 
-## 3. Set Up the Solutions Directory
-1. **Check if `solutions/<LANGUAGE>/` already exists.** If not, create it.
-2. **Copy the compiled starter** as the base:
-   - Copy the contents of `compiled_starters/<LANGUAGE>/` into the first stage's `code/` directory (match the naming convention used by reference languages, e.g., `solutions/<LANGUAGE>/02-<stage-slug>/code/`).
-   - *Constraint:* Always verify the exact directory naming convention by inspecting an existing language's `solutions/` folder. Stage directories typically follow a pattern like `01-<slug>/`, `02-<slug>/`, etc.
-3. **Create `solutions/<LANGUAGE>/code/config.yml`**: Use an existing language's `config.yml` as a template for the structure.
-
-## 4. Implement Solutions Stage-by-Stage
+## 3. Implement Solutions Stage-by-Stage
 For each requested stage, in order:
 
-1. **Create the stage directory** following the naming convention from reference languages (e.g., `solutions/<LANGUAGE>/<NN>-<stage-slug>/code/`).
-2. **Copy the previous stage's code** as the starting point:
-   - For the first stage being implemented: copy from `compiled_starters/<LANGUAGE>/`.
-   - For subsequent stages: copy from the previous stage's `code/` directory in `solutions/<LANGUAGE>/`.
-3. **Read the reference implementations** for this specific stage in other languages to understand the expected logic.
-4. **Implement the solution** for this stage only — the minimal code change needed to pass this stage's tests.
+1. **Verify that `solutions/<LANGUAGE>/` exists** and contains the solution for the stage immediately before the first requested stage (e.g., if implementing stage 3, confirm stage 2's solution is present).
+2. **Create the stage directory** following the naming convention from reference languages (e.g., `solutions/<LANGUAGE>/<NN>-<stage-slug>/code/`).
+   - *Constraint:* Always verify the exact directory naming convention by inspecting an existing language's `solutions/` folder. Stage directories typically follow a pattern like `01-<slug>/`, `02-<slug>/`, etc.
+3. **Copy the previous stage's solution** as the starting point:
+   - Copy from `solutions/<LANGUAGE>/<previous-stage>/code/` into the new stage's `code/` directory.
+4. **Read the reference implementations** for this specific stage in other languages to understand the expected logic.
+5. **Implement the solution** for this stage only — the minimal code change needed to pass this stage's tests.
    - *Constraint:* Each stage's solution should be an incremental diff from the previous stage. Do NOT include logic for future stages.
    - *Constraint:* Match the code style and complexity of reference implementations. Keep it minimal.
-   - *Constraint:* Use the same SDKs/dependencies established in the language's Stage 1 implementation.
+   - *Constraint:* Use the same SDKs/dependencies established in the language's previous stage implementation.
    - *Constraint:* Do NOT manually edit files in any directory other than `solutions/<LANGUAGE>/`.
 
-## 5. Write Hints
-For each requested stage, add hints to `solutions/<LANGUAGE>/config.yml`:
+## 4. Write Hints
+For each requested stage, add hints to `solutions/<LANGUAGE>/<stage-number>-<stage-slug>/code/config.yml`:
 1. **Study the hints** written for the same stages in reference languages' `config.yml` files.
 2. **Write hints** that follow the same structure, tone, and level of detail as the reference hints.
    - Match the formatting convention (e.g., markdown in YAML strings, number of hints per stage).
    - Tailor hints to the target language's idioms, standard library, and SDK usage.
 3. **Ensure the `config.yml` is valid YAML** — watch for indentation, multiline strings, and special characters.
 
-## 6. The Iteration Loop (Compile & Test)
+## 5. The Iteration Loop (Compile & Test)
 For each stage, repeat until tests pass:
 
 1. **Compile**: Run `sudo -E course-sdk compile <LANGUAGE>`.
@@ -66,7 +60,7 @@ For each stage, repeat until tests pass:
    - **Contraint**: The previous stage solutions are guaranteed to not be the problem so do not change them.
 3. **Move to the next stage** only after the current stage passes.
 
-## 7. Final Verification
+## 6. Final Verification
 Once all requested stages pass:
 1. Run a full `sudo -E course-sdk test <LANGUAGE>` to confirm all implemented stages pass together.
 2. **Review each stage's solution** to ensure:
