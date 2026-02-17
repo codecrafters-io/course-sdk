@@ -41,6 +41,7 @@ For each requested stage, in order:
    - *Constraint:* Match the code style and complexity of reference implementations. Keep it minimal.
    - *Constraint:* Use the same SDKs/dependencies established in the language's previous stage implementation.
    - *Constraint:* Do NOT manually edit files in any directory other than `solutions/<LANGUAGE>/`.
+   - *Contraint*: Do NOT manually create `solutions/<LANGUAGE>/diff` directory, the compile command handles that.
 
 ## 4. Write Hints
 For each requested stage, add hints to `solutions/<LANGUAGE>/<stage-number>-<stage-slug>/code/config.yml`:
