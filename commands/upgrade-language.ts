@@ -29,7 +29,7 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     if (!attributes.user_editable_file) {
       throw new Error(
-        `${language.slug}'s config.yml file doesn't include the "user_editable_file" key. Run "course-sdk add-language ${language.slug}" first instead.`
+        `${language.slug}'s config.yml file doesn't include the "user_editable_file" key. Run "course-sdk add-language ${language.slug}" first instead.`,
       );
     }
 
@@ -46,9 +46,13 @@ export default class UpgradeLanguageCommand extends BaseCommand {
 
     console.log("");
     filesToRevert.forEach((file) => {
-      console.log(`Reverting changes to ${file}...`);
-      execSync(`git checkout ${path.join(course.starterTemplatesDirForLanguage(language), file)}`);
-      console.log("");
+      if (fs.existsSync(path.join(course.starterTemplatesDirForLanguage(language), file))) {
+        console.log(`Reverting changes to ${file}...`);
+        execSync(`git checkout ${path.join(course.starterTemplatesDirForLanguage(language), file)}`);
+        console.log("");
+      } else {
+        console.log(`File ${file} does not exist in starter templates. Skipping...`);
+      }
     });
 
     console.log(`Upgrade done! Run 'course-sdk test ${language.slug}' to verify.`);
