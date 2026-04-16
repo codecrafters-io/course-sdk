@@ -15,6 +15,23 @@ Ensure all necessary tools are installed before proceeding:
 2. **Docker:** Ensure Docker is installed. Start and verify the daemon:
    - `sudo service docker start`
    - `sudo docker info`
+   - **cgroup workaround (Cursor Cloud / nested container environments):** If `docker run` fails with an error like `unable to apply cgroup configuration: cannot enter cgroupv2 ... with domain controllers -- it is in threaded mode`, the `--memory` and `--cpus` resource limit flags used by `course-sdk test` are incompatible with the host's cgroup configuration. Fix this by wrapping the `docker` binary to strip those flags:
+     ```bash
+     sudo mv /usr/bin/docker /usr/bin/docker.real
+     sudo tee /usr/bin/docker << 'WRAPPER'
+     #!/bin/bash
+     args=()
+     for arg in "$@"; do
+       case "$arg" in
+         --memory=*|--cpus=*) ;;
+         *) args+=("$arg") ;;
+       esac
+     done
+     exec /usr/bin/docker.real "${args[@]}"
+     WRAPPER
+     sudo chmod +x /usr/bin/docker
+     ```
+     This strips `--memory` and `--cpus` flags from all `docker run` invocations, allowing `course-sdk test` to work in environments where cgroupv2 resource controllers are unavailable.
 3. **course-sdk:** Might be installed but assume it is outdated. Run `bun install` and `make install` in the repository root to compile the SDK.
 
 ## 2. Gather Context
