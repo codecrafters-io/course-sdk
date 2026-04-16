@@ -15,7 +15,7 @@ Ensure all necessary tools are installed before proceeding:
 2. **Docker:** Ensure Docker is installed. Start and verify the daemon:
    - `sudo service docker start`
    - `sudo docker info`
-3. **course-sdk:** Check if `course-sdk` is installed. If not, run `bun install` and `make install` in the repository root to compile the SDK.
+3. **course-sdk:** Check if `course-sdk` is installed and is the latest version. If not, run `bun install` and `make install` in the repository root to compile the SDK.
 
 ## 2. Gather Context
 Before writing any code, understand what you're building:
