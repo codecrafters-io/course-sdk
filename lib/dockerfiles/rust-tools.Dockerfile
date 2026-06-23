@@ -1,4 +1,4 @@
-FROM rust:1.95-trixie
+FROM rust:1.96-trixie
 
 WORKDIR /workdir
 
