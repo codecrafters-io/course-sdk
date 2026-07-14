@@ -4,6 +4,7 @@ export default class Uncommenter {
   private static DOUBLE_HYPHENS = /(^\s*)--\s{0,1}(.*)$/;
 
   private static REGEX_PATTERNS: { [key: string]: RegExp } = {
+    ada: Uncommenter.DOUBLE_HYPHENS,
     c: Uncommenter.DOUBLE_SLASHES,
     clojure: /(^\s*);;\s{0,1}(.*)$/,
     cpp: Uncommenter.DOUBLE_SLASHES,
