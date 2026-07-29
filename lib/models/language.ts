@@ -58,6 +58,7 @@ export default class Language {
 
   get codeFileExtension(): string {
     const extensions: { [key: string]: string } = {
+      ada: "adb",
       c: "c",
       clojure: "clj",
       cpp: "cpp",
