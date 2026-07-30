@@ -9,6 +9,7 @@ export default class Language {
 
   static all() {
     return [
+      new Language("ada", "Ada"),
       new Language("c", "C"),
       new Language("cpp", "C++"),
       new Language("clojure", "Clojure"),
@@ -57,6 +58,7 @@ export default class Language {
 
   get codeFileExtension(): string {
     const extensions: { [key: string]: string } = {
+      ada: "adb",
       c: "c",
       clojure: "clj",
       cpp: "cpp",
