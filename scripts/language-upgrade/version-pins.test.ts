@@ -219,6 +219,20 @@ describe("dependency manifests", () => {
     expect(outcomes.find((o) => o.path === "code/go.mod")?.status).toEqual("missing");
   });
 
+  // course-sdk refreshes config.yml from language-templates during
+  // upgrade-language, so by the time pins run it already holds the new version.
+  test("reports a file already refreshed from templates as already correct", () => {
+    const dir = languageRoot({
+      "config.yml": "attributes:\n  required_executable: go (1.27)\n",
+      "code/go.mod": "module x\n\ngo 1.26.0\n",
+    });
+
+    const outcomes = applyVersionPins(dir, "go", "1.26", "1.27");
+
+    expect(outcomes.find((o) => o.path === "config.yml")?.reason).toEqual("already at the target version");
+    expect(read(dir, "code/go.mod")).toContain("go 1.27.0");
+  });
+
   test("is a no-op when already at the target version", () => {
     const dir = languageRoot({
       "config.yml": "attributes:\n  required_executable: go (1.27)\n",
