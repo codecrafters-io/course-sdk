@@ -159,6 +159,34 @@ describe("dependency manifests", () => {
     expect(read(dir, "code/pyproject.toml")).toContain('requires-python = ">=3.15"');
   });
 
+  // Both of these were found by check-language-support rather than by reading
+  // the templates, and both would have left the language half-upgraded.
+  test(".python-version, which selects the interpreter", () => {
+    const dir = languageRoot({
+      "config.yml": 'attributes:\n  required_executable: "uv"\n',
+      "code/pyproject.toml": '[project]\nrequires-python = ">=3.14"\n',
+      "code/.python-version": "3.14\n",
+    });
+
+    applyVersionPins(dir, "python", "3.14", "3.15");
+
+    expect(read(dir, "code/.python-version")).toEqual("3.15\n");
+  });
+
+  test("swift-tools-version in Package.swift", () => {
+    const dir = languageRoot({
+      "config.yml": 'attributes:\n  required_executable: "swift (>=6.0)"\n',
+      "code/Package.swift":
+        "// swift-tools-version: 6.0\n// The swift-tools-version declares the minimum version.\n\nimport PackageDescription\n",
+    });
+
+    applyVersionPins(dir, "swift", "6.0", "6.2");
+
+    const packageSwift = read(dir, "code/Package.swift");
+    expect(packageSwift).toContain("// swift-tools-version: 6.2");
+    expect(packageSwift).toContain("import PackageDescription");
+  });
+
   test("mix.exs elixir requirement", () => {
     const dir = languageRoot({
       "config.yml": 'attributes:\n  required_executable: "mix"\n',
