@@ -37,21 +37,21 @@ afterEach(() => {
 });
 
 describe("checkLanguage", () => {
-  test("reports a language whose tag carries its version as supported", () => {
+  test("reports a language whose tag carries its version as bumpable", () => {
     const report = checkLanguage(goTemplates(), "go");
 
-    expect(report.support).toEqual("supported");
+    expect(report.templatesBump).toEqual("supported");
     expect(report.version).toEqual("1.26");
     expect(report.baseImage).toEqual("1.26-alpine");
-    expect(report.blocker).toBeUndefined();
+    expect(report.templatesBlocker).toBeUndefined();
     expect(report.unpinnedFiles).toBeEmpty();
   });
 
-  test("reports a base image tracking another tool as unsupported", () => {
+  test("reports a base image tracking another tool as not bumpable", () => {
     const report = checkLanguage(goTemplates({}, "FROM debian:trixie"), "go");
 
-    expect(report.support).toEqual("unsupported");
-    expect(report.blocker).toMatch(/no version token equal to "1.26"/);
+    expect(report.templatesBump).toEqual("unsupported");
+    expect(report.templatesBlocker).toMatch(/no version token equal to "1.26"/);
   });
 
   test("lists the pins it would apply", () => {
@@ -69,8 +69,8 @@ describe("unpinned version files", () => {
     const report = checkLanguage(goTemplates({ "code/.tool-versions": "golang 1.26\n" }), "go");
 
     expect(report.unpinnedFiles).toEqual(["code/.tool-versions"]);
-    // Still automatable; a stale file is a gap in the bump, not a blocker.
-    expect(report.support).toEqual("supported");
+    // Still bumpable; a stale file is a gap in the upgrade, not a blocker.
+    expect(report.templatesBump).toEqual("supported");
   });
 
   test("does not flag files a pin already covers", () => {
@@ -79,8 +79,16 @@ describe("unpinned version files", () => {
     expect(report.unpinnedFiles).not.toContain("code/go.mod");
   });
 
-  test("does not flag a version that is merely a prefix of a longer one", () => {
-    const report = checkLanguage(goTemplates({ "code/notes.txt": "needs 1.26.5 or newer\n" }), "go");
+  // Zig's build.zig.zon pins "0.16.0" while its Dockerfile is named zig-0.16.
+  // Matching only the exact string missed it, so a bump left it stale.
+  test("flags a more precise form of the current version", () => {
+    const report = checkLanguage(goTemplates({ "code/toolchain.txt": "minimum 1.26.0\n" }), "go");
+
+    expect(report.unpinnedFiles).toEqual(["code/toolchain.txt"]);
+  });
+
+  test("does not flag a version that merely starts with the same digits", () => {
+    const report = checkLanguage(goTemplates({ "code/notes.txt": "needs 1.264 or newer\n" }), "go");
 
     expect(report.unpinnedFiles).toBeEmpty();
   });
