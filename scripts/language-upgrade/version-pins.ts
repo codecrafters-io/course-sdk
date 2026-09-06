@@ -58,8 +58,13 @@ const MANIFEST_PINS: Record<string, Pin[]> = {
     { pathGlob: "code/pom.xml", pattern: /(<maven\.compiler\.target>)(\d[\d.]*)(<\/maven\.compiler\.target>)/ },
     { pathGlob: "code/pom.xml", pattern: /(<java\.version>)(\d[\d.]*)(<\/java\.version>)/ },
   ],
-  python: [{ pathGlob: "code/pyproject.toml", pattern: /^(requires-python\s*=\s*">=\s*)([\d.]+)(")/m }],
+  python: [
+    { pathGlob: "code/pyproject.toml", pattern: /^(requires-python\s*=\s*">=\s*)([\d.]+)(")/m },
+    // Selects the interpreter, so a stale value here quietly runs the old one.
+    { pathGlob: "code/.python-version", pattern: /^([ \t]*)([\d.]+)([ \t]*)$/m },
+  ],
   rust: [{ pathGlob: "code/Cargo.toml", pattern: /^(rust-version\s*=\s*")([\d.]+)(")/m }],
+  swift: [{ pathGlob: "code/Package.swift", pattern: /^(\/\/\s*swift-tools-version:\s*)([\d.]+)([ \t]*)$/m }],
 };
 
 function coerceOrNull(version: string): semver.SemVer | null {
@@ -125,6 +130,16 @@ function applyPin(languageRootDir: string, pin: Pin, oldVersion: string, newVers
 
     return { path: relativePath, status: "updated" as const, before: existingVersion, after: replacement };
   });
+}
+
+// Which files the pins for a language would touch. Lets check-language-support
+// tell "we know about this version and leave it alone deliberately" apart from
+// "we never looked at this file", which is the difference between a supported
+// language and one that would break silently.
+export function pinnedFilesForLanguage(languageRootDir: string, languageSlug: string): string[] {
+  return [REQUIRED_EXECUTABLE_PIN, ...(MANIFEST_PINS[languageSlug] || [])].flatMap((pin) =>
+    glob.sync(path.join(languageRootDir, pin.pathGlob)).map((filePath) => path.relative(languageRootDir, filePath)),
+  );
 }
 
 // languageRootDir is languages/<slug> in language-templates, or

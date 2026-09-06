@@ -56,7 +56,7 @@ async function loadDashboardStatus(location: string): Promise<DashboardStatus> {
   return JSON.parse(fs.readFileSync(location, "utf8")) as DashboardStatus;
 }
 
-function dockerfileVersion(dockerfile: Dockerfile): string {
+export function dockerfileVersion(dockerfile: Dockerfile): string {
   return dockerfile.buildpackWithVersion.substring(dockerfile.buildpack.length + 1);
 }
 
@@ -74,7 +74,7 @@ function renderAtSamePrecision(newVersion: string, reference: string): string {
 
 // language-templates keeps exactly one Dockerfile per language, unlike course
 // repos which accumulate every version. So this is a rename, not an addition.
-function currentDockerfile(languageRootDir: string): Dockerfile {
+export function currentDockerfile(languageRootDir: string): Dockerfile {
   const dockerfilePaths = glob.sync(path.join(languageRootDir, "dockerfiles", "*.Dockerfile"));
 
   if (dockerfilePaths.length === 0) {
@@ -93,40 +93,60 @@ function currentDockerfile(languageRootDir: string): Dockerfile {
 // produce "elixir:1.20.5", a tag that need not exist. Those cases refuse
 // instead, and so do base images that track something else entirely
 // ("gradle:jdk24-alpine" for Kotlin, "debian:trixie" for Zig).
+const FROM_LINE_PATTERN = /^(FROM\s+\S+?:)(\S+)$/m;
+
+export function baseImageTag(contents: string): string | null {
+  const match = contents.match(FROM_LINE_PATTERN);
+
+  return match ? match[2] : null;
+}
+
+// Locates the version inside an image tag, or explains why it cannot. Shared
+// with check-language-support.ts so the support matrix is derived from the
+// same rule the bump enforces, rather than being a second opinion that can
+// drift from it.
+export function locateVersionToken(tag: string, version: string): { index: number } | { error: string } {
+  const versionTokens = [...tag.matchAll(/\d+(?:\.\d+)*/g)];
+  const exactMatches = versionTokens.filter((token) => token[0] === version);
+
+  if (exactMatches.length === 0) {
+    const found = versionTokens.map((token) => token[0]).join(", ") || "none";
+
+    return {
+      error:
+        `tag "${tag}" has no version token equal to "${version}" (found: ${found}). ` +
+        `Refusing to guess, since a partial match would invent a tag that may not exist.`,
+    };
+  }
+
+  if (exactMatches.length > 1) {
+    return { error: `tag "${tag}" has "${version}" in more than one place, so the right one is ambiguous` };
+  }
+
+  return { index: exactMatches[0].index! };
+}
+
 export function bumpBaseImage(
   contents: string,
   fromVersion: string,
   toVersion: string,
 ): { contents: string; before: string; after: string } {
-  const fromLinePattern = /^(FROM\s+\S+?:)(\S+)$/m;
-  const match = contents.match(fromLinePattern);
+  const existingTag = baseImageTag(contents);
 
-  if (!match) {
+  if (existingTag === null) {
     throw new Error("Could not find a FROM line with a tagged image in the Dockerfile");
   }
 
-  const existingTag = match[2];
-  const versionTokens = [...existingTag.matchAll(/\d+(?:\.\d+)*/g)];
-  const exactMatches = versionTokens.filter((token) => token[0] === fromVersion);
+  const located = locateVersionToken(existingTag, fromVersion);
 
-  if (exactMatches.length === 0) {
-    const found = versionTokens.map((token) => token[0]).join(", ") || "none";
-
-    throw new Error(
-      `FROM tag "${existingTag}" has no version token equal to "${fromVersion}" (found: ${found}). ` +
-        `Refusing to guess, since a partial match would invent a tag that may not exist.`,
-    );
+  if ("error" in located) {
+    throw new Error(`FROM ${located.error}`);
   }
 
-  if (exactMatches.length > 1) {
-    throw new Error(`FROM tag "${existingTag}" has "${fromVersion}" in more than one place, so the right one is ambiguous`);
-  }
-
-  const tokenStart = exactMatches[0].index!;
-  const newTag = existingTag.slice(0, tokenStart) + toVersion + existingTag.slice(tokenStart + fromVersion.length);
+  const newTag = existingTag.slice(0, located.index) + toVersion + existingTag.slice(located.index + fromVersion.length);
 
   return {
-    contents: contents.replace(fromLinePattern, `$1${newTag}`),
+    contents: contents.replace(FROM_LINE_PATTERN, `$1${newTag}`),
     before: existingTag,
     after: newTag,
   };
