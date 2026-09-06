@@ -1,164 +1,152 @@
 # Language version upgrades
 
-Scripts for moving a course, and the shared templates it draws from, onto a
-newer version of a language.
+Moves a course, and the shared templates it draws from, onto a newer version of
+a language.
 
 ```
-resolve-versions.ts           what version is the course on, the templates on, and the latest
+upgrade-course-language.ts    apply a language version to one course   (start here)
 update-language-templates.ts  bump language-templates for one language
-upgrade-course-language.ts    apply a language version to one course
-check-language-support.ts     which languages can be upgraded unattended
-version-pins.ts               shared: rewrite the version wherever it is pinned
+check-language-support.ts     which languages can be bumped unattended
+resolve-versions.ts           report course / templates / latest versions
+version-pins.ts               library: rewrite the version wherever it is pinned
 ```
 
-## Upgrading a course
+## Before you run anything
+
+These scripts **edit checkouts in place and do not create branches or commits**.
+Make a branch first, or you will be upgrading `main`.
+
+```sh
+git -C ../build-your-own-redis switch -c upgrade-go
+git -C ../language-templates switch -c upgrade-go   # only if templates need bumping
+```
+
+`upgrade-course-language.ts` runs `course-sdk upgrade-language`, which does
+`git checkout` on the starter template's user-editable file and dependency
+manifests to preserve course-specific content. **Uncommitted changes to those
+files are discarded.** Commit or stash before starting.
+
+Everything is run from the course-sdk checkout:
+
+```sh
+cd course-sdk && bun install
+```
+
+## Upgrade a course
 
 ```sh
 bun scripts/language-upgrade/upgrade-course-language.ts \
-  --course-dir ../build-your-own-redis --language go
+  --course-dir ../build-your-own-redis \
+  --language go
 ```
 
-If `language-templates` is behind too, this refuses with exit code 3 and prints
-the two ways forward: bump the templates on their own, or re-run with
-`--update-templates` to chain both.
+Then review, compile and test:
 
-Bumping the templates is a one-off per language version, not something each
-course does. Every course tends to sit on the same version at once, so eleven
-courses discovering Go 1.27 would otherwise open eleven identical
-`language-templates` pull requests. One course bumps the shared template; the
-rest pick it up once it merges.
+```sh
+git -C ../build-your-own-redis diff
+cd ../build-your-own-redis && course-sdk compile go && course-sdk test go
+```
 
-Because `language-templates` has no CI and a Dockerfile cannot be built in
-isolation, the templates bump is never validated on its own. Running it through
-a course is the validation, so pass `--templates-repo` pointing at the checkout
-holding the unmerged bump.
+If `language-templates` is behind too, this exits `3` without changing anything
+and prints both ways forward. To do it in one go:
 
-Exit codes: `0` upgraded or nothing to do, `1` failed, `3` templates are behind.
+```sh
+bun scripts/language-upgrade/upgrade-course-language.ts \
+  --course-dir ../build-your-own-redis \
+  --language go \
+  --templates-repo ../language-templates \
+  --update-templates
+```
 
-## Languages that cannot be upgraded unattended
+That bumps the templates first, then upgrades the course against them. Pass
+`--templates-repo` whenever the templates change is not merged yet, so the
+course reads your local branch instead of `origin/main`.
 
-The answer differs by operation, and conflating the two understates what is
-automatable.
+Bumping the templates is **one-off per language version, not per course**. Every
+course tends to sit on the same version at once, so eleven courses discovering
+Go 1.27 would otherwise open eleven identical `language-templates` pull
+requests. Check for an open one before using `--update-templates`.
 
-**Upgrading a course works for every language.** `course-sdk upgrade-language`
-copies the Dockerfile out of `language-templates` verbatim, so nothing in that
-path depends on the base image. Zig is the worked example: it cannot have its
-template bumped automatically, yet
-[build-your-own-grep#224](https://github.com/codecrafters-io/build-your-own-grep/pull/224)
-moved that course from Zig 0.15 to 0.16 by copying the already-updated
-Dockerfile and adjusting pins, which is exactly what these scripts do.
+## Bump language-templates on its own
 
-**Bumping `language-templates` works for twelve of twenty-three.** That
-operation has to construct a new Dockerfile, so it turns on rewriting the
-version in the base image tag, and the eleven below do not carry their version
-there. They refuse loudly rather than producing a plausible-looking but broken
-change.
+No course needed:
 
-Run the check rather than trusting the list below, which is a snapshot:
+```sh
+bun scripts/language-upgrade/update-language-templates.ts \
+  --templates-repo ../language-templates \
+  --language go
+```
+
+Nothing validates this. `language-templates` has no CI and a Dockerfile cannot
+be built in isolation, so run a course against it before merging.
+
+## Check what can be automated
 
 ```sh
 bun scripts/language-upgrade/check-language-support.ts --templates-repo ../language-templates
 ```
 
-It reads the templates as they are now, and answers using the same rule the
-bump enforces, so the two cannot drift apart.
+Reports three things: that course upgrades work for every language, which
+languages can have their templates bumped and why the rest cannot, and any
+version pins not yet covered. Use `--format json` to consume it, `--language
+<slug>` for one language.
 
-As of Go 1.26 / Node 25 / Rust 1.96, these twelve can have their template
-bumped:
+Course upgrades work everywhere because the Dockerfile is copied out of
+`language-templates` verbatim. Only the templates bump has to rewrite a base
+image tag, and that is what the report is about.
 
-> csharp, go, haskell, java, javascript, ocaml, php, python, ruby, rust, swift,
-> typescript
+## Flags
 
-The other eleven need a human for that step, and fall into three groups.
+| Flag                              | Scripts                                   | Notes                                                                                                              |
+| --------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--course-dir <path>`             | upgrade-course, resolve                   | course repo checkout                                                                                               |
+| `--language <slug>`               | all                                       | course-sdk slug, so `javascript` not `nodejs`                                                                      |
+| `--templates-repo <path>`         | all                                       | required for templates bumps and the support check; optional elsewhere, where it defaults to cloning `origin/main` |
+| `--update-templates`              | upgrade-course                            | bump templates instead of refusing                                                                                 |
+| `--status-json <url\|path>`       | upgrade-course, update-templates, resolve | defaults to language-dashboard's published `status.json`                                                           |
+| `--format <text\|markdown\|json>` | check-support                             | defaults to `text`                                                                                                 |
 
-### The version lives somewhere other than the FROM tag
+`COURSE_SDK_LANGUAGE_TEMPLATES_REPO` makes `course-sdk` itself read templates
+from a local checkout. The scripts set it for you from `--templates-repo`; set
+it by hand if you are running `course-sdk add-language` or `upgrade-language`
+directly against unmerged templates.
 
-| Language | Base image                           | Where the version actually is                        |
-| -------- | ------------------------------------ | ---------------------------------------------------- |
-| ada      | `gcc:15.2.0-trixie`                  | `ENV ALIRE_VERSION=2.1.1`                            |
-| kotlin   | `gradle:jdk24-alpine`                | a GitHub release URL, `kotlin-compiler-2.3.20.zip`   |
-| odin     | `silkeh/clang:21-trixie`             | a git branch, `dev-2026-04`                          |
-| zig      | `debian:trixie`                      | a download URL in a `RUN` step                       |
-| scala    | `eclipse-temurin:25-jdk-alpine-3.23` | nowhere; scala-cli is fetched from `releases/latest` |
+Exit codes: `0` upgraded or already current, `1` failed, `3` templates behind.
 
-Ada is the closest to workable, since the version is at least present verbatim
-as an env var. Kotlin and Odin also spell theirs out, but in formats that do not
-match the Dockerfile name (`2.3.20` against `kotlin-2.3`, `dev-2026-04` against
-`odin-2026.4`). Scala pins nothing, so there is no version to rewrite.
+## When it refuses
 
-### The number in the filename is not a tool version
+| Message                                                 | Meaning                                                                                                                                                                                                     |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| exit `3`, "language-templates is behind"                | Bump templates first, or re-run with `--update-templates`                                                                                                                                                   |
+| "FROM tag has no version token equal to ..."            | This language's templates bump is not automatable. Run the support check; the course upgrade still works once templates are updated by hand                                                                 |
+| "holds X, which is not the version being upgraded from" | The pin tracks a different tool and was left alone. Usually correct — Kotlin's `config.yml` holds a Gradle version, Haskell's holds a Stack version                                                         |
+| "no Dockerfile for `<lang>`"                            | Course does not have this language yet; use `course-sdk add-language`                                                                                                                                       |
+| Tests fail after a clean upgrade                        | Breaking API changes in the starter code. Nothing here fixes those; edit `starter_templates/<lang>/code/` and iterate as in [skills/adding-language-support](../../skills/adding-language-support/SKILL.md) |
 
-| Language | Base image                    | What the number means        | Where it lives                           |
-| -------- | ----------------------------- | ---------------------------- | ---------------------------------------- |
-| c        | `gcc:15.2.0-trixie`           | C23, the language standard   | `CMAKE_C_STANDARD` in `CMakeLists.txt`   |
-| cpp      | `gcc:15.2.0-trixie`           | C++23, the language standard | `CMAKE_CXX_STANDARD` in `CMakeLists.txt` |
-| clojure  | `clojure:tools-deps-bookworm` | a library version            | `org.clojure/clojure` in `deps.edn`      |
+A skipped pin is reported with its reason rather than passing silently, so read
+the `[pin]` lines even on a successful run.
 
-Upgrading these means something different from bumping an image, so they are out
-of scope rather than unimplemented. The check reports these files under "version
-also appears in", which is where an upgrade would have to happen instead.
+## Adding a pin
 
-### The registry tag is more precise than the Dockerfile name
+When the support check reports a file under "version pins not covered", a bump
+would leave that file stale. Add a pattern to `MANIFEST_PINS` in
+`version-pins.ts`, keyed by language slug:
 
-| Language | Dockerfile    | Base image                                       |
-| -------- | ------------- | ------------------------------------------------ |
-| dart     | `dart-3.11`   | `dart:3.11.0`                                    |
-| elixir   | `elixir-1.19` | `elixir:1.19.5-alpine`                           |
-| gleam    | `gleam-1.16`  | `ghcr.io/gleam-lang/gleam:v1.16.0-erlang-alpine` |
+```ts
+zig: [{ pathGlob: "code/build.zig.zon", pattern: /^(\s*\.minimum_zig_version\s*=\s*")([\d.]+)(")/m }],
+```
 
-These refuse on purpose. Only whole version tokens are replaced, so bumping
-Elixir 1.19 to 1.20 will not turn `1.19.5` into `1.20.5` and invent a release
-that need not exist.
+The pattern needs exactly three capture groups — prefix, version, suffix — and
+paths are relative to the language root, which is `languages/<slug>/` in
+language-templates and `starter_templates/<slug>/` in a course. A pin is only
+rewritten when it currently holds the version being upgraded from, so nearby
+versions belonging to other tools are safe.
 
-This is the group most worth fixing. It needs a registry lookup to turn "the
-latest 1.20.x" into a tag that exists, which nothing here does yet.
+Add a case to `version-pins.test.ts`, then re-run the support check to confirm
+the file is no longer reported.
 
-## Version pins
+## Tests
 
-A version is rarely in one place. Bumping Go means the Dockerfile tag,
-`config.yml`'s `required_executable`, and `go.mod`'s `go` directive; Java means
-three separate properties in `pom.xml`.
-
-Rewriting every version-shaped string would break things, because plenty of
-nearby values track something else entirely:
-
-| Where                     | Value                        | What it actually is                     |
-| ------------------------- | ---------------------------- | --------------------------------------- |
-| kotlin `config.yml`       | `gradle (9.4.1)`             | Gradle, not Kotlin 2.3                  |
-| haskell `config.yml`      | `stack (24.33)`              | Stack, not GHC 9.10                     |
-| haskell `stack.yaml`      | `resolver: lts-24.33`        | the Stackage snapshot                   |
-| kotlin `build.gradle.kts` | `JavaLanguageVersion.of(24)` | the Java toolchain                      |
-| rust `Cargo.toml`         | `edition = "2024"`           | the edition                             |
-| java `pom.xml`            | `<version>1.0</version>`     | the project's own version               |
-| gleam `config.yml`        | `gleam (1.14.0)`             | already out of sync with its Dockerfile |
-
-So a pin is only rewritten when it currently holds the version being upgraded
-_from_. Everything above fails that check and is reported as skipped, with the
-reason, rather than passing silently.
-
-Lockfiles are left alone deliberately. Regenerating one belongs to its tool, not
-to a regex.
-
-Pins matter for every language, not just the twelve, because course upgrades
-work everywhere.
-
-`check-language-support.ts` reports files under `code/` that mention the current
-version but that no pin covers, which is how `.python-version`,
-`Package.swift`, `build.zig.zon`, `pubspec.yaml`, `libs.versions.toml` and
-Scala's `compile.sh` were all found.
-
-It matches more precise forms of the version too, not just the exact string. A
-Dockerfile named `zig-0.16` gates `.minimum_zig_version = "0.16.0"`, and
-matching exactly missed it — the same precision trap that makes
-`elixir:1.19.5` refuse. Two known false positives are suppressed: Ruby's
-`Gemfile.lock` records the Bundler version, which happened to be 4.0.9
-alongside Ruby 4.0, and C#'s `.sln` carries
-`MinimumVisualStudioVersion = 10.0.40219.1` against .NET 10.0.
-
-## Adding support for a language
-
-1. Run the check to see what is blocking it.
-2. If the blocker is a version outside the FROM tag, that needs new handling in
-   `update-language-templates.ts`.
-3. If the check reports unpinned files, add patterns to `MANIFEST_PINS` in
-   `version-pins.ts` and a test alongside the others.
+```sh
+bun test scripts/language-upgrade/
+```
