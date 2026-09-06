@@ -23,7 +23,7 @@ const DEFAULT_STATUS_JSON_URL = "https://raw.githubusercontent.com/codecrafters-
 //   `course-sdk upgrade-language` can pull it in.
 // "path_b": language-templates is behind too, so the course repo forks its own
 //   newest Dockerfile and the change is backported to language-templates after.
-type Mode = "up_to_date" | "path_a" | "path_b";
+export type Mode = "up_to_date" | "path_a" | "path_b";
 
 type LanguageStatus = {
   latest: string;
@@ -35,7 +35,7 @@ type DashboardStatus = {
   languages: Record<string, LanguageStatus>;
 };
 
-type Resolution = {
+export type Resolution = {
   course: string;
   courseRepo: string;
   language: string;
@@ -115,7 +115,7 @@ function latestTemplatesDockerfile(templatesRepoDir: string, language: Language)
   return dockerfilePaths.map((dockerfilePath) => new Dockerfile(dockerfilePath)).sort((a, b) => b.semver.compare(a.semver))[0];
 }
 
-async function resolve(
+export async function resolve(
   courseDir: string,
   languageSlug: string,
   statusJsonLocation: string,
@@ -184,19 +184,23 @@ async function resolve(
   };
 }
 
-const program = new Command();
+export { DEFAULT_STATUS_JSON_URL };
 
-program
-  .name("resolve-versions")
-  .description("Resolve which language version upgrade a course needs, if any")
-  .requiredOption("--course-dir <path>", "path to the course repository checkout")
-  .requiredOption("--language <slug>", "course-sdk language slug. Example: 'go'")
-  .addOption(new Option("--status-json <location>", "URL or path to the language-dashboard status.json").default(DEFAULT_STATUS_JSON_URL))
-  .addOption(new Option("--templates-repo <path>", "path to a language-templates checkout. Defaults to cloning it"))
-  .action(async (options) => {
-    const resolution = await resolve(options.courseDir, options.language, options.statusJson, options.templatesRepo);
+if (import.meta.main) {
+  const program = new Command();
 
-    console.log(JSON.stringify(resolution, null, 2));
-  });
+  program
+    .name("resolve-versions")
+    .description("Resolve which language version upgrade a course needs, if any")
+    .requiredOption("--course-dir <path>", "path to the course repository checkout")
+    .requiredOption("--language <slug>", "course-sdk language slug. Example: 'go'")
+    .addOption(new Option("--status-json <location>", "URL or path to the language-dashboard status.json").default(DEFAULT_STATUS_JSON_URL))
+    .addOption(new Option("--templates-repo <path>", "path to a language-templates checkout. Defaults to cloning it"))
+    .action(async (options) => {
+      const resolution = await resolve(options.courseDir, options.language, options.statusJson, options.templatesRepo);
 
-await program.parseAsync(process.argv);
+      console.log(JSON.stringify(resolution, null, 2));
+    });
+
+  await program.parseAsync(process.argv);
+}

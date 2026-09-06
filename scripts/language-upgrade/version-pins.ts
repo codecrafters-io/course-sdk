@@ -98,6 +98,15 @@ function applyPin(languageRootDir: string, pin: Pin, oldVersion: string, newVers
 
     const existingVersion = match[2];
     const existingCoerced = coerceOrNull(existingVersion);
+    const newCoerced = coerceOrNull(newVersion);
+
+    // Checked before the guard below, because a file that course-sdk already
+    // refreshed from language-templates is at the target rather than at the
+    // version being upgraded from, and "already correct" is the clearer report.
+    if (existingCoerced !== null && newCoerced !== null && semver.eq(existingCoerced, newCoerced)) {
+      return { path: relativePath, status: "skipped" as const, before: existingVersion, reason: "already at the target version" };
+    }
+
     const oldCoerced = coerceOrNull(oldVersion);
 
     // The guard: only touch a version that is the one we are upgrading from.
@@ -111,10 +120,6 @@ function applyPin(languageRootDir: string, pin: Pin, oldVersion: string, newVers
     }
 
     const replacement = renderAtSamePrecision(newVersion, existingVersion);
-
-    if (replacement === existingVersion) {
-      return { path: relativePath, status: "skipped" as const, before: existingVersion, reason: "already at the target version" };
-    }
 
     fs.writeFileSync(filePath, contents.replace(pin.pattern, `$1${replacement}$3`));
 
