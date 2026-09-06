@@ -37,8 +37,22 @@ Exit codes: `0` upgraded or nothing to do, `1` failed, `3` templates are behind.
 
 ## Languages that cannot be upgraded unattended
 
-Roughly half of them, today. This is fine, and the scripts refuse loudly rather
-than producing a plausible-looking but broken change.
+The answer differs by operation, and conflating the two understates what is
+automatable.
+
+**Upgrading a course works for every language.** `course-sdk upgrade-language`
+copies the Dockerfile out of `language-templates` verbatim, so nothing in that
+path depends on the base image. Zig is the worked example: it cannot have its
+template bumped automatically, yet
+[build-your-own-grep#224](https://github.com/codecrafters-io/build-your-own-grep/pull/224)
+moved that course from Zig 0.15 to 0.16 by copying the already-updated
+Dockerfile and adjusting pins, which is exactly what these scripts do.
+
+**Bumping `language-templates` works for twelve of twenty-three.** That
+operation has to construct a new Dockerfile, so it turns on rewriting the
+version in the base image tag, and the eleven below do not carry their version
+there. They refuse loudly rather than producing a plausible-looking but broken
+change.
 
 Run the check rather than trusting the list below, which is a snapshot:
 
@@ -49,14 +63,13 @@ bun scripts/language-upgrade/check-language-support.ts --templates-repo ../langu
 It reads the templates as they are now, and answers using the same rule the
 bump enforces, so the two cannot drift apart.
 
-As of Go 1.26 / Node 25 / Rust 1.96, twelve languages upgrade cleanly:
+As of Go 1.26 / Node 25 / Rust 1.96, these twelve can have their template
+bumped:
 
 > csharp, go, haskell, java, javascript, ocaml, php, python, ruby, rust, swift,
 > typescript
 
-and eleven need a human. The upgrade turns on rewriting the version in the base
-image tag, so what these have in common is that the tag does not carry the
-language's version.
+The other eleven need a human for that step, and fall into three groups.
 
 ### The version lives somewhere other than the FROM tag
 
@@ -126,10 +139,21 @@ reason, rather than passing silently.
 Lockfiles are left alone deliberately. Regenerating one belongs to its tool, not
 to a regex.
 
-`check-language-support.ts` also reports files under `code/` that mention the
-current version but that no pin covers, which is how `.python-version` and
-`Package.swift` were found. Every automatable language is currently clean, so a
-new entry there means a bump would leave something stale.
+Pins matter for every language, not just the twelve, because course upgrades
+work everywhere.
+
+`check-language-support.ts` reports files under `code/` that mention the current
+version but that no pin covers, which is how `.python-version`,
+`Package.swift`, `build.zig.zon`, `pubspec.yaml`, `libs.versions.toml` and
+Scala's `compile.sh` were all found.
+
+It matches more precise forms of the version too, not just the exact string. A
+Dockerfile named `zig-0.16` gates `.minimum_zig_version = "0.16.0"`, and
+matching exactly missed it — the same precision trap that makes
+`elixir:1.19.5` refuse. Two known false positives are suppressed: Ruby's
+`Gemfile.lock` records the Bundler version, which happened to be 4.0.9
+alongside Ruby 4.0, and C#'s `.sln` carries
+`MinimumVisualStudioVersion = 10.0.40219.1` against .NET 10.0.
 
 ## Adding support for a language
 

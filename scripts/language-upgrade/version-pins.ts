@@ -37,9 +37,11 @@ type Pin = {
   pattern: RegExp;
 };
 
+// Captures only the digits, so any comparison operator stays in the prefix and
+// survives: swift's "swift (>=6.0)" must not flatten to "swift (6.2)".
 const REQUIRED_EXECUTABLE_PIN: Pin = {
   pathGlob: "config.yml",
-  pattern: /^(\s*required_executable:\s*"?[^\s"(]+\s*\()([^)]*)(\))/m,
+  pattern: /^(\s*required_executable:\s*"?[^\s"(]+\s*\(\s*[><=~^]*\s*)(\d[\d.]*)([^)]*\))/m,
 };
 
 // Lockfiles are deliberately absent. Python's uv.lock also carries
@@ -48,6 +50,7 @@ const REQUIRED_EXECUTABLE_PIN: Pin = {
 // "uv lock".
 const MANIFEST_PINS: Record<string, Pin[]> = {
   csharp: [{ pathGlob: "code/*.csproj", pattern: /(<TargetFramework>net)([\d.]+)(<\/TargetFramework>)/ }],
+  dart: [{ pathGlob: "code/pubspec.yaml", pattern: /^(\s*sdk:\s*\^)([\d.]+)(\s*)$/m }],
   elixir: [{ pathGlob: "code/mix.exs", pattern: /(elixir:\s*"~>\s*)([\d.]+)(")/ }],
   go: [{ pathGlob: "code/go.mod", pattern: /^(go\s+)(\d[\d.]*)(\s*)$/m }],
   // stack.yaml also has "resolver: lts-24.33", the Stackage snapshot, which
@@ -58,17 +61,44 @@ const MANIFEST_PINS: Record<string, Pin[]> = {
     { pathGlob: "code/pom.xml", pattern: /(<maven\.compiler\.target>)(\d[\d.]*)(<\/maven\.compiler\.target>)/ },
     { pathGlob: "code/pom.xml", pattern: /(<java\.version>)(\d[\d.]*)(<\/java\.version>)/ },
   ],
+  // The Kotlin plugin version, which is also what the Dockerfile downloads.
+  kotlin: [{ pathGlob: "code/gradle/libs.versions.toml", pattern: /^(kotlin-jvm\s*=\s*\{[^}]*version\s*=\s*")([\d.]+)(")/m }],
   python: [
     { pathGlob: "code/pyproject.toml", pattern: /^(requires-python\s*=\s*">=\s*)([\d.]+)(")/m },
     // Selects the interpreter, so a stale value here quietly runs the old one.
     { pathGlob: "code/.python-version", pattern: /^([ \t]*)([\d.]+)([ \t]*)$/m },
   ],
   rust: [{ pathGlob: "code/Cargo.toml", pattern: /^(rust-version\s*=\s*")([\d.]+)(")/m }],
+  // Scala pins its version in the build script rather than a manifest.
+  scala: [{ pathGlob: "code/.codecrafters/compile.sh", pattern: /(--scala-version=)([\d.]+)()/ }],
   swift: [{ pathGlob: "code/Package.swift", pattern: /^(\/\/\s*swift-tools-version:\s*)([\d.]+)([ \t]*)$/m }],
+  zig: [{ pathGlob: "code/build.zig.zon", pattern: /^(\s*\.minimum_zig_version\s*=\s*")([\d.]+)(")/m }],
 };
 
 function coerceOrNull(version: string): semver.SemVer | null {
   return semver.coerce(version);
+}
+
+// Compares only as far as the reference version is specific. Dockerfile names
+// carry major.minor, while the files they gate are often more precise:
+// zig-0.16 against ".minimum_zig_version = 0.16.0", go-1.26 against
+// "go 1.26.0". Exact equality would call those a mismatch and skip them.
+//
+// This still separates versions of different tools, which is the guard's whole
+// job, because those differ in the components being compared: Gradle's 9.4.1
+// against Kotlin's 2.3, Stack's 24.33 against GHC's 9.10.
+function matchesAtPrecision(existing: string, reference: string): boolean {
+  const existingCoerced = coerceOrNull(existing);
+  const referenceCoerced = coerceOrNull(reference);
+
+  if (existingCoerced === null || referenceCoerced === null) {
+    return false;
+  }
+
+  const componentCount = Math.min(reference.split(".").length, 3);
+  const components = (version: semver.SemVer) => [version.major, version.minor, version.patch].slice(0, componentCount);
+
+  return components(existingCoerced).every((component, index) => component === components(referenceCoerced)[index]);
 }
 
 // Rewrite at whatever precision the existing value uses, so "go 1.26.0" stays
@@ -102,20 +132,16 @@ function applyPin(languageRootDir: string, pin: Pin, oldVersion: string, newVers
     }
 
     const existingVersion = match[2];
-    const existingCoerced = coerceOrNull(existingVersion);
-    const newCoerced = coerceOrNull(newVersion);
 
     // Checked before the guard below, because a file that course-sdk already
     // refreshed from language-templates is at the target rather than at the
     // version being upgraded from, and "already correct" is the clearer report.
-    if (existingCoerced !== null && newCoerced !== null && semver.eq(existingCoerced, newCoerced)) {
+    if (matchesAtPrecision(existingVersion, newVersion)) {
       return { path: relativePath, status: "skipped" as const, before: existingVersion, reason: "already at the target version" };
     }
 
-    const oldCoerced = coerceOrNull(oldVersion);
-
     // The guard: only touch a version that is the one we are upgrading from.
-    if (existingCoerced === null || oldCoerced === null || !semver.eq(existingCoerced, oldCoerced)) {
+    if (!matchesAtPrecision(existingVersion, oldVersion)) {
       return {
         path: relativePath,
         status: "skipped" as const,

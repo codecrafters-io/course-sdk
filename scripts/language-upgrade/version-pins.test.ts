@@ -49,6 +49,24 @@ describe("config.yml required_executable", () => {
     expect(read(dir, "config.yml")).toContain('required_executable: "php (8.6)"');
   });
 
+  test("keeps a comparison operator", () => {
+    const dir = languageRoot({ "config.yml": 'attributes:\n  required_executable: "swift (>=6.0)"\n' });
+
+    applyVersionPins(dir, "swift", "6.0", "6.2");
+
+    expect(read(dir, "config.yml")).toContain('required_executable: "swift (>=6.2)"');
+  });
+
+  test("leaves a value whose version is not a number alone", () => {
+    // Odin's "dev-2026-04" is a version, but not one that can be rewritten.
+    const dir = languageRoot({ "config.yml": "attributes:\n  required_executable: odin (dev-2026-04)\n" });
+
+    const outcomes = applyVersionPins(dir, "odin", "2026.4", "2026.9");
+
+    expect(outcomes.find((o) => o.path === "config.yml")?.status).toEqual("skipped");
+    expect(read(dir, "config.yml")).toContain("odin (dev-2026-04)");
+  });
+
   test("leaves a value with no version alone", () => {
     const dir = languageRoot({ "config.yml": 'attributes:\n  required_executable: "uv"\n' });
 
@@ -187,6 +205,63 @@ describe("dependency manifests", () => {
     expect(packageSwift).toContain("import PackageDescription");
   });
 
+  // From the real Zig 0.15 to 0.16 upgrade in build-your-own-grep#224, where
+  // the pin is more precise than the Dockerfile name.
+  test("build.zig.zon minimum_zig_version, which is more precise than the Dockerfile", () => {
+    const dir = languageRoot({
+      "config.yml": "attributes:\n  required_executable: zig (0.15)\n",
+      "code/build.zig.zon": '.{\n    .name = .grep,\n    .minimum_zig_version = "0.15.1",\n    .dependencies = .{},\n}\n',
+    });
+
+    applyVersionPins(dir, "zig", "0.15", "0.16");
+
+    const zon = read(dir, "code/build.zig.zon");
+    expect(zon).toContain('.minimum_zig_version = "0.16.0"');
+    expect(zon).toContain(".name = .grep");
+    expect(read(dir, "config.yml")).toContain("zig (0.16)");
+  });
+
+  test("pubspec.yaml sdk constraint", () => {
+    const dir = languageRoot({
+      "config.yml": "attributes:\n  required_executable: dart (3.11)\n",
+      "code/pubspec.yaml": "name: codecrafters_grep\nversion: 0.1.0\n\nenvironment:\n  sdk: ^3.11.0\n",
+    });
+
+    applyVersionPins(dir, "dart", "3.11", "3.12");
+
+    const pubspec = read(dir, "code/pubspec.yaml");
+    expect(pubspec).toContain("sdk: ^3.12.0");
+    // The package's own version must not move with the SDK's.
+    expect(pubspec).toContain("version: 0.1.0");
+  });
+
+  test("the Kotlin plugin version in libs.versions.toml", () => {
+    const dir = languageRoot({
+      "config.yml": 'attributes:\n  required_executable: "gradle (9.4.1)"\n',
+      "code/gradle/libs.versions.toml": '[plugins]\nkotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.3.20" }\n',
+    });
+
+    applyVersionPins(dir, "kotlin", "2.3", "2.4");
+
+    expect(read(dir, "code/gradle/libs.versions.toml")).toContain('version = "2.4.0"');
+    // Gradle's version still must not be touched.
+    expect(read(dir, "config.yml")).toContain("gradle (9.4.1)");
+  });
+
+  test("the Scala version passed to scala-cli in compile.sh", () => {
+    const dir = languageRoot({
+      "config.yml": "attributes:\n  required_executable: scala-cli\n",
+      "code/.codecrafters/compile.sh": "#!/bin/sh\nset -e\nscala-cli --power --assembly --scala-version=3.8.3 \\\n  --jvm=25 .\n",
+    });
+
+    applyVersionPins(dir, "scala", "3.8", "3.9");
+
+    const compileSh = read(dir, "code/.codecrafters/compile.sh");
+    expect(compileSh).toContain("--scala-version=3.9.0");
+    // The JVM version is a different thing again.
+    expect(compileSh).toContain("--jvm=25");
+  });
+
   test("mix.exs elixir requirement", () => {
     const dir = languageRoot({
       "config.yml": 'attributes:\n  required_executable: "mix"\n',
@@ -274,14 +349,14 @@ describe("dependency manifests", () => {
 
   test("languages with no manifest pin only touch config.yml", () => {
     const dir = languageRoot({
-      "config.yml": "attributes:\n  required_executable: zig (0.16)\n",
-      "code/build.zig": "// nothing versioned here\n",
+      "config.yml": "attributes:\n  required_executable: node (25)\n",
+      "code/app/main.js": "// nothing versioned here\n",
     });
 
-    const outcomes = applyVersionPins(dir, "zig", "0.16", "0.17");
+    const outcomes = applyVersionPins(dir, "javascript", "25", "26");
 
     expect(outcomes).toHaveLength(1);
-    expect(read(dir, "config.yml")).toContain("zig (0.17)");
-    expect(read(dir, "code/build.zig")).toEqual("// nothing versioned here\n");
+    expect(read(dir, "config.yml")).toContain("node (26)");
+    expect(read(dir, "code/app/main.js")).toEqual("// nothing versioned here\n");
   });
 });

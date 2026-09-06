@@ -26,11 +26,13 @@ type LanguageReport = {
   language: string;
   version: string;
   baseImage: string;
-  support: Support;
+  // Bumping language-templates has to construct the new Dockerfile, so it can
+  // only work when the base image tag carries the language's version.
+  templatesBump: Support;
   // Why the base image tag cannot be rewritten, if it cannot.
-  blocker?: string;
-  // Files holding the current version that no pin covers. These do not block a
-  // bump, but they would be left stale by one.
+  templatesBlocker?: string;
+  // Files holding the current version that no pin covers. These block nothing,
+  // but either operation would leave them stale.
   unpinnedFiles: string[];
   pinnedFiles: string[];
 };
@@ -47,14 +49,33 @@ const LOCKFILES = [
   "manifest.toml",
   "gradle.lockfile",
   "mix.lock",
+  // Records the Bundler version, which can coincide with Ruby's: Bundler 4.0.9
+  // alongside Ruby 4.0.
+  "Gemfile.lock",
+  "pubspec.lock",
+  "packages.lock.json",
 ];
 
-function isLockfile(relativePath: string): boolean {
-  return LOCKFILES.includes(path.basename(relativePath));
+// Visual Studio's own version lives here (MinimumVisualStudioVersion =
+// 10.0.40219.1), which collides with .NET 10.0 and means nothing for an upgrade.
+const IGNORED_EXTENSIONS = [".sln"];
+
+function isNoisyFile(relativePath: string): boolean {
+  return LOCKFILES.includes(path.basename(relativePath)) || IGNORED_EXTENSIONS.includes(path.extname(relativePath));
+}
+
+// Matches the version, and also any more precise form of it: for a Dockerfile
+// named zig-0.16 this finds "0.16" and "0.16.0", but not "0.161" or "10.16".
+//
+// The more precise form is the point. Zig's build.zig.zon pins
+// ".minimum_zig_version = 0.16.0", and an exact-only match missed it, which is
+// the same precision trap that makes Docker tags like "elixir:1.19.5" refuse.
+function versionMentionPattern(version: string): RegExp {
+  return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?:\\.\\d+)*(?![\\d.])`);
 }
 
 // Finds files under code/ that mention the current version but that no pin
-// covers. A bump would leave these stale, which is how a language ends up
+// covers. An upgrade would leave these stale, which is how a language ends up
 // half-upgraded and failing in a way that is hard to attribute.
 function findUnpinnedVersionFiles(languageRootDir: string, version: string, pinnedFiles: string[]): string[] {
   const codeDir = path.join(languageRootDir, "code");
@@ -69,7 +90,7 @@ function findUnpinnedVersionFiles(languageRootDir: string, version: string, pinn
     .filter((filePath) => {
       const relativePath = path.relative(languageRootDir, filePath);
 
-      if (pinnedFiles.includes(relativePath) || isLockfile(relativePath)) {
+      if (pinnedFiles.includes(relativePath) || isNoisyFile(relativePath)) {
         return false;
       }
 
@@ -81,8 +102,7 @@ function findUnpinnedVersionFiles(languageRootDir: string, version: string, pinn
         return false;
       }
 
-      // Bounded so "1.26" does not match inside "1.26.5" or "21.26".
-      return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?![\\d.])`).test(contents);
+      return versionMentionPattern(version).test(contents);
     })
     .map((filePath) => path.relative(languageRootDir, filePath));
 }
@@ -106,8 +126,8 @@ export function checkLanguage(templatesRepoDir: string, languageSlug: string): L
     language: languageSlug,
     version: version,
     baseImage: tag === null ? "(untagged)" : tag,
-    support: blocker ? "unsupported" : "supported",
-    blocker: blocker,
+    templatesBump: blocker ? "unsupported" : "supported",
+    templatesBlocker: blocker,
     unpinnedFiles: findUnpinnedVersionFiles(languageRootDir, version, pinnedFiles),
     pinnedFiles: pinnedFiles,
   };
@@ -131,42 +151,60 @@ function shortBlocker(blocker: string): string {
 }
 
 function printText(reports: LanguageReport[]): void {
-  const supported = reports.filter((report) => report.support === "supported");
-  const unsupported = reports.filter((report) => report.support === "unsupported");
+  const bumpable = reports.filter((report) => report.templatesBump === "supported");
+  const blocked = reports.filter((report) => report.templatesBump === "unsupported");
+  const stale = reports.filter((report) => report.unpinnedFiles.length > 0);
+
+  // Upgrading a course copies the Dockerfile out of language-templates
+  // verbatim, so nothing about the base image constrains it. Only bumping the
+  // templates has to build a new Dockerfile, and that is what the base image
+  // can block. Reporting one number for both would understate what is
+  // automatable, which is what this split is here to avoid.
+  console.log("");
+  console.log(ansiColors.bold(`Course upgrades: all ${reports.length} languages`));
+  console.log(ansiColors.dim("  course-sdk upgrade-language copies the Dockerfile from language-templates,"));
+  console.log(ansiColors.dim("  so the base image never has to be rewritten here"));
 
   console.log("");
-  console.log(ansiColors.bold(`Automatable (${supported.length})`));
+  console.log(ansiColors.bold(`language-templates bumps: ${bumpable.length} of ${reports.length}`));
+  console.log("");
 
-  for (const report of supported) {
-    const note = report.unpinnedFiles.length > 0 ? ansiColors.yellow(`  unpinned: ${report.unpinnedFiles.join(", ")}`) : "";
-    console.log(`  ${ansiColors.green("ok")}  ${report.language.padEnd(12)} ${report.version.padEnd(9)} ${report.baseImage}${note}`);
+  for (const report of bumpable) {
+    console.log(`  ${ansiColors.green("ok")}  ${report.language.padEnd(12)} ${report.version.padEnd(9)} ${report.baseImage}`);
   }
 
   console.log("");
-  console.log(ansiColors.bold(`Needs a human (${unsupported.length})`));
 
-  for (const report of unsupported) {
+  for (const report of blocked) {
     console.log(`  ${ansiColors.red("no")}  ${report.language.padEnd(12)} ${report.version.padEnd(9)} ${report.baseImage}`);
-    console.log(`      ${ansiColors.dim(shortBlocker(report.blocker!))}`);
+    console.log(`      ${ansiColors.dim(shortBlocker(report.templatesBlocker!))}`);
+  }
 
-    // For these the unpinned file is often where the version really lives, so
-    // it points at what an upgrade would have to touch instead.
-    if (report.unpinnedFiles.length > 0) {
-      console.log(`      ${ansiColors.dim(`version also appears in: ${report.unpinnedFiles.join(", ")}`)}`);
-    }
+  console.log("");
+  console.log(ansiColors.bold(`Version pins not covered: ${stale.length}`));
+  console.log(ansiColors.dim("  these hold the current version but no pin touches them, so either"));
+  console.log(ansiColors.dim("  operation would leave them stale"));
+  console.log("");
+
+  if (stale.length === 0) {
+    console.log(`  ${ansiColors.green("none")}`);
+  }
+
+  for (const report of stale) {
+    console.log(`  ${ansiColors.yellow("!")}   ${report.language.padEnd(12)} ${report.unpinnedFiles.join(", ")}`);
   }
 
   console.log("");
 }
 
 function printMarkdown(reports: LanguageReport[]): void {
-  console.log("| Language | Version | Base image | Automatable | Why not |");
+  console.log("| Language | Version | Base image | Templates bump | Why not |");
   console.log("| --- | --- | --- | --- | --- |");
 
   for (const report of reports) {
-    const why = report.blocker ? shortBlocker(report.blocker) : "";
+    const why = report.templatesBlocker ? shortBlocker(report.templatesBlocker) : "";
     console.log(
-      `| ${report.language} | ${report.version} | \`${report.baseImage}\` | ${report.support === "supported" ? "yes" : "no"} | ${why} |`,
+      `| ${report.language} | ${report.version} | \`${report.baseImage}\` | ${report.templatesBump === "supported" ? "yes" : "no"} | ${why} |`,
     );
   }
 }
