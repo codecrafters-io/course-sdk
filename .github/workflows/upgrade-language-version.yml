@@ -10,9 +10,24 @@ on:
   workflow_dispatch:
     inputs:
       course_repo:
-        description: "Course repository name. Example: build-your-own-redis"
+        description: "Course repository"
         required: true
-        type: string
+        # The courses language-dashboard tracks. One missing from this list has
+        # no version data there, so resolve-versions has nothing to compare
+        # against. Options cannot be generated, so add new courses by hand.
+        type: choice
+        options:
+          - build-your-own-bittorrent
+          - build-your-own-claude-code
+          - build-your-own-dns-server
+          - build-your-own-git
+          - build-your-own-grep
+          - build-your-own-http-server
+          - build-your-own-interpreter
+          - build-your-own-kafka
+          - build-your-own-redis
+          - build-your-own-shell
+          - build-your-own-sqlite
       language:
         description: "course-sdk language slug, so 'javascript' not 'nodejs'"
         required: true
