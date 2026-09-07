@@ -34,7 +34,8 @@ jobs:
 
     steps:
       # Needs contents:write and pull-requests:write on the course repos and on
-      # language-templates. Store the App's id and private key as these secrets.
+      # language-templates. The App's id is a repository variable, its private
+      # key a secret.
       #
       # Only used for the checkouts and the duplicate-PR check below. The
       # pushes are too far away in wall-clock time to reuse it; see the second
@@ -43,7 +44,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.LANGUAGE_UPGRADE_APP_ID }}
+          app-id: ${{ vars.LANGUAGE_UPGRADE_APP_ID }}
           private-key: ${{ secrets.LANGUAGE_UPGRADE_APP_PRIVATE_KEY }}
           owner: codecrafters-io
           repositories: |
@@ -191,7 +192,7 @@ jobs:
         if: steps.resolve.outputs.mode != 'up_to_date'
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.LANGUAGE_UPGRADE_APP_ID }}
+          app-id: ${{ vars.LANGUAGE_UPGRADE_APP_ID }}
           private-key: ${{ secrets.LANGUAGE_UPGRADE_APP_PRIVATE_KEY }}
           owner: codecrafters-io
           repositories: |
