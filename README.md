@@ -12,7 +12,7 @@ This repository is used to develop & test CodeCrafters challenges.
 
 ## Developing courses
 
-We'll use [`build-your-own-git`](https://github.com/codecrafters-io/build-your-own-git) as an example here.
+We'll use `[build-your-own-git](https://github.com/codecrafters-io/build-your-own-git)` as an example here.
 
 Clone the course repository and cd into it:
 
@@ -44,3 +44,17 @@ To add support for a new language (TODO, not working yet):
 ```sh
 course-sdk add-language <language>
 ```
+
+### Working against local language templates
+
+`course-sdk add-language` and `course-sdk upgrade-language` pull template files
+from [language-templates](https://github.com/codecrafters-io/language-templates), cloning it to a cache and resetting to `origin/main` on every run.
+
+Set `COURSE_SDK_LANGUAGE_TEMPLATES_REPO` to read from a local checkout instead:
+
+```sh
+COURSE_SDK_LANGUAGE_TEMPLATES_REPO=../language-templates course-sdk upgrade-language go
+```
+
+Use it when developing templates, or to pick up a templates change that has not
+been merged yet.
