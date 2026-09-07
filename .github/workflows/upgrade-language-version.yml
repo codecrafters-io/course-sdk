@@ -1,0 +1,303 @@
+# Upgrades one course to the latest version of one language, opening draft PRs
+# for review. Run it from the Actions tab.
+#
+# Writes to other repositories (the course, and sometimes language-templates),
+# which the default GITHUB_TOKEN cannot do. It mints a token from a GitHub App
+# instead; see the secrets below.
+name: Upgrade language version
+
+on:
+  workflow_dispatch:
+    inputs:
+      course_repo:
+        description: "Course repository name. Example: build-your-own-redis"
+        required: true
+        type: string
+      language:
+        description: "course-sdk language slug, so 'javascript' not 'nodejs'"
+        required: true
+        type: string
+      update_templates:
+        description: "Also bump language-templates when it is behind. Do this once per language version, not once per course."
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    # Generous because the slow part is Docker with a cold layer cache, run up
+    # to three times: once for the upgrade, once for the baseline when that
+    # fails, and once per repair attempt. Locally, a zig upgrade that needed
+    # one repair took 12 minutes with warm images.
+    timeout-minutes: 90
+
+    steps:
+      # Needs contents:write and pull-requests:write on the course repos and on
+      # language-templates. Store the App's id and private key as these secrets.
+      #
+      # Only used for the checkouts and the duplicate-PR check below. The
+      # pushes are too far away in wall-clock time to reuse it; see the second
+      # token further down.
+      - name: Mint a token that can write to the other repositories
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.LANGUAGE_UPGRADE_APP_ID }}
+          private-key: ${{ secrets.LANGUAGE_UPGRADE_APP_PRIVATE_KEY }}
+          owner: codecrafters-io
+          repositories: |
+            ${{ inputs.course_repo }}
+            language-templates
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.2 # Error: 1.2.3 breaks course-sdk as of 2025-02-27
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: codecrafters-io/${{ inputs.course_repo }}
+          path: courses/${{ inputs.course_repo }}
+          token: ${{ steps.app-token.outputs.token }}
+          # This token has expired by the time we push. The push steps set an
+          # origin URL carrying a freshly minted one instead.
+          persist-credentials: false
+
+      - uses: actions/checkout@v4
+        with:
+          repository: codecrafters-io/language-templates
+          path: language-templates
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - run: bun install
+
+      - run: git config --global user.email "hello@codecrafters.io"
+      - run: git config --global user.name "codecrafters-bot"
+
+      - name: Resolve versions
+        id: resolve
+        run: |
+          set -euo pipefail
+          bun scripts/language-upgrade/resolve-versions.ts \
+            --course-dir courses/${{ inputs.course_repo }} \
+            --language ${{ inputs.language }} \
+            --templates-repo language-templates \
+            | tee resolution.json
+          {
+            echo "mode=$(jq -r .mode resolution.json)"
+            echo "target_version=$(jq -r .targetVersion resolution.json)"
+            echo "course_version=$(jq -r .courseVersion resolution.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stop if already current
+        if: steps.resolve.outputs.mode == 'up_to_date'
+        run: |
+          echo "::notice::${{ inputs.course_repo }} is already on ${{ inputs.language }} ${{ steps.resolve.outputs.course_version }}"
+          exit 0
+
+      - name: Stop if language-templates is behind and we were not told to bump it
+        if: steps.resolve.outputs.mode == 'path_b' && !inputs.update_templates
+        run: |
+          echo "::error::language-templates does not have ${{ inputs.language }} ${{ steps.resolve.outputs.target_version }} yet. Re-run with update_templates checked, but first check no other course has already opened that PR."
+          exit 1
+
+      # A templates bump belongs to a language version, not to a course. Without
+      # this, every lagging course opens its own identical language-templates PR.
+      - name: Refuse a duplicate language-templates bump
+        if: steps.resolve.outputs.mode == 'path_b' && inputs.update_templates
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: upgrade-${{ inputs.language }}-${{ steps.resolve.outputs.target_version }}
+        run: |
+          set -euo pipefail
+          existing=$(gh pr list --repo codecrafters-io/language-templates \
+            --state open --head "$BRANCH" --json url --jq '.[].url')
+          if [ -n "$existing" ]; then
+            echo "::error::language-templates already has an open bump for ${{ inputs.language }} ${{ steps.resolve.outputs.target_version }}: $existing. Merge it, then re-run this without update_templates."
+            exit 1
+          fi
+
+      # The installer only edits shell rc files, which a later step's
+      # non-interactive shell never reads. Without the GITHUB_PATH line the
+      # repair command is simply not found, and the upgrade reports
+      # still_failing having never run an agent.
+      - name: Install the repair agent
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        run: |
+          set -euo pipefail
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Check the repair agent is on PATH
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        run: cursor-agent --version
+
+      # continue-on-error because a failed upgrade still has a diff worth
+      # looking at. The verdict is read below and the job is failed at the end.
+      - name: Upgrade
+        id: upgrade
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        continue-on-error: true
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          bun scripts/language-upgrade/upgrade-course-language.ts \
+            --course-dir courses/${{ inputs.course_repo }} \
+            --language ${{ inputs.language }} \
+            --templates-repo language-templates \
+            --json-out "$GITHUB_WORKSPACE/upgrade-result.json" \
+            ${{ inputs.update_templates && '--update-templates' || '' }}
+
+      - name: Read the test verdict
+        id: verdict
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        run: |
+          set -euo pipefail
+          if [ ! -f upgrade-result.json ]; then
+            echo "::error::The upgrade did not get far enough to produce a result. See the Upgrade step."
+            exit 1
+          fi
+          verdict=$(jq -r '.test.verdict // "skipped"' upgrade-result.json)
+          failures=$(jq -r '(.test.failures // []) | join(", ")' upgrade-result.json)
+          attempts=$(jq -r '.test.repairAttempts // 0' upgrade-result.json)
+
+          case "$verdict" in
+            passed)
+              note="\`course-sdk test\` passes." ;;
+            pre_existing)
+              note="\`course-sdk test\` fails ($failures), but it failed the same way on the base branch before this upgrade. Not caused by this PR, and worth fixing separately." ;;
+            repaired)
+              note="\`course-sdk test\` failed after the upgrade and the repair agent fixed it in $attempts attempt(s). Review those edits closely." ;;
+            still_failing)
+              note="**\`course-sdk test\` still fails ($failures)** after $attempts repair attempt(s). This needs a human." ;;
+            *)
+              note="Tests did not run." ;;
+          esac
+
+          {
+            echo "verdict=$verdict"
+            echo "failures=$failures"
+            echo "attempts=$attempts"
+            echo "note=$note"
+          } >> "$GITHUB_OUTPUT"
+
+      # An installation token lasts an hour, and everything above it can take
+      # longer than that
+      - name: Mint a fresh token for the pushes
+        id: push-token
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.LANGUAGE_UPGRADE_APP_ID }}
+          private-key: ${{ secrets.LANGUAGE_UPGRADE_APP_PRIVATE_KEY }}
+          owner: codecrafters-io
+          repositories: |
+            ${{ inputs.course_repo }}
+            language-templates
+
+      # Opened first: the course PR below builds on this one, and must not be
+      # merged before it.
+      - name: Open the language-templates PR
+        id: templates-pr
+        if: steps.resolve.outputs.mode == 'path_b' && inputs.update_templates
+        working-directory: language-templates
+        env:
+          GH_TOKEN: ${{ steps.push-token.outputs.token }}
+          BRANCH: upgrade-${{ inputs.language }}-${{ steps.resolve.outputs.target_version }}
+          LANGUAGE: ${{ inputs.language }}
+          COURSE_REPO: ${{ inputs.course_repo }}
+          TARGET_VERSION: ${{ steps.resolve.outputs.target_version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -m "Update $LANGUAGE to $TARGET_VERSION"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/codecrafters-io/language-templates.git"
+          git push origin "$BRANCH"
+          body=$(cat <<EOF
+          Opened by [upgrade-language-version]($RUN_URL), triggered for \`$COURSE_REPO\`.
+
+          language-templates has no CI and a Dockerfile cannot be built on its own, so this was validated by running \`$COURSE_REPO\` against it. Merge this before the course PR.
+          EOF
+          )
+          url=$(gh pr create --draft \
+            --title "Update $LANGUAGE to $TARGET_VERSION" \
+            --body "$body" \
+            --head "$BRANCH")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Open the course PR
+        id: course-pr
+        if: steps.resolve.outputs.mode != 'up_to_date'
+        working-directory: courses/${{ inputs.course_repo }}
+        env:
+          GH_TOKEN: ${{ steps.push-token.outputs.token }}
+          BRANCH: upgrade-${{ inputs.language }}-${{ steps.resolve.outputs.target_version }}
+          LANGUAGE: ${{ inputs.language }}
+          COURSE_REPO: ${{ inputs.course_repo }}
+          COURSE_VERSION: ${{ steps.resolve.outputs.course_version }}
+          TARGET_VERSION: ${{ steps.resolve.outputs.target_version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TEMPLATES_NOTE: ${{ steps.templates-pr.outputs.url && format('Depends on {0}, which must merge first.', steps.templates-pr.outputs.url) || '' }}
+          VERDICT_NOTE: ${{ steps.verdict.outputs.note }}
+        run: |
+          set -euo pipefail
+
+          # An upgrade that died before writing anything leaves nothing to
+          # commit, and "git commit" would fail here with a message about the
+          # working tree rather than about what actually went wrong.
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::error::The upgrade produced no changes. See the Upgrade step for why."
+            exit 1
+          fi
+
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -m "Update $LANGUAGE to $TARGET_VERSION"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/codecrafters-io/$COURSE_REPO.git"
+          git push origin "$BRANCH"
+
+          # $VERDICT_NOTE holds backticks. Expanding a variable inside a
+          # heredoc is safe: the result is not rescanned for substitution.
+          body=$(cat <<EOF
+          Upgrades $LANGUAGE from $COURSE_VERSION to $TARGET_VERSION.
+
+          Opened by [upgrade-language-version]($RUN_URL). $TEMPLATES_NOTE
+
+          $VERDICT_NOTE
+
+          The diff may contain more than a version bump: the upgrade refreshes the starter template from language-templates, so any drift that had accumulated since the last upgrade lands here too.
+          EOF
+          )
+          url=$(gh pr create --draft \
+            --title "Update $LANGUAGE to $TARGET_VERSION" \
+            --body "$body" \
+            --head "$BRANCH")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Course | ${{ inputs.course_repo }} |"
+            echo "| Language | ${{ inputs.language }} |"
+            echo "| Version | ${{ steps.resolve.outputs.course_version }} → ${{ steps.resolve.outputs.target_version }} |"
+            echo "| Tests | ${{ steps.verdict.outputs.verdict || '—' }} |"
+            echo "| Course PR | ${{ steps.course-pr.outputs.url || '—' }} |"
+            echo "| Templates PR | ${{ steps.templates-pr.outputs.url || '—' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Fail if the upgrade left the course broken
+        if: steps.verdict.outputs.verdict == 'still_failing'
+        env:
+          VERDICT_NOTE: ${{ steps.verdict.outputs.note }}
+        run: |
+          echo "::error::$VERDICT_NOTE"
+          exit 1

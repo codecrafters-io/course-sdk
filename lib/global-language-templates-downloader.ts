@@ -21,6 +21,13 @@ export default class GlobalLanguageTemplatesDownloader {
   }
 
   async download(): Promise<string> {
+    // Escape hatch for working against a local checkout: useful when developing
+    // templates, and required when a course needs to pick up a templates change
+    // that hasn't been merged to main yet.
+    if (process.env.COURSE_SDK_LANGUAGE_TEMPLATES_REPO) {
+      return await this.useLocalRepository(process.env.COURSE_SDK_LANGUAGE_TEMPLATES_REPO);
+    }
+
     const repositoryPath = path.join(this.cacheDir, "repo");
     const languageDir = path.join(repositoryPath, "languages", this.language.slug);
 
@@ -35,6 +42,18 @@ export default class GlobalLanguageTemplatesDownloader {
     if (!(await fs.promises.exists(languageDir))) {
       throw new LanguageTemplateNotAvailableError(this.language);
     }
+
+    return languageDir;
+  }
+
+  async useLocalRepository(repositoryPath: string): Promise<string> {
+    const languageDir = path.join(repositoryPath, "languages", this.language.slug);
+
+    if (!(await fs.promises.exists(languageDir))) {
+      throw new LanguageTemplateNotAvailableError(this.language);
+    }
+
+    console.log(`${ansiColors.yellow("[local]")} Using language templates from ${repositoryPath}`);
 
     return languageDir;
   }
