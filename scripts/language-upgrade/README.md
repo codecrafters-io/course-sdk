@@ -10,7 +10,10 @@ resolve-versions.ts           report course / templates / latest versions
 version-pins.ts               library: rewrite the version wherever it is pinned
 test-outcome.ts               library: did the upgrade break this, or was it already broken
 repair.ts                     library: hand a regression to an agent and re-test
+tools-image.ts                library: has the course outrun the image that lints it
 ```
+
+
 
 ## Before you run anything
 
@@ -50,6 +53,8 @@ Then review:
 git -C ../build-your-own-redis diff
 ```
 
+
+
 ## What happens when the tests fail
 
 A failure does not automatically mean the upgrade broke something. Some courses
@@ -60,15 +65,17 @@ So on failure the script checks out `HEAD` into a throwaway worktree, runs the
 same tests there, and compares. Only failures that are new get handed to a
 repair agent. A clean upgrade never pays for the second run.
 
-| Verdict | Meaning | Exit |
-| --- | --- | --- |
-| `passed` | tests pass | `0` |
-| `pre_existing` | fails, but failed the same way before the upgrade. No repair attempted | `0` |
-| `repaired` | the upgrade broke tests and the agent fixed them. Review those edits closely | `0` |
-| `still_failing` | the agent could not fix it. Needs a human | `4` |
+
+| Verdict         | Meaning                                                                      | Exit |
+| --------------- | ---------------------------------------------------------------------------- | ---- |
+| `passed`        | tests pass                                                                   | `0`  |
+| `pre_existing`  | fails, but failed the same way before the upgrade. No repair attempted       | `0`  |
+| `repaired`      | the upgrade broke tests and the agent fixed them. Review those edits closely | `0`  |
+| `still_failing` | the agent could not fix it. Needs a human                                    | `4`  |
+
 
 The agent is whatever `--repair-command` names, receiving the prompt in
-[`prompts/repair.md`](prompts/repair.md) on stdin. It defaults to
+`[prompts/repair.md](prompts/repair.md)` on stdin. It defaults to
 `cursor-agent -p --force`. For `claude` you need it to be able to write and to
 read the templates checkout:
 
@@ -93,6 +100,21 @@ verdict is surprising, re-run before believing it.
 On failure the last 60 lines of the test output are printed, labelled so the
 upgraded run and the baseline can be told apart. Full output is not streamed
 because Docker builds bury everything else.
+
+## Checking Course-SDK tools 
+
+`course-sdk lint` checks Rust and Go with toolchain images this repository
+ships, in `[lib/dockerfiles](../../lib/dockerfiles)`. An upgrade can move a course past them and fail when running a CI
+
+So the upgrade checks the image and says if it is behind. It does not bump it.
+
+Only `rust-tools` and `go-tools` are checked. `docker-tools` tracks
+`hadolint:latest-alpine`, and `js-tools` runs prettier, so neither is tied to a
+course language's version.
+
+Fixing it is a one-line edit to the `FROM` tag, merged to course-sdk `main`.
+Course CI resolves course-sdk at `main`, so that unblocks every waiting course
+PR at once, with no release step.
 
 If `language-templates` is behind too, this exits `3` without changing anything and prints both ways forward. To do it in one go:
 
@@ -131,21 +153,22 @@ Reports three things: that course upgrades work for every language, which langua
 ## Flags
 
 
-| Flag | Scripts | Notes |
-| --- | --- | --- |
-| `--course-dir <path>` | upgrade-course, resolve | course repo checkout |
-| `--language <slug>` | all | course-sdk slug, so `javascript` not `nodejs` |
-| `--templates-repo <path>` | all | required for templates bumps and the support check; optional elsewhere, where it defaults to cloning `origin/main` |
-| `--update-templates` | upgrade-course | bump templates instead of refusing |
-| `--status-json <url\|path>` | upgrade-course, update-templates, resolve | defaults to language-dashboard's published `status.json` |
-| `--skip-tests` | upgrade-course | skip compile-and-test verification |
-| `--repair-command <cmd>` | upgrade-course | agent to fix a regression, given the prompt on stdin |
-| `--max-repair-attempts <n>` | upgrade-course | defaults to `2` |
-| `--json-out <path>` | upgrade-course | write the result somewhere instead of scraping stdout |
-| `--format <text\|markdown\|json>` | check-support | defaults to `text` |
+| Flag                            | Scripts                                   | Notes                                                                                                              |
+| ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--course-dir <path>`           | upgrade-course, resolve                   | course repo checkout                                                                                               |
+| `--language <slug>`             | all                                       | course-sdk slug, so `javascript` not `nodejs`                                                                      |
+| `--templates-repo <path>`       | all                                       | required for templates bumps and the support check; optional elsewhere, where it defaults to cloning `origin/main` |
+| `--update-templates`            | upgrade-course                            | bump templates instead of refusing                                                                                 |
+| `--status-json <url|path>`      | upgrade-course, update-templates, resolve | defaults to language-dashboard's published `status.json`                                                           |
+| `--skip-tests`                  | upgrade-course                            | skip compile-and-test verification                                                                                 |
+| `--repair-command <cmd>`        | upgrade-course                            | agent to fix a regression, given the prompt on stdin                                                               |
+| `--max-repair-attempts <n>`     | upgrade-course                            | defaults to `2`                                                                                                    |
+| `--json-out <path>`             | upgrade-course                            | write the result somewhere instead of scraping stdout                                                              |
+| `--format <text|markdown|json>` | check-support                             | defaults to `text`                                                                                                 |
+
 
 These scripts set
-[`COURSE_SDK_LANGUAGE_TEMPLATES_REPO`](../../README.md#working-against-local-language-templates)
+`[COURSE_SDK_LANGUAGE_TEMPLATES_REPO](../../README.md#working-against-local-language-templates)`
 from `--templates-repo`, which is what lets a course read a templates change
 before it is merged. You only need to set it yourself when running `course-sdk`
 directly.
@@ -156,14 +179,14 @@ Exit codes: `0` upgraded or already current, `1` failed, `3` templates behind,
 ## When it refuses
 
 
-| Message | Meaning |
-| --- | --- |
-| exit `3`, "language-templates is behind" | Bump templates first, or re-run with `--update-templates` |
-| "FROM tag has no version token equal to ..." | This language's templates bump is not automatable. Run the support check; the course upgrade still works once templates are updated by hand |
-| "holds X, which is not the version being upgraded from" | The pin tracks a different tool and was left alone. Usually correct — Kotlin's `config.yml` holds a Gradle version, Haskell's holds a Stack version |
-| "no Dockerfile for `<lang>`" | Course does not have this language yet; use `course-sdk add-language` |
-| "Already failing on HEAD" | The course was red before the upgrade. Not this PR's problem, but worth fixing separately |
-| exit `4`, still failing after repair | Breaking changes the agent could not resolve. Edit `starter_templates/<lang>/code/` and iterate as in [skills/adding-language-support](../../skills/adding-language-support/SKILL.md) |
+| Message                                                 | Meaning                                                                                                                                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| exit `3`, "language-templates is behind"                | Bump templates first, or re-run with `--update-templates`                                                                                                                             |
+| "FROM tag has no version token equal to ..."            | This language's templates bump is not automatable. Run the support check; the course upgrade still works once templates are updated by hand                                           |
+| "holds X, which is not the version being upgraded from" | The pin tracks a different tool and was left alone. Usually correct — Kotlin's `config.yml` holds a Gradle version, Haskell's holds a Stack version                                   |
+| "no Dockerfile for `<lang>`"                            | Course does not have this language yet; use `course-sdk add-language`                                                                                                                 |
+| "Already failing on HEAD"                               | The course was red before the upgrade. Not this PR's problem, but worth fixing separately                                                                                             |
+| exit `4`, still failing after repair                    | Breaking changes the agent could not resolve. Edit `starter_templates/<lang>/code/` and iterate as in [skills/adding-language-support](../../skills/adding-language-support/SKILL.md) |
 
 
 A skipped pin is reported with its reason rather than passing silently, so read the `[pin]` lines even on a successful run.
