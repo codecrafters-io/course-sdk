@@ -23,6 +23,7 @@ import { applyVersionPins } from "./version-pins";
 import { updateLanguageTemplates, type TemplatesUpdate } from "./update-language-templates";
 import { captureBaseline, compareToBaseline, runTest } from "./test-outcome";
 import { DEFAULT_REPAIR_COMMAND, runRepair } from "./repair";
+import { checkToolsImage, describeToolsImage, type ToolsImageReport } from "./tools-image";
 
 // Distinct exit codes so the workflow can tell "nothing to do" from "a human
 // needs to decide something" from "it broke".
@@ -112,7 +113,13 @@ async function runCourseSdk(courseDir: string, args: string, templatesRepo?: str
 
 export async function upgradeCourseLanguage(
   options: Options,
-): Promise<{ resolution: Resolution; templatesUpdate: TemplatesUpdate | null; test: TestReport | null } | null> {
+): Promise<{
+  resolution: Resolution;
+  templatesUpdate: TemplatesUpdate | null;
+  test: TestReport | null;
+  toolsImage: ToolsImageReport;
+  toolsImageNote: string | null;
+} | null> {
   const language = Language.findBySlug(options.language);
 
   heading("Resolving versions");
@@ -173,7 +180,21 @@ export async function upgradeCourseLanguage(
 
   const testReport = options.skipTests ? null : await testAndRepair(options, resolution, language.slug);
 
-  return { resolution: resolution, templatesUpdate: templatesUpdate, test: testReport };
+  const toolsImage = checkToolsImage(language.slug, resolution.targetVersion);
+  const toolsImageNote = describeToolsImage(toolsImage, language.slug);
+
+  if (toolsImageNote) {
+    heading("Toolchain image is behind");
+    console.log(ansiColors.yellow(toolsImageNote));
+  }
+
+  return {
+    resolution: resolution,
+    templatesUpdate: templatesUpdate,
+    test: testReport,
+    toolsImage: toolsImage,
+    toolsImageNote: toolsImageNote,
+  };
 }
 
 // Best-effort: the repair prompt reads better naming this file, but a course
