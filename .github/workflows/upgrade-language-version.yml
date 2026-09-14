@@ -193,11 +193,23 @@ jobs:
               note="Tests did not run." ;;
           esac
 
+          # course-sdk lints courses with toolchain images it ships itself, so
+          # an upgrade can outrun the image that checks it. "course-sdk test"
+          # does not lint, so this is invisible here and only shows up when the
+          # course's own CI runs. Reported, not fixed: the image serves every
+          # course, so bumping it is not this PR's call.
+          tools_note=$(jq -r '.toolsImageNote // ""' upgrade-result.json)
+          # Deliberately free of backticks: the summary below interpolates it
+          # straight into a shell string.
+          tools_status=$(jq -r 'if (.toolsImage.status // "") == "behind" then "behind, bump " + .toolsImage.file else "ok" end' upgrade-result.json)
+
           {
             echo "verdict=$verdict"
             echo "failures=$failures"
             echo "attempts=$attempts"
             echo "note=$note"
+            echo "tools_note=$tools_note"
+            echo "tools_status=$tools_status"
           } >> "$GITHUB_OUTPUT"
 
       # An installation token lasts an hour, and everything above it can take
@@ -260,6 +272,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEMPLATES_NOTE: ${{ steps.templates-pr.outputs.url && format('Depends on {0}, which must merge first.', steps.templates-pr.outputs.url) || '' }}
           VERDICT_NOTE: ${{ steps.verdict.outputs.note }}
+          TOOLS_NOTE: ${{ steps.verdict.outputs.tools_note }}
         run: |
           set -euo pipefail
 
@@ -277,6 +290,13 @@ jobs:
           git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/codecrafters-io/$COURSE_REPO.git"
           git push origin "$BRANCH"
 
+          # Only rendered when there is something to say, so the PR body does
+          # not carry an empty heading on the usual run.
+          tools_section=""
+          if [ -n "$TOOLS_NOTE" ]; then
+            tools_section=$(printf '\n### Blocked on a course-sdk change\n\n%s\n' "$TOOLS_NOTE")
+          fi
+
           # $VERDICT_NOTE holds backticks. Expanding a variable inside a
           # heredoc is safe: the result is not rescanned for substitution.
           body=$(cat <<EOF
@@ -285,6 +305,7 @@ jobs:
           Opened by [upgrade-language-version]($RUN_URL). $TEMPLATES_NOTE
 
           $VERDICT_NOTE
+          $tools_section
 
           The diff may contain more than a version bump: the upgrade refreshes the starter template from language-templates, so any drift that had accumulated since the last upgrade lands here too.
           EOF
@@ -305,6 +326,7 @@ jobs:
             echo "| Language | ${{ inputs.language }} |"
             echo "| Version | ${{ steps.resolve.outputs.course_version }} → ${{ steps.resolve.outputs.target_version }} |"
             echo "| Tests | ${{ steps.verdict.outputs.verdict || '—' }} |"
+            echo "| Toolchain image | ${{ steps.verdict.outputs.tools_status || '—' }} |"
             echo "| Course PR | ${{ steps.course-pr.outputs.url || '—' }} |"
             echo "| Templates PR | ${{ steps.templates-pr.outputs.url || '—' }} |"
           } >> "$GITHUB_STEP_SUMMARY"
