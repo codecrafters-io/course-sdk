@@ -208,6 +208,20 @@ This is worth writing because the failure it prevents is invisible: someone adds
 
 **As a score (for comparing generated candidates):** weight `MUST` at 0 or fail-the-whole-thing, and score `SHOULD` compliance as the signal. Don't score `TASTE` at all — doing so produces homogenous, formulaic content, which is the failure mode these courses avoid today.
 
+**As an automated pre-pass:** `jev_review.py` runs the mechanizable subset over a directory of descriptions for about $0.00007 each. It sees descriptions only, so sections G and I are out of its reach. Route each rule by what decides it, not by how subjective it sounds:
+
+- **A parser, for anything decided by scanning characters** — bullet counts, semicolons, heading levels, fence tags, singular stage references, banned phrases. Exact, free, no false positives. A judgment model is actively bad here: asked whether a description containing zero semicolons contained one, Jev answered 0.65–0.77, and it flagged two descriptions for a phrase present in neither.
+- **A `noul`, for one thing that is present or absent in meaning** — the one-sentence hook, a complete example, a Tests section showing exact output. These discriminate sharply and independently: breaking the hook moved its own question from 0.88 to 0.10 and left every other question within 0.02, so batching a whole rubric into one request is safe.
+- **A `choice`, when the rule is really a count over kinds.** See below.
+
+**Decompose a weak judgment rule rather than rewording it.** "Do the Notes fence scope?", asked once over a whole section, produced a false positive and a bare number an author can't act on. Labelling each bullet instead — scope, trap, implementation tip, spec reference, trivia — and letting code require at least one load-bearing label removed the false positive, named the offending bullet, and produced a confidence per label. Several rules in sections A–F collapse many items into one question the same way.
+
+**A rule with an escape clause cannot be asked at all.** "Randomised values are called out, and this passes trivially if nothing is randomised" sat at 0.51–0.59 no matter what it was shown. Deciding whether a rule applies is code's job; the model gets the question only once it's known to apply.
+
+**Treat low confidence as a referral, not a failure.** A flat distribution means the passage is genuinely ambiguous and a human should read it — which is usually a signal the passage itself needs rewriting, not that the check is broken.
+
+**A detector is not a reviewer.** Jev returns probabilities and labels, never prose, so it can find a `SHOULD` failure but can't quote the text and propose a replacement. Use it to decide which descriptions and which sections are worth an LLM's attention, then hand those to a reviewer that can write.
+
 **Deciding taste calls:** default to splitting. A stage that takes you more than ~15 minutes to write a clean example for is two stages. A stage you can't summarize in one sentence is two stages. Learners have never complained that stages were too small.
 
 ---
@@ -217,6 +231,12 @@ This is worth writing because the failure it prevents is invisible: someone adds
 ## Worked example
 
 The `skills` extension of **build-your-own-claude-code** (7 stages, `vh1` through `mj2`) was designed and built with this rubric, and is the source of section G's last seven rules and all of section I. Three of those seven came from shipping the extension and then watching it fail — which is also why one of them notes that the rule above it was already written, agreed with, and violated anyway. Read it alongside `claude-code-tester`'s `internal/skills_manager/` package for a concrete instance of the format.
+
+## Calibrating the automated pre-pass
+
+Every claim in the routing rules above is measured, not assumed, and `jev_discriminate.py` is how. It takes one description that passes, makes a copy that breaks exactly one rule, and asks every question of every copy. A rule earns its place by dropping sharply on the copy that breaks it and holding steady on the others; a rule that stays flat across all of them is carrying no information and belongs in the parser or nowhere.
+
+Re-run it before trusting a new rule, and after any model change. The thresholds are tied to one model's probability distribution, which is why the client pins `jev-1.13.0` rather than riding `jev-latest`.
 
 ## Source analyses
 
