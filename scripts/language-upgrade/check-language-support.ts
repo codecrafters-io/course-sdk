@@ -17,7 +17,7 @@ import fs from "fs";
 import path from "path";
 import { glob } from "glob";
 
-import { baseImageTag, currentDockerfile, dockerfileVersion, locateVersionToken } from "./update-language-templates";
+import { baseImageTag, currentDockerfile, dockerfileVersion, planBaseImageChange, versionMentionPattern } from "./update-language-templates";
 import { pinnedFilesForLanguage } from "./version-pins";
 
 type Support = "supported" | "unsupported";
@@ -26,8 +26,9 @@ type LanguageReport = {
   language: string;
   version: string;
   baseImage: string;
-  // Bumping language-templates has to construct the new Dockerfile, so it can
-  // only work when the base image tag carries the language's version.
+  // Bumping language-templates has to construct the new Dockerfile. That works
+  // when the tag carries the language version, or when the image is a runtime
+  // that does not (Scala's JDK) and the version lives in a pin.
   templatesBump: Support;
   // Why the base image tag cannot be rewritten, if it cannot.
   templatesBlocker?: string;
@@ -62,16 +63,6 @@ const IGNORED_EXTENSIONS = [".sln"];
 
 function isNoisyFile(relativePath: string): boolean {
   return LOCKFILES.includes(path.basename(relativePath)) || IGNORED_EXTENSIONS.includes(path.extname(relativePath));
-}
-
-// Matches the version, and also any more precise form of it: for a Dockerfile
-// named zig-0.16 this finds "0.16" and "0.16.0", but not "0.161" or "10.16".
-//
-// The more precise form is the point. Zig's build.zig.zon pins
-// ".minimum_zig_version = 0.16.0", and an exact-only match missed it, which is
-// the same precision trap that makes Docker tags like "elixir:1.19.5" refuse.
-function versionMentionPattern(version: string): RegExp {
-  return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?:\\.\\d+)*(?![\\d.])`);
 }
 
 // Finds files under code/ that mention the current version but that no pin
@@ -113,14 +104,16 @@ export function checkLanguage(templatesRepoDir: string, languageSlug: string): L
   const version = dockerfileVersion(dockerfile);
   const tag = baseImageTag(dockerfile.contents);
   const pinnedFiles = pinnedFilesForLanguage(languageRootDir, languageSlug);
+  // Same decision the bump makes. Passing the current version as the target
+  // only asks whether a change is possible; the support check never writes.
+  const planned = planBaseImageChange(dockerfile.contents, version, version, languageSlug);
 
   const blocker =
     tag === null
       ? "no FROM line with a tagged image"
-      : (() => {
-          const located = locateVersionToken(tag, version);
-          return "error" in located ? located.error : undefined;
-        })();
+      : "error" in planned
+        ? planned.error.replace(/^FROM /, "")
+        : undefined;
 
   return {
     language: languageSlug,

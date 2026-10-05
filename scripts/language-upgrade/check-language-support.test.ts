@@ -47,6 +47,20 @@ describe("checkLanguage", () => {
     expect(report.unpinnedFiles).toBeEmpty();
   });
 
+  test("reports Scala as bumpable when its JDK image does not name the Scala version", () => {
+    const dir = templatesRepo("scala", {
+      "config.yml": "attributes:\n  required_executable: scala-cli\n",
+      "code/.codecrafters/compile.sh": "scala-cli --scala-version=3.8.3\n",
+      "dockerfiles/scala-3.8.Dockerfile": "FROM eclipse-temurin:25-jdk-alpine-3.23\n\nRUN .codecrafters/compile.sh\n",
+    });
+    const report = checkLanguage(dir, "scala");
+
+    expect(report.templatesBump).toEqual("supported");
+    expect(report.templatesBlocker).toBeUndefined();
+    expect(report.baseImage).toEqual("25-jdk-alpine-3.23");
+    expect(report.unpinnedFiles).toBeEmpty();
+  });
+
   test("reports a base image tracking another tool as not bumpable", () => {
     const report = checkLanguage(goTemplates({}, "FROM debian:trixie"), "go");
 
