@@ -1,0 +1,67 @@
+# Upgrades every course that still needs one language version.
+#
+# language-templates must already have that version. Run "Upgrade language
+# version" on one course first, with "Also bump language-templates" checked,
+# and merge the templates pull request. This action then refuses to bump
+# templates again.
+#
+# A course that is already on the version, does not ship the language, or
+# already has an open upgrade pull request is skipped. That does not fail
+# the run.
+name: Upgrade language for all courses
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "course-sdk language slug, so 'javascript' not 'nodejs'"
+        required: true
+        type: string
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      upgrade: ${{ steps.plan.outputs.upgrade }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.2 # Error: 1.2.3 breaks course-sdk as of 2025-02-27
+
+      - uses: actions/checkout@v4
+        with:
+          repository: codecrafters-io/language-templates
+          path: language-templates
+
+      - run: bun install
+
+      - name: Plan
+        id: plan
+        env:
+          LANGUAGE: ${{ inputs.language }}
+        run: |
+          set -euo pipefail
+          bun scripts/language-upgrade/upgrade-all-courses.ts \
+            --language "$LANGUAGE" \
+            --templates-repo language-templates \
+            > plan.json
+          echo "upgrade=$(jq -c .upgrade plan.json)" >> "$GITHUB_OUTPUT"
+          jq -r '.skipped[] | "skip \(.repo): \(.reason)"' plan.json
+          jq -r '.upgrade[] | "upgrade \(.)"' plan.json
+
+  upgrade:
+    needs: plan
+    if: needs.plan.outputs.upgrade != '[]'
+    name: ${{ matrix.course_repo }}
+    strategy:
+      fail-fast: false
+      matrix:
+        course_repo: ${{ fromJson(needs.plan.outputs.upgrade) }}
+    uses: ./.github/workflows/upgrade-language-version.yml
+    with:
+      course_repo: ${{ matrix.course_repo }}
+      language: ${{ inputs.language }}
+      update_templates: false
+    secrets: inherit

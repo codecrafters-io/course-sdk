@@ -37,6 +37,21 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      course_repo:
+        description: "Course repository"
+        required: true
+        type: string
+      language:
+        description: "course-sdk language slug, so 'javascript' not 'nodejs'"
+        required: true
+        type: string
+      update_templates:
+        description: "Also bump language-templates when it is behind. Do this once per language version, not once per course."
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   upgrade:
