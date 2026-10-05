@@ -8,6 +8,8 @@ compatibility: Requires the course repo and its tester repo checked out side by 
 
 Take an extension from a one-line idea to a released, CI-covered set of stages, without discovering structural problems after the descriptions are written.
 
+To create the course repo, the tester repo, and `course-definition.yml`, use **Create a New Challenge** first. This skill starts once those exist. Base stages use this same procedure, with the exceptions in that skill's handoff: `stage_descriptions/base-NN-<slug>.md`, no `primary_extension_slug`, and a reference under `scenarios/base`. Solutions and hints stay in **Add Stage Hints and Solutions**.
+
 The quality bar itself lives in the **Review Course Extensions** skill. This document is the order of operations; that one is the checklist. Read this top to bottom while working, and read that at phase 8.
 
 ---
