@@ -24,6 +24,29 @@ jobs:
     outputs:
       upgrade: ${{ steps.plan.outputs.upgrade }}
     steps:
+      # Same app as Upgrade language version. The default token cannot read the
+      # course repositories, which is what the plan step asks gh for.
+      - name: Mint a token that can read the course repositories
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.LANGUAGE_UPGRADE_APP_ID }}
+          private-key: ${{ secrets.LANGUAGE_UPGRADE_APP_PRIVATE_KEY }}
+          owner: codecrafters-io
+          repositories: |
+            build-your-own-bittorrent
+            build-your-own-claude-code
+            build-your-own-dns-server
+            build-your-own-git
+            build-your-own-grep
+            build-your-own-http-server
+            build-your-own-interpreter
+            build-your-own-kafka
+            build-your-own-redis
+            build-your-own-shell
+            build-your-own-sqlite
+            language-templates
+
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
@@ -34,6 +57,8 @@ jobs:
         with:
           repository: codecrafters-io/language-templates
           path: language-templates
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - run: bun install
 
@@ -41,6 +66,7 @@ jobs:
         id: plan
         env:
           LANGUAGE: ${{ inputs.language }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           bun scripts/language-upgrade/upgrade-all-courses.ts \
