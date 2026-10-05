@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { bumpBaseImage } from "./update-language-templates";
+import { bumpBaseImage, planBaseImageChange } from "./update-language-templates";
 
 function dockerfile(fromLine: string): string {
   return ["# syntax=docker/dockerfile:1.7-labs", fromLine, "", "WORKDIR /app", ""].join("\n");
@@ -73,5 +73,30 @@ describe("bumpBaseImage", () => {
     expect(result.contents).toContain("FROM golang:1.27-alpine");
     expect(result.contents).toContain("WORKDIR /app");
     expect(result.contents).not.toContain("1.26");
+  });
+});
+
+describe("planBaseImageChange", () => {
+  // Copied from languages/scala/dockerfiles/scala-3.8.Dockerfile. The JDK and
+  // Alpine versions must survive a Scala bump; the compiler version is not here.
+  test("keeps a JDK tag when the Dockerfile does not mention the language version", () => {
+    const contents = dockerfile("FROM eclipse-temurin:25-jdk-alpine-3.23");
+    const result = planBaseImageChange(contents, "3.8", "3.9", "scala");
+
+    expect(result).toEqual({ contents: contents, before: "25-jdk-alpine-3.23", after: "25-jdk-alpine-3.23" });
+  });
+
+  test("refuses a JDK language once the Dockerfile names the compiler version", () => {
+    const contents = ["FROM eclipse-temurin:25-jdk-alpine-3.23", "ENV SCALA_VERSION=3.8.3", ""].join("\n");
+
+    expect(planBaseImageChange(contents, "3.8", "3.9", "scala")).toMatchObject({
+      error: expect.stringMatching(/no version token equal to "3.8"/),
+    });
+  });
+
+  test("does not keep the tag for a language whose image is supposed to move", () => {
+    expect(planBaseImageChange(dockerfile("FROM debian:trixie"), "0.16", "0.17", "zig")).toMatchObject({
+      error: expect.stringMatching(/no version token equal to "0.16"/),
+    });
   });
 });
