@@ -92,7 +92,8 @@ export function currentDockerfile(languageRootDir: string): Dockerfile {
 // elsewhere: bumping elixir 1.19 to 1.20 against "elixir:1.19.5-alpine" would
 // produce "elixir:1.20.5", a tag that need not exist. Those cases refuse
 // instead, and so do base images that track something else entirely
-// ("gradle:jdk24-alpine" for Kotlin, "debian:trixie" for Zig).
+// ("gradle:jdk24-alpine" for Kotlin, "debian:trixie" for Zig). Scala's JDK is
+// the one image that is safe to leave unchanged; planBaseImageChange does that.
 const FROM_LINE_PATTERN = /^(FROM\s+\S+?:)(\S+)$/m;
 
 export function baseImageTag(contents: string): string | null {
@@ -101,10 +102,44 @@ export function baseImageTag(contents: string): string | null {
   return match ? match[2] : null;
 }
 
-// Locates the version inside an image tag, or explains why it cannot. Shared
-// with check-language-support.ts so the support matrix is derived from the
-// same rule the bump enforces, rather than being a second opinion that can
-// drift from it.
+// Matches the version, and also any more precise form of it: for a Dockerfile
+// named zig-0.16 this finds "0.16" and "0.16.0", but not "0.161" or "10.16".
+//
+// The more precise form is the point. Zig's build.zig.zon pins
+// ".minimum_zig_version = 0.16.0", and an exact-only match missed it, which is
+// the same precision trap that makes Docker tags like "elixir:1.19.5" refuse.
+export function versionMentionPattern(version: string): RegExp {
+  return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?:\\.\\d+)*(?![\\d.])`);
+}
+
+// Images that do not encode the language version. A bump renames the
+// Dockerfile and rewrites pins, and leaves the FROM line alone.
+//
+// Scala ships on a JDK (`eclipse-temurin:25-jdk-alpine-3.23`). scala-cli
+// downloads the compiler at build time from `--scala-version` in compile.sh.
+// Nothing in the Dockerfile changes between 3.8 and 3.9.
+//
+// Membership is not enough on its own. planBaseImageChange still refuses when
+// the Dockerfile mentions the version anywhere, so a later edit that installs
+// a specific Scala into the image falls back to the normal refusal instead of
+// quietly keeping the old compiler under a new filename.
+const BASE_IMAGES_WITHOUT_LANGUAGE_VERSION = new Set(["scala"]);
+
+function keepsUnchangedBaseImage(languageSlug: string, contents: string, version: string): boolean {
+  if (!BASE_IMAGES_WITHOUT_LANGUAGE_VERSION.has(languageSlug)) {
+    return false;
+  }
+
+  if (baseImageTag(contents) === null) {
+    return false;
+  }
+
+  return !versionMentionPattern(version).test(contents);
+}
+
+// Locates the version inside an image tag, or explains why it cannot.
+// check-language-support calls planBaseImageChange, which uses this, so the
+// support matrix is the same decision the bump enforces.
 export function locateVersionToken(tag: string, version: string): { index: number } | { error: string } {
   const versionTokens = [...tag.matchAll(/\d+(?:\.\d+)*/g)];
   const exactMatches = versionTokens.filter((token) => token[0] === version);
@@ -152,6 +187,27 @@ export function bumpBaseImage(
   };
 }
 
+// Like bumpBaseImage, but languages in BASE_IMAGES_WITHOUT_LANGUAGE_VERSION
+// keep their tag when the Dockerfile does not mention the version at all.
+export function planBaseImageChange(
+  contents: string,
+  fromVersion: string,
+  toVersion: string,
+  languageSlug: string,
+): { contents: string; before: string; after: string } | { error: string } {
+  if (keepsUnchangedBaseImage(languageSlug, contents, fromVersion)) {
+    const tag = baseImageTag(contents)!;
+
+    return { contents: contents, before: tag, after: tag };
+  }
+
+  try {
+    return bumpBaseImage(contents, fromVersion, toVersion);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 export async function updateLanguageTemplates(
   templatesRepoDir: string,
   languageSlug: string,
@@ -185,7 +241,11 @@ export async function updateLanguageTemplates(
   const dockerfileTo = path.join("languages", language.slug, "dockerfiles", `${buildpack}-${toVersion}.Dockerfile`);
   const dockerfileFrom = path.relative(templatesRepoDir, dockerfile.path);
 
-  const bumped = bumpBaseImage(dockerfile.contents, fromVersion, toVersion);
+  const planned = planBaseImageChange(dockerfile.contents, fromVersion, toVersion, language.slug);
+
+  if ("error" in planned) {
+    throw new Error(planned.error);
+  }
 
   // git mv so the rename is recorded, matching how bumps look in this repo's
   // history rather than showing up as a delete plus an add.
@@ -194,7 +254,7 @@ export async function updateLanguageTemplates(
     shouldLogCommand: true,
   });
 
-  fs.writeFileSync(path.join(templatesRepoDir, dockerfileTo), bumped.contents);
+  fs.writeFileSync(path.join(templatesRepoDir, dockerfileTo), planned.contents);
 
   const pinOutcomes = applyVersionPins(languageRootDir, language.slug, fromVersion, toVersion);
 
@@ -213,8 +273,8 @@ export async function updateLanguageTemplates(
     toVersion: toVersion,
     dockerfileFrom: dockerfileFrom,
     dockerfileTo: dockerfileTo,
-    baseImageFrom: bumped.before,
-    baseImageTo: bumped.after,
+    baseImageFrom: planned.before,
+    baseImageTo: planned.after,
     pinsUpdated: pinOutcomes.filter((o) => o.status === "updated").map((o) => o.path),
     pinsSkipped: pinOutcomes.filter((o) => o.status === "skipped").map((o) => `${o.path} (${o.reason})`),
   };
