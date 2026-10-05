@@ -4,6 +4,7 @@ Scripts to update a course language to a newer version
 
 ```
 upgrade-course-language.ts    apply a language version to one course   (start here)
+upgrade-all-courses.ts        plan the same upgrade for every course
 update-language-templates.ts  bump language-templates for one language
 check-language-support.ts     which languages can be bumped unattended
 resolve-versions.ts           report course / templates / latest versions
@@ -142,6 +143,18 @@ bun scripts/language-upgrade/update-language-templates.ts \
 
 Nothing validates this. `language-templates` has no CI and a Dockerfile cannot be built in isolation, so run a course against it before merging.
 
+## Upgrade every course
+
+```sh
+bun scripts/language-upgrade/upgrade-all-courses.ts \
+  --language scala \
+  --templates-repo ../language-templates
+```
+
+Prints which courses still need the upgrade. Exits with an error if language-templates does not already have the dashboard's latest version. Run the single-course upgrade with `--update-templates` on one course first, and merge that pull request.
+
+Courses already on that version, courses that do not ship the language, and courses with an open upgrade pull request are reported and left alone. The Actions workflow **Upgrade language for all courses** runs this plan, then upgrades each remaining course. It does not bump language-templates.
+
 ## Check what can be automated
 
 ```sh
@@ -157,9 +170,9 @@ Reports three things: that course upgrades work for every language, which langua
 | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `--course-dir <path>`           | upgrade-course, resolve                   | course repo checkout                                                                                               |
 | `--language <slug>`             | all                                       | course-sdk slug, so `javascript` not `nodejs`                                                                      |
-| `--templates-repo <path>`       | all                                       | required for templates bumps and the support check; optional elsewhere, where it defaults to cloning `origin/main` |
-| `--update-templates`            | upgrade-course                            | bump templates instead of refusing                                                                                 |
-| `--status-json <url|path>`      | upgrade-course, update-templates, resolve | defaults to language-dashboard's published `status.json`                                                           |
+| `--templates-repo <path>`       | all                                       | required for templates bumps, the support check, and upgrade-all; optional elsewhere, where it defaults to cloning `origin/main` |
+| `--update-templates`            | upgrade-course                            | bump templates instead of refusing. The all-courses action never does this                                        |
+| `--status-json <url|path>`      | upgrade-course, update-templates, resolve, upgrade-all | defaults to language-dashboard's published `status.json`                                                           |
 | `--skip-tests`                  | upgrade-course                            | skip compile-and-test verification                                                                                 |
 | `--repair-command <cmd>`        | upgrade-course                            | agent to fix a regression, given the prompt on stdin                                                               |
 | `--max-repair-attempts <n>`     | upgrade-course                            | defaults to `2`                                                                                                    |
