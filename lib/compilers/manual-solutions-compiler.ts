@@ -40,7 +40,8 @@ class ManualSolutionsCompiler {
       }
 
       for (const filePath of firstStageFilePaths) {
-        if (!filePath.endsWith(language.codeFileExtension)) {
+        // The dot matters. OCaml's extension is "ml", and "codecrafters.yml" ends with those letters.
+        if (path.extname(filePath) !== `.${language.codeFileExtension}`) {
           const sourcePath = path.join(firstStageCodeDirectory, filePath);
           const targetPath = path.join(currentStageCodeDirectory, filePath);
           fs.copyFileSync(sourcePath, targetPath);
