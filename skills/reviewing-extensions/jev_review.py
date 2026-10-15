@@ -74,12 +74,15 @@ def parser_findings(text):
             findings["bash_fenced"] = f"shell block tagged `{tag or 'untagged'}`"
 
     singular = re.search(
-        r"\b(the (previous|next|last|earlier|following) stage|in stage \d|stage \d+'s)\b", prose, re.IGNORECASE
+        r"\b(the (previous|next|last|earlier|following) stage|in stage \d+|stage \d+'s)\b", prose, re.IGNORECASE
     )
     if singular:
         findings["plural_stage_refs"] = f"singular stage reference: {singular.group(0)!r}"
 
-    real_x = re.search(r"\breal [A-Z]\w+", text)
+    # Section E allows the comparative "just like the real Redis". A standing
+    # name ("real Redis", "Real Claude Code") is the violation, and only in prose.
+    standing = re.sub(r"just like the real [A-Z]\w+", "", prose, flags=re.IGNORECASE)
+    real_x = re.search(r"\b[Rr]eal [A-Z]\w+", standing)
     if real_x:
         findings["no_real_x"] = f"{real_x.group(0)!r} — use the product's plain name"
 
