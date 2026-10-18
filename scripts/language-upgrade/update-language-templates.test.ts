@@ -99,4 +99,29 @@ describe("planBaseImageChange", () => {
       error: expect.stringMatching(/no version token equal to "0.16"/),
     });
   });
+
+  // Zig installs the compiler from a tarball. The Debian tag stays; every
+  // 0.16.0 in the URL moves to 0.17.0, not to a two-component "0.17" that
+  // would 404.
+  test("rewrites a compiler download when the base image does not carry the version", () => {
+    const contents = [
+      "FROM debian:trixie",
+      "RUN curl -O https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz \\",
+      "    && tar -xf zig-x86_64-linux-0.16.0.tar.xz \\",
+      "    && mv zig-x86_64-linux-0.16.0 /usr/local/zig",
+      "",
+    ].join("\n");
+    const result = planBaseImageChange(contents, "0.16", "0.17", "zig");
+
+    expect(result).toMatchObject({ before: "trixie", after: "trixie" });
+    expect("contents" in result && result.contents).toContain("FROM debian:trixie");
+    expect("contents" in result && result.contents).toContain("https://ziglang.org/download/0.17.0/zig-x86_64-linux-0.17.0.tar.xz");
+    expect("contents" in result && result.contents).not.toContain("0.16");
+  });
+
+  test("still refuses a more precise tag rather than rewriting around it", () => {
+    expect(planBaseImageChange(dockerfile("FROM elixir:1.19.5-alpine"), "1.19", "1.20", "elixir")).toMatchObject({
+      error: expect.stringMatching(/no version token equal to "1.19"/),
+    });
+  });
 });
