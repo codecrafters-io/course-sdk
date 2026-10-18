@@ -92,8 +92,10 @@ export function currentDockerfile(languageRootDir: string): Dockerfile {
 // elsewhere: bumping elixir 1.19 to 1.20 against "elixir:1.19.5-alpine" would
 // produce "elixir:1.20.5", a tag that need not exist. Those cases refuse
 // instead, and so do base images that track something else entirely
-// ("gradle:jdk24-alpine" for Kotlin, "debian:trixie" for Zig). Scala's JDK is
-// the one image that is safe to leave unchanged; planBaseImageChange does that.
+// ("gradle:jdk24-alpine" for Kotlin). Zig's "debian:trixie" is different: the
+// compiler version is the download URL further down, which planBaseImageChange
+// rewrites while leaving the base image alone. Scala's JDK is the other image
+// left unchanged, because nothing in that Dockerfile names the compiler.
 const FROM_LINE_PATTERN = /^(FROM\s+\S+?:)(\S+)$/m;
 
 export function baseImageTag(contents: string): string | null {
@@ -108,8 +110,11 @@ export function baseImageTag(contents: string): string | null {
 // The more precise form is the point. Zig's build.zig.zon pins
 // ".minimum_zig_version = 0.16.0", and an exact-only match missed it, which is
 // the same precision trap that makes Docker tags like "elixir:1.19.5" refuse.
+//
+// A following dot only continues the version when a number comes after it.
+// "0.16.0.tar.xz" is the 0.16.0 release, not a longer version named "0.16.0.tar".
 export function versionMentionPattern(version: string): RegExp {
-  return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?:\\.\\d+)*(?![\\d.])`);
+  return new RegExp(`(?<![\\d.])${version.replace(/\./g, "\\.")}(?:\\.\\d+)*(?!\\d)(?!\\.\\d)`);
 }
 
 // Images that do not encode the language version. A bump renames the
@@ -187,14 +192,51 @@ export function bumpBaseImage(
   };
 }
 
+// Replaces every mention of fromVersion, including a more precise form
+// ("0.16.0" when the Dockerfile is named zig-0.16), keeping each match's own
+// precision so a tarball URL stays "0.17.0" rather than becoming "0.17".
+export function rewriteVersionMentions(contents: string, fromVersion: string, toVersion: string): string {
+  const pattern = new RegExp(versionMentionPattern(fromVersion).source, "g");
+
+  return contents.replace(pattern, (match) => renderAtSamePrecision(toVersion, match));
+}
+
+// The compiler is installed by the Dockerfile, but not by its base image.
+// Zig's "FROM debian:trixie" plus a ziglang.org tarball URL is this case.
+// A tag that itself carries the version, even a more precise one
+// ("elixir:1.19.5"), is not: that has to go through bumpBaseImage and refuse.
+function installsLanguageWithoutTag(contents: string, fromVersion: string, languageSlug: string): boolean {
+  // Scala refuses instead of rewriting, so a compiler version that shows up in
+  // its Dockerfile stays a human decision rather than a guessed edit.
+  if (BASE_IMAGES_WITHOUT_LANGUAGE_VERSION.has(languageSlug)) {
+    return false;
+  }
+
+  const tag = baseImageTag(contents);
+
+  if (tag === null) {
+    return false;
+  }
+
+  return !versionMentionPattern(fromVersion).test(tag) && versionMentionPattern(fromVersion).test(contents);
+}
+
 // Like bumpBaseImage, but languages in BASE_IMAGES_WITHOUT_LANGUAGE_VERSION
-// keep their tag when the Dockerfile does not mention the version at all.
+// keep their tag when the Dockerfile does not mention the version at all, and
+// a Dockerfile that installs the compiler itself keeps its base image while
+// the install lines move.
 export function planBaseImageChange(
   contents: string,
   fromVersion: string,
   toVersion: string,
   languageSlug: string,
 ): { contents: string; before: string; after: string } | { error: string } {
+  if (installsLanguageWithoutTag(contents, fromVersion, languageSlug)) {
+    const tag = baseImageTag(contents)!;
+
+    return { contents: rewriteVersionMentions(contents, fromVersion, toVersion), before: tag, after: tag };
+  }
+
   if (keepsUnchangedBaseImage(languageSlug, contents, fromVersion)) {
     const tag = baseImageTag(contents)!;
 
