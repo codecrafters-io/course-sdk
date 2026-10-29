@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage Editor</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f7f9; --border: #e2e5ea; --text: #1d2330; --muted: #6b7385;
+    --accent: #2f6fed; --accent-soft: #e6eefe; --dirty: #e08a00; --ok: #1f9d55; --code: #f2f4f7;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181e; --panel: #1b1f27; --border: #2c323d; --text: #dde2ea; --muted: #8b93a3;
+      --accent: #6b9bff; --accent-soft: #233150; --dirty: #f0a530; --ok: #3ccf7a; --code: #222731;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: flex; }
+
+  #sidebar { width: 280px; flex: none; background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; }
+  #sidebar h1 { font-size: 13px; margin: 0; padding: 14px 14px 4px; }
+  #sidebar .sub { font-size: 12px; color: var(--muted); padding: 0 14px 10px; }
+  .stage { display: flex; gap: 8px; align-items: baseline; padding: 7px 14px; cursor: pointer; border-left: 3px solid transparent; }
+  .stage:hover { background: var(--accent-soft); }
+  .stage.active { background: var(--accent-soft); border-left-color: var(--accent); }
+  .stage .num { color: var(--muted); font: 12px var(--mono); width: 18px; }
+  .stage .slug { color: var(--muted); font: 12px var(--mono); }
+  .stage .name { flex: 1; }
+  .diff { font-size: 10.5px; padding: 0 6px; border-radius: 9px; white-space: nowrap; background: var(--code); color: var(--muted); }
+  .diff.very_easy, .diff.easy { color: #1f9d55; } .diff.medium { color: #c27c00; } .diff.hard { color: #d64545; }
+  #course-name { font-size: 13px; font-weight: 600; padding: 0 14px 2px; display: flex; gap: 6px; align-items: center; }
+  .stage .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dirty); visibility: hidden; align-self: center; }
+  .stage.dirty .dot { visibility: visible; }
+
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  #title { font-weight: 600; }
+  #file { color: var(--muted); font: 12px var(--mono); }
+  #status { font-size: 12px; color: var(--muted); }
+  #status.dirty { color: var(--dirty); } #status.ok { color: var(--ok); }
+  .spacer { flex: 1; }
+  .toggles { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .toggles button { border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--muted); padding: 4px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+  .toggles button:last-child { border-right: 0; }
+  .toggles button.on { background: var(--accent-soft); color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 5px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+  button.primary:disabled { opacity: .4; cursor: default; }
+  button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+
+  #panes { flex: 1; display: flex; min-height: 0; }
+  .pane { flex: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+  .pane:last-child { border-right: 0; }
+  .pane.hidden { display: none; }
+  .pane-head { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+  .pane-body { flex: 1; overflow: auto; }
+
+  #editor { width: 100%; height: 100%; border: 0; outline: 0; resize: none; padding: 14px; background: var(--bg); color: var(--text); font: 13px/1.6 var(--mono); tab-size: 2; }
+
+  #preview { padding: 6px 22px 40px; max-width: 820px; }
+  #preview code { font: 12.5px var(--mono); background: var(--code); padding: 1px 4px; border-radius: 4px; }
+  #preview pre { background: var(--code); padding: 12px; border-radius: 6px; overflow-x: auto; }
+  #preview pre code { padding: 0; background: none; }
+  #preview pre code.hljs { background: none; padding: 0; }
+  #preview h3 { margin-top: 28px; }
+  #preview table { border-collapse: collapse; } #preview td, #preview th { border: 1px solid var(--border); padding: 4px 8px; }
+
+  .tabs { display: flex; gap: 2px; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 2px 6px; cursor: pointer; border-radius: 4px; }
+  .tabs button.on { color: var(--accent); background: var(--accent-soft); }
+  #tests { padding: 12px 14px 40px; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .meta code { font: 12px var(--mono); }
+  .case { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .case-name { background: var(--panel); padding: 6px 10px; font: 600 12.5px var(--mono); display: flex; gap: 8px; }
+  .case-name .idx { color: var(--muted); font-weight: 400; }
+  .case-body { padding: 8px 10px; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 0 3px; }
+  .label:first-child { margin-top: 0; }
+  pre.blk { margin: 0; background: var(--code); padding: 7px 9px; border-radius: 5px; font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; max-height: 260px; overflow: auto; }
+  pre.blk.full { max-height: none; }
+  .more { font-size: 12px; color: var(--accent); cursor: pointer; background: none; border: 0; padding: 2px 0; }
+  .stage.page-link { border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .course-page .pane[data-pane="tests"], .course-page .toggles [data-pane="tests"] { display: none; }
+  #preview h2 { border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-top: 32px; font-size: 18px; }
+  #preview .item { margin: 14px 0 22px; }
+  #preview .item-head { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+  #preview .item-head code { font-weight: 400; color: var(--muted); }
+  #preview .item > p:first-of-type { margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: 12px var(--mono); background: var(--code); border-radius: 10px; padding: 1px 8px; }
+  .yaml-error { color: #d64545; white-space: pre-wrap; font: 12px var(--mono); padding: 12px; border: 1px solid #d64545; border-radius: 6px; margin-top: 14px; }
+  pre.source { margin: 0; font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+<nav id="sidebar">
+  <h1>Stage Editor</h1>
+  <div id="course-name"></div>
+  <div class="sub" id="repos"></div>
+  <div id="stages"></div>
+</nav>
+<div id="main">
+  <div id="toolbar">
+    <span id="title"></span><span id="file"></span><span id="status"></span>
+    <span class="spacer"></span>
+    <div class="toggles">
+      <button data-pane="raw" class="on">Raw</button>
+      <button data-pane="rendered" class="on">Rendered</button>
+      <button data-pane="tests" class="on">Tests</button>
+    </div>
+    <button class="ghost" id="revert" title="Discard edits and reload from disk">Reload</button>
+    <button class="primary" id="save" disabled title="Auto-saves after you stop typing">Save</button>
+  </div>
+  <div id="panes">
+    <section class="pane" data-pane="raw">
+      <div class="pane-head" id="raw-head">Markdown</div>
+      <div class="pane-body"><textarea id="editor" spellcheck="true"></textarea></div>
+    </section>
+    <section class="pane" data-pane="rendered">
+      <div class="pane-head">Rendered</div>
+      <div class="pane-body"><div id="preview"></div></div>
+    </section>
+    <section class="pane" data-pane="tests">
+      <div class="pane-head">Tests
+        <span class="spacer"></span>
+        <div class="tabs" id="test-tabs">
+          <button data-tab="cases" class="on">Cases</button>
+          <button data-tab="json">Fixture JSON</button>
+          <button data-tab="go">Go</button>
+        </div>
+      </div>
+      <div class="pane-body"><div id="tests"></div></div>
+    </section>
+  </div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+const state = { stages: [], current: null, data: null, saved: {}, drafts: {}, testTab: "cases" };
+
+function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+function recall(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+  return res.json();
+}
+
+const isDirty = (slug) => slug in state.drafts && state.drafts[slug] !== state.saved[slug];
+
+const difficulty = (d) => d ? `<span class="diff ${esc(d)}">${esc(d.replace("_", " "))}</span>` : "";
+
+// The course page shares the editor, drafts and autosave with stages, keyed by this id.
+const COURSE = "@course";
+
+function renderSidebar() {
+  $("#stages").innerHTML = `
+    <div class="stage page-link ${state.current === COURSE ? "active" : ""} ${isDirty(COURSE) ? "dirty" : ""}" data-doc="${COURSE}">
+      <span class="name">Course details</span>
+      <span class="dot"></span>
+    </div>` + state.stages.map((s, i) => `
+    <div class="stage ${s.slug === state.current ? "active" : ""} ${isDirty(s.slug) ? "dirty" : ""}" data-doc="${s.slug}">
+      <span class="num">${String(i + 1).padStart(2, "0")}</span>
+      <span class="name">${esc(s.name)}</span>
+      ${difficulty(s.difficulty)}
+      <span class="slug">${s.slug}</span>
+      <span class="dot"></span>
+    </div>`).join("");
+}
+
+function renderStatus(text, cls = "") {
+  const dirty = isDirty(state.current);
+  $("#save").disabled = !dirty;
+  $("#status").className = text ? cls : dirty ? "dirty" : "";
+  $("#status").textContent = text || (dirty ? "● unsaved" : "");
+}
+
+let previewTimer;
+function renderPreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    const text = $("#editor").value;
+    $("#preview").innerHTML = state.current === COURSE ? renderCourse(text) : marked.parse(text, { gfm: true });
+    $("#preview").querySelectorAll("pre code").forEach((el) => hljs.highlightElement(el));
+  }, 80);
+}
+
+const md = (s) => s == null ? "" : marked.parse(String(s), { gfm: true });
+const yamlDump = (v) => `<pre><code>${esc(jsyaml.dump(v, { lineWidth: 120 }))}</code></pre>`;
+const without = (obj, keys) => Object.fromEntries(Object.entries(obj || {}).filter(([k]) => !keys.includes(k)));
+
+function renderCourse(text) {
+  let c;
+  try { c = jsyaml.load(text) || {}; } catch (e) { return `<div class="yaml-error">YAML error — not saved until fixed\n\n${esc(e.message)}</div>`; }
+  const m = c.marketing || {};
+  const marketingKeys = ["difficulty", "sample_extension_idea_title", "sample_extension_idea_description", "frequently_asked_questions"];
+  const marketingRest = without(m, marketingKeys);
+  const rest = without(c, ["slug", "name", "short_name", "release_status", "description_md", "short_description_md",
+    "completion_percentage", "languages", "marketing", "extensions", "stages"]);
+
+  return `
+    <h1>${esc(c.name ?? "")}</h1>
+    <div class="chips">
+      ${["slug", "short_name", "release_status"].filter((k) => c[k] != null).map((k) => `<span class="chip">${k}: ${esc(c[k])}</span>`).join("")}
+      ${c.completion_percentage != null ? `<span class="chip">completion: ${esc(c.completion_percentage)}%</span>` : ""}
+      ${difficulty(m.difficulty)}
+    </div>
+
+    <h2>Description</h2>${md(c.description_md)}
+    <h2>Short description</h2>${md(c.short_description_md)}
+
+    <h2>Marketing</h2>
+    <div class="item"><div class="item-head">Sample extension idea: ${esc(m.sample_extension_idea_title ?? "—")}</div>${md(m.sample_extension_idea_description)}</div>
+    ${Object.keys(marketingRest).length ? yamlDump(marketingRest) : ""}
+
+    <h2>FAQ</h2>
+    ${(m.frequently_asked_questions || []).map((q) => `
+      <div class="item"><div class="item-head">${marked.parseInline(String(q.question_markdown ?? ""))}</div>${md(q.answer_markdown)}</div>`).join("")}
+
+    <h2>Languages</h2>
+    <div class="chips">${(c.languages || []).map((l) => `<span class="chip">${esc(l.slug)}${l.release_status ? ` · ${esc(l.release_status)}` : ""}</span>`).join("")}</div>
+
+    <h2>Extensions</h2>
+    ${(c.extensions || []).map((x) => `
+      <div class="item"><div class="item-head">${esc(x.name)} <code>${esc(x.slug)}</code></div>${md(x.description_markdown)}</div>`).join("")}
+
+    <h2>Stages</h2>
+    ${(c.stages || []).map((s, i) => {
+      const extra = without(s, ["slug", "name", "difficulty", "marketing_md"]);
+      return `<div class="item"><div class="item-head">${String(i + 1).padStart(2, "0")} ${esc(s.name)} ${difficulty(s.difficulty)} <code>${esc(s.slug)}</code></div>
+        ${md(s.marketing_md)}${Object.keys(extra).length ? yamlDump(extra) : ""}</div>`;
+    }).join("")}
+
+    ${Object.keys(rest).length ? `<h2>Other</h2>${yamlDump(rest)}` : ""}`;
+}
+
+// Arrays of scalars stay on one line; everything else is indented.
+function fmt(value, indent = "") {
+  if (Array.isArray(value)) {
+    if (value.every((v) => v === null || typeof v !== "object")) return JSON.stringify(value).replace(/,/g, ", ");
+    const inner = indent + "  ";
+    return "[\n" + value.map((v) => inner + fmt(v, inner)).join(",\n") + "\n" + indent + "]";
+  }
+  if (value && typeof value === "object") {
+    const inner = indent + "  ";
+    const entries = Object.entries(value);
+    if (!entries.length) return "{}";
+    return "{\n" + entries.map(([k, v]) => inner + JSON.stringify(k) + ": " + fmt(v, inner)).join(",\n") + "\n" + indent + "}";
+  }
+  return JSON.stringify(value);
+}
+
+const LIMIT = 1500;
+function block(text) {
+  const long = text.length > LIMIT;
+  const shown = long ? text.slice(0, LIMIT) + "\n…" : text;
+  return `<pre class="blk" ${long ? `data-full="${esc(text)}"` : ""}>${esc(shown)}</pre>` +
+    (long ? `<button class="more">Show all ${text.length.toLocaleString()} chars</button>` : "");
+}
+
+const shellArg = (a) => /^[\w.\/=:-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
+
+function renderTests() {
+  const t = state.data.tests;
+  const el = $("#tests");
+  if (t?.missing) {
+    el.innerHTML = `<div class="meta">Tester repo not found at <code>${esc(t.path)}</code>.<br><br>
+      Get it from GitHub: <a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a><br><br>
+      <code>git clone git@github.com:codecrafters-io/${esc(t.repo)}.git ${esc(t.path)}</code><br><br>
+      Then restart the server.</div>`;
+    return;
+  }
+  if (!t) { el.innerHTML = `<div class="meta">No test case for <code>${state.current}</code> in tester_definition.go.</div>`; return; }
+
+  const meta = `<div class="meta"><code>${t.testFunc}</code> in <code>${t.goFile ?? "?"}</code>` +
+    (t.fixture ? ` · fixture <code>${t.fixture.name}</code> · ${t.fixture.cases.length} cases` : "") + `</div>`;
+
+  if (state.testTab === "go") {
+    el.innerHTML = meta + `<pre class="source"><code class="language-go">${esc(t.goSource ?? "")}</code></pre>`;
+    hljs.highlightElement(el.querySelector("code"));
+  } else if (!t.fixture) {
+    el.innerHTML = meta + `<div class="meta">This stage doesn't use a fixture file. See the Go tab.</div>`;
+  } else if (state.testTab === "json") {
+    el.innerHTML = meta + `<pre class="source"><code class="language-json">${esc(t.fixture.raw)}</code></pre>`;
+    if (t.fixture.raw.length < 200000) hljs.highlightElement(el.querySelector("code"));
+  } else {
+    el.innerHTML = meta + t.fixture.cases.map((c, i) => {
+      const files = Object.entries(c.files || {}).map(([name, contents]) =>
+        `<div class="label">${esc(name)}</div>` + block(contents)).join("");
+      const vocab = (c.args || []).includes("--vocab") ? `<div class="meta">+ GPT-2 vocab files from <code>fixtures/gpt2/</code></div>` : "";
+      return `<div class="case">
+        <div class="case-name"><span class="idx">#${i + 1}</span>${esc(c.name)}</div>
+        <div class="case-body">
+          <div class="label">Command</div>
+          <pre class="blk">$ ./your_program.sh ${esc((c.args || []).map(shellArg).join(" "))}</pre>
+          ${vocab}${files}
+          <div class="label">Expected stdout</div>${block(fmt(c.expected))}
+        </div></div>`;
+    }).join("");
+  }
+}
+
+async function openDoc(key) {
+  if (state.current && state.current !== key) save(state.current);
+  state.current = key;
+  store("stage-editor:doc", key);
+  const hash = key === COURSE ? "#/course" : `#/stage/${key}`;
+  if (location.hash !== hash) history.replaceState(null, "", hash);
+
+  const isCourse = key === COURSE;
+  document.body.classList.toggle("course-page", isCourse);
+  $("#raw-head").textContent = isCourse ? "YAML" : "Markdown";
+  if (isCourse && !document.querySelector('.toggles button.on:not([data-pane="tests"])')) setPanes(["raw", "rendered"]);
+
+  const data = isCourse ? await api("/api/course") : await api(`/api/stages/${key}`);
+  state.data = data;
+  const content = isCourse ? data.content : data.markdown;
+  // Keep an unsaved draft across page switches; otherwise pick up edits made on disk.
+  state.saved[key] = content;
+  $("#editor").value = key in state.drafts ? state.drafts[key] : content;
+  $("#title").innerHTML = isCourse ? "Course details" : esc(data.name) + " " + difficulty(data.difficulty);
+  $("#file").textContent = isCourse ? data.file : data.file ? `stage_descriptions/${data.file}` : "(no description file)";
+  $("#editor").disabled = !isCourse && !data.file;
+  renderSidebar(); renderStatus(); renderPreview();
+  if (!isCourse) renderTests();
+}
+
+async function loadStages() {
+  const { course, tester, info, stages } = await api("/api/stages");
+  state.stages = stages;
+  $("#course-name").innerHTML = esc(info.name ?? course) + " " + difficulty(info.difficulty);
+  $("#repos").textContent = `${course} · ${tester}`;
+  renderSidebar();
+}
+
+function docFromHash() {
+  if (location.hash === "#/course") return COURSE;
+  const slug = location.hash.match(/^#\/stage\/([\w-]+)$/)?.[1];
+  return state.stages.some((s) => s.slug === slug) ? slug : null;
+}
+
+const AUTOSAVE_MS = 700;
+const autosaveTimers = {};
+
+function scheduleSave(slug) {
+  clearTimeout(autosaveTimers[slug]);
+  autosaveTimers[slug] = setTimeout(() => save(slug), AUTOSAVE_MS);
+}
+
+async function save(slug = state.current) {
+  clearTimeout(autosaveTimers[slug]);
+  if (!isDirty(slug)) return;
+  const markdown = state.drafts[slug];
+  const isCourse = slug === COURSE;
+  if (isCourse) {
+    try { jsyaml.load(markdown); } catch (e) {
+      if (slug === state.current) renderStatus("YAML error — not saved", "dirty");
+      return;
+    }
+  }
+  if (slug === state.current) renderStatus("Saving…");
+  try {
+    const [url, body] = isCourse ? ["/api/course", { content: markdown }] : [`/api/stages/${slug}`, { markdown }];
+    await api(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    state.saved[slug] = markdown;
+    // Typing may have continued while the request was in flight; keep that newer draft.
+    if (state.drafts[slug] === markdown) delete state.drafts[slug];
+    if (isCourse) await loadStages(); else renderSidebar();
+    if (slug === state.current) renderStatus(isDirty(slug) ? "" : "Saved", "ok");
+  } catch (e) {
+    if (slug === state.current) renderStatus("Save failed: " + e.message, "dirty");
+  }
+}
+
+function setPanes(visible) {
+  document.querySelectorAll(".toggles button").forEach((b) => b.classList.toggle("on", visible.includes(b.dataset.pane)));
+  document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("hidden", !visible.includes(p.dataset.pane)));
+  store("stage-editor:panes", visible);
+}
+
+$("#editor").addEventListener("input", (e) => {
+  state.drafts[state.current] = e.target.value;
+  if (!isDirty(state.current)) delete state.drafts[state.current];
+  renderStatus(); renderSidebar(); renderPreview();
+  if (isDirty(state.current)) scheduleSave(state.current);
+});
+$("#editor").addEventListener("keydown", (e) => {
+  if (e.key === "Tab") { e.preventDefault(); document.execCommand("insertText", false, "  "); }
+});
+$("#stages").addEventListener("click", (e) => { const s = e.target.closest(".stage"); if (s) openDoc(s.dataset.doc); });
+$("#save").addEventListener("click", () => save());
+$("#revert").addEventListener("click", () => {
+  if (isDirty(state.current) && !confirm("Discard unsaved edits to this page?")) return;
+  clearTimeout(autosaveTimers[state.current]);
+  delete state.drafts[state.current];
+  openDoc(state.current);
+});
+window.addEventListener("hashchange", () => { const doc = docFromHash(); if (doc && doc !== state.current) openDoc(doc); });
+document.querySelector(".toggles").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const visible = [...document.querySelectorAll(".toggles button.on")].map((x) => x.dataset.pane);
+  const next = visible.includes(b.dataset.pane) ? visible.filter((p) => p !== b.dataset.pane) : [...visible, b.dataset.pane];
+  if (next.length) setPanes(next);
+});
+$("#test-tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.testTab = b.dataset.tab;
+  document.querySelectorAll("#test-tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  renderTests();
+});
+$("#tests").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("more")) return;
+  const pre = e.target.previousElementSibling;
+  pre.textContent = pre.dataset.full; pre.classList.add("full"); e.target.remove();
+});
+window.addEventListener("beforeunload", (e) => {
+  if (Object.keys(state.drafts).some(isDirty)) e.preventDefault();
+});
+
+(async () => {
+  setPanes(recall("stage-editor:panes", ["raw", "rendered", "tests"]));
+  await loadStages();
+  const last = recall("stage-editor:doc", null);
+  const fallback = last === COURSE || state.stages.some((s) => s.slug === last) ? last : state.stages[0].slug;
+  openDoc(docFromHash() ?? fallback);
+})();
+</script>
+</body>
+</html>
