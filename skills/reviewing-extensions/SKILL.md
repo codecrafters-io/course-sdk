@@ -39,7 +39,10 @@ Some of the `MUST` rules are already enforced in CI, so failing them blocks the 
 | | Rule |
 | --- | --- |
 | `MUST` | The text before the first heading — the hook — is **exactly one sentence**, stating what the learner will implement, in the form "In this stage, you'll implement/add/handle X." No preamble before it, no second sentence after it, soft cap 160 characters. Anything else you wanted to say there belongs in the first explanation section. |
+| `MUST` | The hook names the command or behaviour and says what the learner does, in plain verbs: "you'll implement the `merge` command to replace a pair of ids with a new id." A hook built on jargon ("learn an ordered list of merges") fails. `marketing_md` matches the hook word for word. |
 | `MUST` | Every assertion the tester makes appears in the description, and every behaviour the description requires is tested. No silent requirements. |
+| `SHOULD` | `### Notes` uses only concepts this stage or earlier ones introduced. A note about a mechanism a later stage teaches reads as noise to someone who hasn't seen it yet. |
+| `SHOULD` | Connections between stages are described the way the code actually works. A command that takes its input as a flag doesn't consume the previous stage's output. |
 | `SHOULD` | One concept per stage. A stage introducing two unrelated mechanisms is two stages. |
 | `SHOULD` | A `### Notes` section fences the scope — what the learner may hardcode, what's deferred to later stages, what edge cases are out of bounds. This is the highest-value section per word in the whole format. |
 | `MUST` | `### Notes` has at most **3** top-level bullets. A bullet may be several sentences and may nest, so the fix is to consolidate related points into one bullet, not to delete the content. |
@@ -78,6 +81,8 @@ Some of the `MUST` rules are already enforced in CI, so failing them blocks the 
 | `SHOULD` | Make invisible characters visible — `\r\n`, trailing spaces, null bytes — with explicit escapes or an annotation. |
 | `SHOULD` | Use concrete literals (`strawberry`, `6379`, `apple`) not placeholders (`<value>`, `$PORT`) in example output. |
 | `SHOULD` | Show at least one negative/edge example when the stage has one (empty list, missing key, out-of-range index). |
+| `SHOULD` | The plain case comes first, then the edge case, and a sentence states each edge rule before its example. An algorithm that loops gets numbered steps and a table with one row per round. Scan and tie-break rules name a direction ("first, reading left to right"). |
+| `MUST` | Every number in an example (counts, byte values, table rows) comes from the reference implementation. Hand-counted examples drift: a draft said `hi 👋` was 8 bytes, and it's 7. |
 | `SHOULD` | Inline everything needed to pass. Links are for depth, never for requirements. |
 | `TASTE` | Tables for rule-like content (escape sequences, status codes, type bytes). |
 | `TASTE` | Pseudocode or diff blocks showing the shape of the change. |
@@ -93,9 +98,10 @@ Some of the `MUST` rules are already enforced in CI, so failing them blocks the 
 | --- | --- |
 | `MUST` | Every stage has a `### Tests` section. |
 | `MUST` | It shows the exact command the tester runs and the exact output expected, as literal text. |
-| `SHOULD` | End with a bulleted list of what the tester verifies — one bullet per assertion. |
+| `SHOULD` | It follows the house shape, in this order: what the tester writes and where ("The tester will write `hi 👋` to `text.txt` and execute your program like this:"), the command in a `bash` fence, "Your program must print … :" with the literal output, then one sentence naming the other cases ("The tester will also run your program on a few other files, including an empty file, a file with only an emoji, and a file with several lines."). Redis and SQLite read this way. |
+| `SHOULD` | Name the other cases by kind and leave out their outputs. A table of every hidden input and its answer turns the stage into a lookup table. The rules those cases exercise belong in the worked example above `### Tests`, so the Tests section restates nothing. |
+| `MUST` | Say "random" only when the tester draws values at run time. When the cases are frozen fixtures, "a few other files" is the honest phrasing. |
 | `SHOULD` | 1–3 assertions per stage. More than 3 is a scope smell. |
-| `SHOULD` | Describe the tester's setup (files it creates, values it generates) when the learner's output depends on it. |
 | `TASTE` | Showing the tester's own log output format. |
 
 ## E. Language
@@ -105,7 +111,7 @@ Some of the `MUST` rules are already enforced in CI, so failing them blocks the 
 | `MUST` | No unresolved authoring artifacts: no content in HTML comments, no empty or duplicated headings, no truncated sections, no TODOs. |
 | `SHOULD` | 200–350 words of prose. Under 120 is usually under-specified; over 600 usually means two stages. |
 | `SHOULD` | Second person, present/future tense, active voice. "You'll parse the header", not "the header is parsed". |
-| `SHOULD` | Define domain jargon on first use, inline, in one clause. Assume the base course and nothing else. |
+| `SHOULD` | Define domain jargon on first use, inline, in one clause. Assume the base course and nothing else. The term in the stage's own name counts: a stage called "Train BPE" defines BPE. |
 | `SHOULD` | One idea per paragraph, 2–4 sentences. Prefer a list or table over a long sentence with commas. |
 | `MUST` | No semicolons in prose. Split the sentence, or use a dash or a comma. Semicolons inside code fences and inline code spans are untouched by this. |
 | `SHOULD` | Name things the same way everywhere — the script name, the flag, the command — across description, tester output, and `course-definition.yml`. |
@@ -124,7 +130,7 @@ Measured across the 152 stage descriptions in redis, git, dns-server, and claude
 | `SHOULD` | Content that isn't a language uses a bare fence, or `text`. Protocol wire dumps, annotated hexdumps, directory trees, and rendered prompt text are all legitimately untagged — don't invent a tag to satisfy the previous rule. |
 | `SHOULD` | Identifiers are backticked every time they appear in prose: command names, flags, file and directory paths, filenames, field and frontmatter keys, environment variables, placeholders, and literal values. |
 | `SHOULD` | The first mention of a real-world identifier links to its official documentation, with the identifier backticked inside the link text — ``[`RPUSH`](https://redis.io/docs/latest/commands/rpush/)``. |
-| `SHOULD` | Links go to a primary source, deep-linked to the exact section: the vendor's docs, the RFC, the format spec. Wikipedia, a blog, or a doc root is a fallback for when no primary source covers the point. |
+| `SHOULD` | Links go to a primary source, deep-linked to the exact section: the vendor's docs, the RFC, the format spec. Wikipedia, a blog, or a doc root is a fallback for when no primary source covers the point. For an algorithm, link the official implementation or its docs (the `tiktoken` repo for BPE), and leave out the academic paper. |
 | `TASTE` | Bold on the first use of a term of art. |
 | `TASTE` | Reference-style vs inline links. |
 
@@ -141,6 +147,11 @@ Linking the spec is not decoration. A CodeCrafters course is a fidelity exercise
 | `SHOULD` | Failure messages are of the form "Expected X, got Y" with both values printed. A learner should not need to read the tester source to understand a failure. |
 | `SHOULD` | Three logging layers: `Infof` for what the tester is doing, `Debugf` for raw bytes/traffic, `Successf` for each passed assertion. |
 | `SHOULD` | Randomize identifiers and values (keys, names, ports, contents) to defeat hardcoding; pin protocol constants and anything the description states literally. |
+| `SHOULD` | At most 4 cases per stage: the worked example from the description, plus 2–3 cases that each catch a different wrong implementation. Name each case after the mistake it catches (`tie-first-pair-wins`, `rank-not-frequency`). Twenty generated cases rarely catch a bug that four chosen ones miss, and each one adds a run to the stage's time budget. |
+| `SHOULD` | The first case is small enough to check by hand (`[1, 2, 3, 1, 2]`, not the 11 ids of `aaabdaaabac`), and it is the description's worked example. Longer inputs come after it. |
+| `MUST` | Every stage logs each input it writes (`Wrote ids.json: [1, 2, 3, 1, 2]`) before the command line, in the order the command names them, with text files quoted and long files previewed. Failure messages print numbers as numbers, and case names say what the case checks. A learner can only debug a wrong answer if they can see the input. |
+| `SHOULD` | No CLI flag carries a value the stage fixes. State the constant in prose ("the new id in this stage is always 256"). A flag adds an argument to parse and a test case that checks nothing about the concept. |
+| `MUST` | `course-sdk compile` leaves no diff in the course repo, and every starter's main file carries the `You can use print statements as follows for debugging` comment the first-stage compiler looks for. The `verify_templates_compiled` CI job fails on either. |
 | `SHOULD` | Later stages re-exercise earlier behaviour rather than testing the new feature in isolation. |
 | `SHOULD` | Reuse the shared test-case abstractions (`SendCommandTestCase`, `CommandResponseTestCase`, `SendRequestTestCase`) rather than hand-rolling assertions. |
 | `SHOULD` | Explicit per-stage timeouts when the stage involves waiting, blocking, or an external process. For a stage that runs the learner's program *n* times, budget roughly *n* × the executable timeout plus setup headroom. |

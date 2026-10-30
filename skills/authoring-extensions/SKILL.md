@@ -200,11 +200,41 @@ go test -count=1 ./internal/<feature>_manager/
 
 # Phase 4 — Course repo content
 
-1. Add the `extensions:` block to `course-definition.yml` (`slug`, `name`, `description_markdown`).
+1. Add the `extensions:` entry to `course-definition.yml` (`slug`, `name`, `description_markdown`) in the same change as its stages. Core rejects an update that has an extension with no stages (`Validation failed: Extension <slug> has no stages`). If the extension started as an idea in core's `data/course_extension_ideas.yml`, reuse that name and description.
 2. Add one `stages:` entry per stage, with `slug`, `name`, `difficulty`, `primary_extension_slug`, and `marketing_md`. Leave `tester_source_code_url` out unless the course already uses it — it is optional, most courses have none, and a `blob/main/` link without a line anchor rots. Check what the base course does before adding any field the base stages don't carry.
 3. Write `stage_descriptions/<ext>-NN-<slug>.md`, one per stage.
 
 Per stage: objective sentence → concept explanation → worked example → `### Tests` → `### Notes`.
+
+**Give each stage at most 4 test cases, and write `### Tests` in one fixed shape.** The cases are the worked example plus 2–3 that each catch a different wrong implementation, named after that mistake. `### Tests` says what the tester writes and where, shows the command and the literal output for the worked example, then names the other cases by kind in one sentence:
+
+```markdown
+The tester will write `hi 👋` to `text.txt` and execute your program like this:
+
+(command in a bash fence)
+
+Your program must print the bytes as a JSON array:
+
+(literal output in a json fence)
+
+The tester will also run your program on a few other files, including an empty file, a file with only an emoji, and a file with several lines.
+```
+
+Leave the hidden outputs out of the description. Teach the rule each case exercises in the worked example instead. Rubric sections D and G hold the full rules.
+
+**Make the first case small enough to check by hand, and put the bigger inputs later.** The first case is the one a learner debugs first. Five ids like `[1, 2, 3, 1, 2]` fit in your head, and eleven bytes of `aaabdaaabac` do not. A learner who read `ids.json` as raw text got `[44, 32]` (the bytes of `", "`) on the longer input and could not see why. Make the worked example in the description that same first case.
+
+**Write every stage for a reader who has read only the stages before it.** Each rule below came from a tokenizer-course draft that the course author found unclear:
+
+- **The hook names the command and says what the learner does:** "In this stage, you'll implement the `merge` command to replace a pair of ids with a new id." Words like "learn a list of merges" or "apply the earliest rank" leave the reader asking what to type. `marketing_md` repeats the hook word for word.
+- **Define the term in the stage's name inside the stage.** A stage called "Train BPE" has to say what BPE is. Link the official code or docs, such as `tiktoken`. Leave out academic papers.
+- **Show the plain case first, then the tricky one.** Introduce each edge rule in one sentence before its example ("Each id can be part of only one match."). For an algorithm that loops, use numbered steps and a table with one row per round.
+- **Give scans and tie-breaks a direction:** "the pair that appears first, reading left to right."
+- **Describe how stages connect the way the code does.** If a command takes its input as a flag, it doesn't use the earlier stage's output. Say that later stages combine the two, rather than "now merge the pair you found."
+- **Notes use only concepts the reader has already met, and they state scope.** "Later stages repeat the same tie-break after every merge" means nothing before merging is taught. Coding tips like "write it as a function" fail the Notes check.
+- **When a value is fixed for the stage, state it in prose and leave out the flag.** The merge stage dropped `--new 256` for "the new id in this stage is always 256", which also removed a test case.
+- **Say how to read every input file, in the stage that introduces it.** Keep the paragraph that explains what the command does as it is, and add the input after it: "Your program first reads and parses the ids from `ids.json`, a JSON array of integers like `[1, 2, 3, 1, 2]`. Use your language's JSON library." Later stages that reuse the format say "the same format as earlier stages". When a stage's output becomes a later stage's input, say so in both stages. The tokenizer's `top-pair` stage put "Parse `ids.json` as JSON" in Notes only, and a learner who reused the `bytes` stage's code counted pairs in the characters `[`, `,`, and ` `.
+- **Generate every number in an example from the reference implementation:** byte counts, pair counts, table rows. Hand-counted drafts said `hi 👋` was 8 bytes (it's 7) and that `[8, 9, 1, 2]` has two pairs (it has three).
 
 **`NN` is the stage's position within the extension, so inserting or removing a stage renumbers every file after it.** Treat the renumbering as part of the same change, not as cleanup — the ordering in `course-definition.yml` is what the site renders from, and a description file whose number disagrees with it is invisible until someone notices the wrong stage text on the wrong stage. Rename from the back so you never collide with a number still in use:
 
@@ -228,6 +258,20 @@ Write each stage's worked example in the same pass as its assertion list from ph
 2. Register each in `internal/tester_definition.go` with a timeout.
 3. Add a `Makefile` define listing the extension's stages, plus a target for running them locally.
 4. Re-sync the tester's copy of the course definition, or `TestStagesMatchYAML` will fail.
+
+**Every stage logs each input it gives the learner's program, before the command line.** The learner sees only the tester's log, so an input that isn't logged is an input they can't debug against. Put this in the shared runner so no stage can skip it:
+
+```
+[tester::#GK8] Wrote ids.json: [1, 2, 3, 1, 2]
+[tester::#GK8] $ ./your_program.sh top-pair ids.json
+[tester::#GK8] visible: expected [1,2], got [44,32]
+```
+
+- Log files in the order the command names them (`text.txt` before `merges.json` for `encode text.txt --merges merges.json`).
+- Show JSON files as written. Quote text files, so newlines, empty files, and characters like a non-breaking space show up.
+- Cut long files to a preview with the total size. For large fixed files, like GPT-2's vocabulary, log their paths instead of their contents.
+- Print numbers in `expected`/`got` as JSON numbers. A runner that compared `json.Number` values as strings printed `["97","97"]`.
+- Name each case after what it checks (`non-breaking-space`). It appears in every pass and fail line, and `hidden-0` tells the learner nothing.
 
 **Do not use `make copy_course_file` for this while the course change is still local.** That target fetches `course-definition.yml` from GitHub `main`, so it overwrites your edits with the pre-change version — the opposite of what you want, and the failure looks like your stage registration is wrong. Copy from your working tree instead, and use `make copy_course_file` only after the course-repo change has merged.
 
@@ -255,6 +299,14 @@ Until this exists the extension has **no CI coverage at all**, so don't treat ph
 ```sh
 make test_flakiness RUNS=100
 ```
+
+**Read the log of every stage run against the reference.** Run the tester binary with `CODECRAFTERS_REPOSITORY_DIR` set to `internal/test_helpers/pass_all` and `CODECRAFTERS_TEST_CASES_JSON` listing every stage slug. Language slugs like `cpp` also match `slug:` in the YAML, so take the stage slugs from `stages:`. Check that each case logs its inputs before its command line, and that the first case of each stage can be checked by hand.
+
+**Run stage 1 against every generated first-stage solution.** `course-sdk compile` writes `solutions/<lang>/01-<slug>/code` from the starters, and nothing in CI runs the tester on them. Copy each one to a temporary directory and run the tester binary with `CODECRAFTERS_REPOSITORY_DIR` pointing at it and `CODECRAFTERS_TEST_CASES_JSON` naming stage 1. On the tokenizer course, this caught a Python `run.sh` that failed every learner.
+
+For a language whose toolchain isn't installed locally, build its Dockerfile with the solution directory as the context. Inside the container, run `.codecrafters/compile.sh`, copy `.codecrafters/run.sh` over `your_program.sh` as the platform does, and run a Linux build of the tester (`GOOS=linux`) from a mounted directory. The local `your_program.sh` recompiles on every run, and CMake's output on stdout breaks any check that parses stdout. Build C++ with `--platform linux/amd64` and an amd64 tester, because its Dockerfile downloads an x86_64 CMake.
+
+**Trimming fixture cases changes the per-stage timeout budget.** Resize any `Timeout` computed from the case count in `tester_definition.go`. Then regenerate, and diff the kept cases against the previous fixtures to confirm they are byte-for-byte unchanged.
 
 **Fixtures record the model's choices alongside your tester's.** A byte-exact fixture taken over a live model pins its wording and the number of round trips it took, neither of which says anything about the code under test, and both of which drift. On the Skills extension both drifted within a day: one recording opened with "I see. The skill instructions indicate…" and the next with "I've read the skill instructions.", and a stage that took four requests one day took seven the next. Write a `NormalizeOutputFunc` from the start that strips what the model decided and keeps what the tester did about it — the learner program's output lines, and any tally of requests. What the program printed is already covered by the stage assertions, whose verdicts stay in the fixture. `tester-utils` runs the normalizer over the stored fixture as well as the live output, so tightening it later costs nothing.
 
