@@ -41,6 +41,8 @@ Do not install the real program you will test against (runc, redis-server, claud
 
 Every starter's main file needs the line `You can use print statements as follows for debugging, they'll be visible when running tests.` as a comment directly above its debug print. `course-sdk compile` builds each language's first-stage solution by finding that line, and it stops with `Didn't find a line that matches /You can use print/` in any language where it's missing. Check every language: the tokenizer course's TypeScript starter was the one that left it out.
 
+If the program takes a command per stage, the starter's commented code handles stage 1's command and sends anything else to `Unknown command <name>` on stderr with exit code 1. The learner's first run of stage 2 then fails with `Unknown command top-pair`, which names what to add. Debug prints go to stderr as well, because the tester parses stdout.
+
 If the stages give the program JSON files to read, add a JSON library to every starter whose standard library has none, as `build-your-own-claude-code` does. Add `serde_json` to Rust's `Cargo.toml` and run `cargo fetch` to add it to `Cargo.lock` without bumping other crates. Add Gson to Java's `pom.xml`. For C++, add `nlohmann-json` to `vcpkg.json`, then `find_package(nlohmann_json CONFIG REQUIRED)` and `target_link_libraries(<binary> PRIVATE nlohmann_json::nlohmann_json)` to `CMakeLists.txt`. Python, Go, and TypeScript already have JSON. Parsing JSON by hand is busywork unrelated to the challenge.
 
 If the tester runs the learner's program from a temporary directory (`executable.WorkingDir`), copy the Python `.codecrafters/run.sh` from `build-your-own-shell`. It passes `--project` and `PYTHONPATH` relative to the script. git's version runs `uv run -m app.main` from the current directory and fails with `No module named 'app'`.
@@ -62,13 +64,15 @@ A second commit, when asked, is the slug assignment. Renames of `stage_descripti
 
 ## Description
 
-`description_md` is 25–50 words, two paragraphs:
+`description_md` is 25–65 words, two paragraphs. Open with a question the audience already wonders about, and answer it with a real example the course reproduces. Define the thing they'll build in one plain sentence, then say what they'll build:
 
-> X is \<what it is\>. In this challenge, you'll build your own X that's capable of A, B, and C.
+> Why do language models miscount the r's in "strawberry"? GPT-2 never sees the letters. Its tokenizer hands it three pieces: `st`, `raw`, and `berry`. A tokenizer is the program that splits text into pieces like these before a model reads it. In this challenge, you'll build one that splits text exactly like GPT-2's.
 >
-> Along the way, you'll learn about D, E, and more.
+> Along the way, you'll learn about byte-pair encoding, UTF-8, and more.
 
-Name capabilities the base actually has. Do not list extension work in paragraph one.
+Put the definition after the example, so the reader has seen the thing before it gets a name. A tokenizer draft without one left the course author asking what a tokenizer is. Generate the example from the real system (the strawberry tokens came from `tiktoken`), and add it to a stage's test cases so every learner's program reproduces it.
+
+Name capabilities the base actually has. Do not list extension work in paragraph one. Claim only what the program does: "the integers a language model understands" credits the model with understanding and suggests the learner's own tokenizer feeds a model, which only the GPT-2 stage does. Spell out terms like "training a vocabulary" as the operation ("learns which pairs of bytes to merge into new tokens"). In the second paragraph, use names a newcomer recognizes ("byte-pair encoding", "UTF-8") over terms the course introduces later ("pretokenization").
 
 `short_description_md` is plain text, under 70 characters:
 
@@ -87,6 +91,8 @@ Name capabilities the base actually has. Do not list extension work in paragraph
 3. Why should I build such a project?
 4. What are the prerequisites for this challenge?
 
+"Why should I build such a project?" carries the motivation: the surprising behaviors the course explains, each with a real example, and what the finished program connects to. Leave out claims that only an extension delivers. The tokenizer draft said the course shows why Hindi costs more tokens than English, which only the token-tax extension covers.
+
 "What will I build?" is the base, then one line on what that base can already do, then a short list of later extensions, then "At the end, you'll have a GitHub repo to show off."
 
 Attach each capability to the operation that delivers it, in words a newcomer can check. "Decode those IDs back to text, including text that matches GPT-2" read as nonsense, because matching GPT-2 is an encoding property. The fix named the stage and the result: "In the last stage, your program loads GPT-2's vocabulary files and produces the same token IDs as GPT-2."
@@ -104,6 +110,8 @@ Each `description_markdown` is two sentences, about 28–44 words. Link the spec
 > Along the way you'll learn about A, B, and more.
 
 ## Stage blurbs
+
+A stage `name` is a short phrase naming what the stage's command does: "Most frequent pair", "Merge a pair", "Split like GPT-2". The sidebar lists every name, so the list should read as the course's arc.
 
 `marketing_md` is one or two sentences starting "In this stage, you'll …". It is the overview line, not the stage description. No `primary_extension_slug` on base stages. Once stage descriptions exist, `marketing_md` is the description's hook word for word. Edit both together, and copy the YAML to the tester afterwards.
 

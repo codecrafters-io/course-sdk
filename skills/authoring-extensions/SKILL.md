@@ -204,7 +204,23 @@ go test -count=1 ./internal/<feature>_manager/
 2. Add one `stages:` entry per stage, with `slug`, `name`, `difficulty`, `primary_extension_slug`, and `marketing_md`. Leave `tester_source_code_url` out unless the course already uses it — it is optional, most courses have none, and a `blob/main/` link without a line anchor rots. Check what the base course does before adding any field the base stages don't carry.
 3. Write `stage_descriptions/<ext>-NN-<slug>.md`, one per stage.
 
-Per stage: objective sentence → concept explanation → worked example → `### Tests` → `### Notes`.
+Per stage: hook → `### Why <step>?` → the command, with a worked example → how to read the input → `### Tests` → `### Notes`.
+
+**Lead with the goal, then the mechanics.** After the hook, say what this step achieves in the real system, with a real instance of it, before any rule about how the command works. The tokenizer's merge stage opens "Why merge?" with GPT-2's first merge: a space followed by `t`, the pair `(32, 116)`, which made every ` the`, ` to`, and ` that` one token shorter. Drafts that started with the algorithm read, in the course author's words, as "implementation heavy as opposed to being goal oriented", and were hard to get excited about. Then the command section carries the worked example and the rules, as bullets or short paragraphs.
+
+**Bring the real system into every stage, not only the last one.** If the course reproduces a product, each stage shows what the product does at that step, generated from the product itself (`tiktoken` for GPT-2). A course that meets GPT-2 only in its final stage spends seven stages on toy inputs the learner has no reason to care about.
+
+**A progress metric is optional.** One number that changes as the learner's program improves can show where they are. The tokenizer tracks how many tokens `to the top of the tree` takes: 22 as bytes, 18 after one merge, 11 after training, 6 for GPT-2. If you add one, introduce it in full in the first stage that moves it, saying what it measures and that it appears in every later stage. From then on, put it in a collapsed `<details>` block right after the hook, with the numbers in the `<summary>`. Generate every number from the reference implementation. Leave out a roadmap of stage names, because the sidebar already lists them. Use your judgement on whether a course needs a metric, or ask the reviewer.
+
+**Draw with text.** Stage descriptions render `<details>` blocks and `{{#lang_is_<language>}}…{{/lang_is_<language>}}` blocks. They have no Mermaid and no images, so diagrams go in `text` fences.
+
+**Check each language's standard library against the reference.** When a stage relies on a regex engine or a UTF-8 decoder, run every shipped language's version over every test input and compare with the reference. Write a `lang_is` note for each language that differs. In the tokenizer course:
+
+- Java's `\p{L}` and `\s` match GPT-2's Python `regex` only with `Pattern.UNICODE_CHARACTER_CLASS`. Without it, two non-breaking spaces became one chunk.
+- JavaScript has no possessive `++`. Plain `+` with the `gu` flags gives the same chunks.
+- Go's `range` over `[240, 159]` yields two replacement characters, and Python, JavaScript, Rust, and Java yield one.
+
+**Wrap prose at 80 columns** with `npx -y prettier@3.0.3 --prose-wrap always --write stage_descriptions/`, and check with `--check` before the PR.
 
 **Give each stage at most 4 test cases, and write `### Tests` in one fixed shape.** The cases are the worked example plus 2–3 that each catch a different wrong implementation, named after that mistake. `### Tests` says what the tester writes and where, shows the command and the literal output for the worked example, then names the other cases by kind in one sentence:
 
@@ -271,7 +287,12 @@ Write each stage's worked example in the same pass as its assertion list from ph
 - Show JSON files as written. Quote text files, so newlines, empty files, and characters like a non-breaking space show up.
 - Cut long files to a preview with the total size. For large fixed files, like GPT-2's vocabulary, log their paths instead of their contents.
 - Print numbers in `expected`/`got` as JSON numbers. A runner that compared `json.Number` values as strings printed `["97","97"]`.
-- Name each case after what it checks (`non-breaking-space`). It appears in every pass and fail line, and `hidden-0` tells the learner nothing.
+- Name each case after the mistake it catches (`non-breaking-space`). It appears in every pass and fail line. `hidden-0` and `visible-wave` tell the learner nothing. If a second bug fails that case, split the case so the name they see is the bug they have.
+- Empty stdout, extra stdout, and a non-zero exit that printed nothing are three failures. A crash is not a JSON parse error: say the exit code and that stdout was empty. Extra lines should say how many, and to send debug output to stderr.
+- Point at the first differing index. Cutting both values off at 240 characters hides the one wrong merge in a list of 50.
+- Escape non-printable and replacement characters in failure text (`%+q`). A row of `�` is hard to count, and U+009F does not show up at all.
+- When one wrong output means one bug, put that hint on the failure. Numbers above 255 mean characters, not bytes. An output equal to the input means nothing merged. A timeout on encode means the loop never stops. A null id means the piece is missing from `vocab.json`, usually a bad byte-to-character table.
+- On a stage that splits text, print the chunks you expected next to the ids. The ids alone do not show where the split went wrong.
 
 **Do not use `make copy_course_file` for this while the course change is still local.** That target fetches `course-definition.yml` from GitHub `main`, so it overwrites your edits with the pre-change version — the opposite of what you want, and the failure looks like your stage registration is wrong. Copy from your working tree instead, and use `make copy_course_file` only after the course-repo change has merged.
 

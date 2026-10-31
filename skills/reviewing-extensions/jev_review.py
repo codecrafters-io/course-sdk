@@ -58,9 +58,12 @@ def parser_findings(text):
     prose = re.sub(r"`[^`]*`", "", without_fences)
     findings = {}
 
-    bullets = notes_bullets(text)
-    if len(bullets) > 3:
-        findings["notes_bullet_cap"] = f"{len(bullets)} top-level bullets, at most 3 allowed"
+    for lang in languages_in(text) or [None]:
+        bullets = notes_bullets(text, lang)
+        if len(bullets) > 3:
+            seen_by = f" for {lang}" if lang else ""
+            findings["notes_bullet_cap"] = f"{len(bullets)} top-level bullets{seen_by}, at most 3 allowed"
+            break
 
     if ";" in prose:
         findings["no_semicolons"] = "semicolon in prose"
@@ -89,8 +92,21 @@ def parser_findings(text):
     return findings
 
 
-def notes_bullets(text):
-    """Top-level bullets of the Notes section, continuation lines folded in."""
+LANG_BLOCK = re.compile(r"\{\{#lang_is_(\w+)\}\}(.*?)\{\{/lang_is_\1\}\}", re.DOTALL)
+
+
+def languages_in(text):
+    return sorted({lang for lang, _ in LANG_BLOCK.findall(text)})
+
+
+def notes_bullets(text, lang=None):
+    """Top-level bullets of the Notes section, continuation lines folded in.
+
+    A learner sees only their own language's `{{#lang_is_x}}` blocks, so with
+    `lang` set, other languages' blocks are dropped. Without it, every block is
+    kept and only the markers are removed.
+    """
+    text = LANG_BLOCK.sub(lambda m: m.group(2) if lang in (None, m.group(1)) else "", text)
     sections = re.split(r"^### Notes\s*$", text, flags=re.MULTILINE)
 
     if len(sections) < 2:
@@ -105,7 +121,7 @@ def notes_bullets(text):
 
 # Each names one thing that is present or absent in meaning. No escape clauses.
 JUDGMENT_RULES = {
-    "hook_one_sentence": "The text before the first heading is exactly one sentence, and it states what the learner will implement.",
+    "hook_one_sentence": "The text before the first heading, not counting a collapsed `<details>` block, is exactly one sentence, and it states what the learner will implement.",
     # Scoped to the body on purpose. Unscoped, the Tests section satisfies it on
     # its own and the rule can never fail independently of `tests_section`.
     "complete_example": "Outside the `### Tests` section, the explanation contains at least one worked example showing literal input and its literal result. Prose describing what would happen doesn't count.",
