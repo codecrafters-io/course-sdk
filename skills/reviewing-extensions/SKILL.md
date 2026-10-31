@@ -24,7 +24,7 @@ Each rule is tagged. **The tags matter more than the rules.**
 | **`SHOULD`** | The house default. Correlated with stages that don't generate support load. | Allowed to deviate, but say why in the PR description. |
 | **`TASTE`** | Genuinely optional. Good courses disagree with each other here. | Ignore freely. Never flag in review. |
 
-There are 21 `MUST` rules, 47 `SHOULD`, and 15 `TASTE`.
+There are 28 `MUST` rules, 54 `SHOULD`, and 16 `TASTE`.
 
 Some of the `MUST` rules are already enforced in CI, so failing them blocks the PR whatever a reviewer thinks. The `test_stage_descriptions` job in `.github/workflows/test-course-definition.yml` runs [`codecrafters-io/llm-rules-test`](https://github.com/codecrafters-io/llm-rules-test) over every changed file under `stage_descriptions/`, grading each against 16 atomic rules with an LLM. The rules live in that repo's `rules/` directory, one markdown file each — read them directly when a CI failure is unclear, since the job reports the rule `id` that fired. Note that `course-sdk lint` is a *different* and much narrower thing: it runs prettier, gofmt, rustfmt, and hadolint, and checks no prose at all.
 
@@ -38,14 +38,16 @@ Some of the `MUST` rules are already enforced in CI, so failing them blocks the 
 
 | | Rule |
 | --- | --- |
-| `MUST` | The text before the first heading — the hook — is **exactly one sentence**, stating what the learner will implement, in the form "In this stage, you'll implement/add/handle X." No preamble before it, no second sentence after it, soft cap 160 characters. Anything else you wanted to say there belongs in the first explanation section. |
+| `MUST` | The text before the first heading — the hook — is **exactly one sentence**, stating what the learner will implement, in the form "In this stage, you'll implement/add/handle X." No preamble before it, no second sentence after it, soft cap 160 characters. A collapsed `<details>` block may follow it. Anything else you wanted to say there belongs in the first explanation section. |
+| `SHOULD` | The first section after the hook says what this step achieves in the real system, with a real instance generated from it, before any rule about the command. The tokenizer's merge stage opens with GPT-2's first merge, `(32, 116)`, a space followed by `t`. A stage that opens with the algorithm reads as a spec with no reason to build it. |
+| `TASTE` | A progress metric that follows one input through every stage, in a collapsed `<details>` block after the hook. |
 | `MUST` | The hook names the command or behaviour and says what the learner does, in plain verbs: "you'll implement the `merge` command to replace a pair of ids with a new id." A hook built on jargon ("learn an ordered list of merges") fails. `marketing_md` matches the hook word for word. |
 | `MUST` | Every assertion the tester makes appears in the description, and every behaviour the description requires is tested. No silent requirements. |
 | `SHOULD` | `### Notes` uses only concepts this stage or earlier ones introduced. A note about a mechanism a later stage teaches reads as noise to someone who hasn't seen it yet. |
 | `SHOULD` | Connections between stages are described the way the code actually works. A command that takes its input as a flag doesn't consume the previous stage's output. |
 | `SHOULD` | One concept per stage. A stage introducing two unrelated mechanisms is two stages. |
 | `SHOULD` | A `### Notes` section fences the scope — what the learner may hardcode, what's deferred to later stages, what edge cases are out of bounds. This is the highest-value section per word in the whole format. |
-| `MUST` | `### Notes` has at most **3** top-level bullets. A bullet may be several sentences and may nest, so the fix is to consolidate related points into one bullet, not to delete the content. |
+| `MUST` | `### Notes` has at most **3** top-level bullets, counted per language as the learner sees them, so bullets inside another language's `{{#lang_is_<language>}}` block don't count. A bullet may be several sentences and may nest, so the fix is to consolidate related points into one bullet, not to delete the content. |
 | `SHOULD` | State the bare-minimum passing behaviour explicitly when it's less than the full feature ("you can hardcode the response for now"). |
 | `TASTE` | A short recap of the previous stage before the objective. |
 
@@ -144,9 +146,10 @@ Linking the spec is not decoration. A CodeCrafters course is a fidelity exercise
 | --- | --- |
 | `MUST` | Numbers in the description (ports, sizes, offsets, counts) match what the tester actually uses. |
 | `MUST` | The tester checks for unexpected extra output/data, not just that the expected bytes are present. |
-| `SHOULD` | Failure messages are of the form "Expected X, got Y" with both values printed. A learner should not need to read the tester source to understand a failure. |
+| `MUST` | Empty stdout, extra stdout, and a non-zero exit that printed nothing are three different failures. A crash is not reported as a JSON parse error. |
 | `SHOULD` | Three logging layers: `Infof` for what the tester is doing, `Debugf` for raw bytes/traffic, `Successf` for each passed assertion. |
 | `SHOULD` | Randomize identifiers and values (keys, names, ports, contents) to defeat hardcoding; pin protocol constants and anything the description states literally. |
+| `SHOULD` | Failure text says what was wrong and what to do: the first differing index, not both values cut off at 240 characters; escaped non-printable characters; a hint when one output means one bug (a number above 255, an output equal to the input, a timeout on a merge loop, a null id). A stage that splits text shows the expected chunks next to the ids. |
 | `SHOULD` | At most 4 cases per stage: the worked example from the description, plus 2–3 cases that each catch a different wrong implementation. Name each case after the mistake it catches (`tie-first-pair-wins`, `rank-not-frequency`). Twenty generated cases rarely catch a bug that four chosen ones miss, and each one adds a run to the stage's time budget. |
 | `SHOULD` | The first case is small enough to check by hand (`[1, 2, 3, 1, 2]`, not the 11 ids of `aaabdaaabac`), and it is the description's worked example. Longer inputs come after it. |
 | `MUST` | Every stage logs each input it writes (`Wrote ids.json: [1, 2, 3, 1, 2]`) before the command line, in the order the command names them, with text files quoted and long files previewed. Failure messages print numbers as numbers, and case names say what the case checks. A learner can only debug a wrong answer if they can see the input. |
