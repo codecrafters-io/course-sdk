@@ -12,6 +12,7 @@ export default class TesterDownloader {
   testersRootDir: string;
   // Cache latest tester version
   private latestVersion?: string;
+  private latestAssetUrl?: string;
 
   constructor(course: Course, testersRootDir?: string) {
     this.course = course;
@@ -31,10 +32,18 @@ export default class TesterDownloader {
 
     const compressedFilePath = path.join(this.testersRootDir, `${this.course.slug}-${this.latestVersion}.tar.gz`);
     fs.mkdirSync(this.testersRootDir, { recursive: true });
-    const artifactUrl = `https://github.com/${this.testerRepositoryName}/releases/download/${this.latestVersion}/${this.latestVersion}_linux_amd64.tar.gz`;
+    const artifactUrl = this.latestAssetUrl;
+    if (!artifactUrl) {
+      throw new Error(`Latest tester release is missing ${this.latestVersion}_linux_amd64.tar.gz`);
+    }
     console.log(`Downloading ${artifactUrl}`);
 
-    const response = await fetch(artifactUrl);
+    const response = await fetch(artifactUrl, {
+      headers: {
+        Accept: "application/octet-stream",
+        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+      },
+    });
     if (!response.ok) {
       throw new Error(`Failed to download tester. Status: ${response.status}. Response: ${await response.text()}`);
     }
@@ -64,11 +73,16 @@ export default class TesterDownloader {
       throw new Error(`Failed to fetch latest tester version. Status: ${response.status}. Response: ${await response.text()}`);
     }
 
-    const tagName = (await response.json()).tag_name;
+    const release = await response.json();
+    const tagName = release.tag_name;
 
     if (!tagName) {
-      throw new Error(`Failed to fetch latest tester version. No tag name found in response: ${await response.text()}`);
+      throw new Error(`Failed to fetch latest tester version. No tag name found in response: ${JSON.stringify(release)}`);
     }
+
+    this.latestAssetUrl = release.assets?.find(
+      (asset: { name: string; url: string }) => asset.name === `${tagName}_linux_amd64.tar.gz`,
+    )?.url;
 
     return tagName;
   }
